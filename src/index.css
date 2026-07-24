@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+/* Design tokens from the Tidepools style guide (daylight / cool).
+   Tailwind v4 turns these into utilities: bg-sand, text-deep-pool, font-display, ... */
+@theme {
+  --color-sand: #e9e7dc;
+  --color-driftwood: #d9d6c7;
+  --color-foam: #f6f4ec;
+  --color-tide: #6fa8a0;
+  --color-tide-fill: #a6cfc8;
+  --color-deep-pool: #274a54;
+  --color-sea-glass: #8fbdb2;
+  --color-coral: #de8368;
+  --color-rock: #8e877a;
+  --color-ink: #22303a;
+
+  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Nunito", ui-sans-serif, system-ui, sans-serif;
+}
+
+@layer base {
+  body {
+    font-family: var(--font-sans);
+    background-color: var(--color-sand);
+    color: var(--color-ink);
+  }
+}

@@ -1,0 +1,278 @@
+// techniques.ts — the human-technique catalog as constraint operations over a
+// partial water/rock assignment. Each pass returns whether it deduced anything
+// and records which techniques fired. A "constraint" is a set of present cells
+// with an exact water count (from an adjacency clue or a line total), optionally
+// carrying local connectivity for the ring it came from.
+import type { Board, Connectivity, Technique } from './board'
+import type { Line } from './hex'
+import { DIRECTIONS, key, linesOf } from './hex'
+import { circularRuns } from './clues'
+
+export type CellVal = 'water' | 'rock' | 'unknown'
+export type Assign = Map<string, CellVal>
+
+export interface Constraint {
+  /** present cell keys governed by this constraint */
+  cells: string[]
+  /** exact number of water among `cells` */
+  water: number
+  source: 'adjacency' | 'line'
+  /** for connectivity: the origin's 6 ring slots (cell key or null if absent) */
+  ring?: (string | null)[]
+  connectivity?: Connectivity
+}
+
+/** Accumulates progress across a solving run. */
+export interface SolveCtx {
+  contradiction: boolean
+  used: Set<Technique>
+}
+
+/** Build the constraint set + initial assignment (given cells known rock). */
+export function setup(board: Board): { assign: Assign; constraints: Constraint[] } {
+  const assign: Assign = new Map()
+  for (const k of board.present) assign.set(k, 'unknown')
+
+  const constraints: Constraint[] = []
+  for (const [k, cell] of board.cells) {
+    if (cell.given) {
+      assign.set(k, 'rock') // a given clue cell is a revealed rock
+      if (cell.clue) {
+        const ring: (string | null)[] = DIRECTIONS.map((d) => {
+          const nk = key({ q: cell.coord.q + d.q, r: cell.coord.r + d.r })
+          return board.present.has(nk) ? nk : null
+        })
+        const cells = ring.filter((x): x is string => x !== null)
+        constraints.push({
+          cells,
+          water: cell.clue.count,
+          source: 'adjacency',
+          ...(cell.clue.connectivity
+            ? { ring, connectivity: cell.clue.connectivity }
+            : {}),
+        })
+      }
+    }
+  }
+
+  if (board.lines.length > 0) {
+    const byId = new Map<string, Line>()
+    for (const ln of linesOf(board.present)) byId.set(`${ln.axis},${ln.index}`, ln)
+    for (const lc of board.lines) {
+      const ln = byId.get(`${lc.axis},${lc.index}`)
+      if (ln) constraints.push({ cells: ln.cells, water: lc.total, source: 'line' })
+    }
+  }
+
+  return { assign, constraints }
+}
+
+function tally(cells: string[], assign: Assign): { water: number; unknown: string[] } {
+  let water = 0
+  const unknown: string[] = []
+  for (const k of cells) {
+    const v = assign.get(k)
+    if (v === 'water') water++
+    else if (v === 'unknown') unknown.push(k)
+  }
+  return { water, unknown }
+}
+
+/** Forced-by-count on a single constraint. Returns whether it changed a cell. */
+export function applyForcedCount(c: Constraint, assign: Assign, ctx: SolveCtx): boolean {
+  const { water, unknown } = tally(c.cells, assign)
+  const remaining = c.water - water
+  if (remaining < 0 || remaining > unknown.length) {
+    ctx.contradiction = true
+    return false
+  }
+  if (unknown.length === 0) return false
+  if (remaining === 0) {
+    for (const k of unknown) assign.set(k, 'rock')
+    ctx.used.add(c.source === 'line' ? 'line-total' : 'forced-count')
+    return true
+  }
+  if (remaining === unknown.length) {
+    for (const k of unknown) assign.set(k, 'water')
+    ctx.used.add(c.source === 'line' ? 'line-total' : 'forced-count')
+    return true
+  }
+  return false
+}
+
+/**
+ * One sweep of forced-count across all constraints. `allowLine` gates line
+ * constraints (line totals read as a Tricky-level technique, so Calm excludes
+ * them). Adjacency forced-counts are the always-available base.
+ */
+export function forcedCountPass(
+  constraints: Constraint[],
+  assign: Assign,
+  ctx: SolveCtx,
+  allowLine = true,
+): boolean {
+  let changed = false
+  for (const c of constraints) {
+    if (c.source === 'line' && !allowLine) continue
+    if (applyForcedCount(c, assign, ctx)) changed = true
+    if (ctx.contradiction) return changed
+  }
+  return changed
+}
+
+/**
+ * Connectivity forcing: enumerate the ≤2^6 water/rock arrangements of a clue's
+ * ring consistent with the known cells, the exact water count, AND the
+ * `{}`/`--` property; force any slot that is the same in every valid one.
+ */
+export function applyConnectivity(c: Constraint, assign: Assign, ctx: SolveCtx): boolean {
+  if (!c.ring || !c.connectivity) return false
+  const ring = c.ring
+  // Fixed slots from current knowledge; collect unknown present slots.
+  const base: (boolean | null)[] = ring.map((k) => {
+    if (k === null) return false // absent slot never water
+    const v = assign.get(k)
+    if (v === 'water') return true
+    if (v === 'rock') return false
+    return null // unknown
+  })
+  const unknownIdx: number[] = []
+  base.forEach((b, i) => {
+    if (b === null) unknownIdx.push(i)
+  })
+  if (unknownIdx.length === 0) return false
+
+  const wantSplit = c.connectivity === 'split'
+  // For each unknown slot, track whether every valid arrangement made it water/rock.
+  const alwaysWater = new Map<number, boolean>()
+  const alwaysRock = new Map<number, boolean>()
+  for (const i of unknownIdx) {
+    alwaysWater.set(i, true)
+    alwaysRock.set(i, true)
+  }
+  let anyValid = false
+
+  const combos = 1 << unknownIdx.length
+  for (let mask = 0; mask < combos; mask++) {
+    const slots = base.map((b) => b === true)
+    for (let b = 0; b < unknownIdx.length; b++) {
+      if (mask & (1 << b)) slots[unknownIdx[b]] = true
+    }
+    const waterCount = slots.filter(Boolean).length
+    if (waterCount !== c.water) continue
+    const runs = circularRuns(slots)
+    const isSplit = runs >= 2
+    if (isSplit !== wantSplit) continue
+    anyValid = true
+    for (const i of unknownIdx) {
+      if (slots[i]) alwaysRock.set(i, false)
+      else alwaysWater.set(i, false)
+    }
+  }
+
+  if (!anyValid) {
+    ctx.contradiction = true
+    return false
+  }
+
+  let changed = false
+  for (const i of unknownIdx) {
+    const k = ring[i]!
+    if (alwaysWater.get(i)) {
+      assign.set(k, 'water')
+      changed = true
+    } else if (alwaysRock.get(i)) {
+      assign.set(k, 'rock')
+      changed = true
+    }
+  }
+  if (changed) ctx.used.add('connectivity')
+  return changed
+}
+
+export function connectivityPass(
+  constraints: Constraint[],
+  assign: Assign,
+  ctx: SolveCtx,
+): boolean {
+  let changed = false
+  for (const c of constraints) {
+    if (c.connectivity && applyConnectivity(c, assign, ctx)) changed = true
+    if (ctx.contradiction) return changed
+  }
+  return changed
+}
+
+/**
+ * Subset/overlap: when one constraint's still-unknown cells are a strict subset
+ * of another's, the difference has a forced water count. Only overlapping
+ * constraints can be subset-related, so we pair via a cell→constraint index
+ * (avoids the O(C²) all-pairs scan). Returns on the first productive deduction
+ * so later derivations always work from a fresh assignment (sound).
+ */
+export function subsetPass(
+  constraints: Constraint[],
+  assign: Assign,
+  ctx: SolveCtx,
+  allowLine = true,
+): boolean {
+  type Reduced = { idx: number; cells: string[]; set: Set<string>; water: number }
+  const reduced: Reduced[] = []
+  const cellIndex = new Map<string, number[]>()
+  for (const c of constraints) {
+    if (c.source === 'line' && !allowLine) continue
+    const { water, unknown } = tally(c.cells, assign)
+    if (unknown.length === 0) continue
+    const idx = reduced.length
+    reduced.push({ idx, cells: unknown, set: new Set(unknown), water: c.water - water })
+    for (const k of unknown) {
+      const arr = cellIndex.get(k)
+      if (arr) arr.push(idx)
+      else cellIndex.set(k, [idx])
+    }
+  }
+
+  for (const a of reduced) {
+    const candidates = new Set<number>()
+    for (const k of a.cells) {
+      for (const j of cellIndex.get(k)!) if (j !== a.idx) candidates.add(j)
+    }
+    for (const j of candidates) {
+      const b = reduced[j]
+      if (a.cells.length >= b.cells.length) continue
+      let subset = true
+      for (const k of a.cells) {
+        if (!b.set.has(k)) {
+          subset = false
+          break
+        }
+      }
+      if (!subset) continue
+      const diffCells = b.cells.filter((k) => !a.set.has(k))
+      const diffWater = b.water - a.water
+      if (diffWater < 0 || diffWater > diffCells.length) {
+        ctx.contradiction = true
+        return false
+      }
+      let changed = false
+      if (diffWater === 0) {
+        for (const k of diffCells)
+          if (assign.get(k) === 'unknown') {
+            assign.set(k, 'rock')
+            changed = true
+          }
+      } else if (diffWater === diffCells.length) {
+        for (const k of diffCells)
+          if (assign.get(k) === 'unknown') {
+            assign.set(k, 'water')
+            changed = true
+          }
+      }
+      if (changed) {
+        ctx.used.add('subset-overlap')
+        return true
+      }
+    }
+  }
+  return false
+}

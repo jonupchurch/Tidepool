@@ -4,7 +4,7 @@ _Snapshot; updated each work session. Last updated: 2026-07-24._
 
 ## Current phase
 
-**Engine built (001 complete) + all features tasked.** The deterministic puzzle engine (`src/core/`) is implemented, tested (106 green), and verified. Every remaining feature (002–009) now has a full `tasks.md` (277 tasks total, test-first per Constitution VIII). Ready to implement in build order — **008 persistence seam is next.**
+**Implementing (001 + 008 complete).** Engine (`src/core/`) and the persistence/platform seam (`src/platform/`) are both built, tested, and verified — **159 tests green**. All 9 features are specced + planned + tasked. Next in the build order: **002 gameplay board.**
 
 ## Done
 
@@ -18,13 +18,15 @@ _Snapshot; updated each work session. Last updated: 2026-07-24._
 - Decided: no database for v1 — seeds + localStorage/IndexedDB behind the `platform/` seam.
 - Scaffold merged to `main`.
 - **Specced + planned all 9 features (001–009)** via Spec-Kit (engine got specify→clarify→plan; the rest specify→plan). Feature map + build order in `PLAN.md`.
-- **001 Engine implemented + verified** — `src/core/`: RNG → hex geometry → board/clues → technique solver + uniqueness oracle → difficulty rater → clue reducer → generation pipeline → serialization + public API. 106 unit/contract tests green; typecheck + build pass. All 36 tasks in `specs/001-*/tasks.md` done. See CHANGELOG for the SC-001…SC-006 verification.
+- **001 Engine implemented + verified** — `src/core/`: RNG → hex geometry → board/clues → technique solver + uniqueness oracle → difficulty rater → clue reducer → generation pipeline → serialization + public API. 106 unit/contract tests green. All 36 tasks done.
+- **008 Persistence & platform seam implemented + verified** — `src/platform/`: `SaveStore` interface + typed accessors, versioned schemas, web (localStorage + IndexedDB) + in-memory backends, migration, export/import, backend selection. 53 tests green incl. the SC-002 no-leak scan. All 31 tasks done.
+- **All 9 features tasked** — full `tasks.md` for 001–009 (313 tasks total).
 
 ## Next — implementation (build order)
 
-- **008 Persistence & platform seam** — the `SaveStore` interface + web backend; unblocks every stateful feature. Run `/speckit-tasks` then implement.
-- Then: 002 gameplay → 003/004 shell + modes → 005/006 journal + settings → 007 tutorial → art/audio → 009 Tauri/Steam.
-- `/speckit-tasks` per feature to generate the ordered task list before coding it.
+- **002 Gameplay board** — the play session over the engine (marks, undo/redo, pool/board completion), Canvas 2D renderer, off-thread generation. Consumes the 008 `SaveStore` for autosave/resume. Tasks ready in `specs/002-*/tasks.md`.
+- Then: 003/004 shell + modes → 005/006 journal + settings → 007 tutorial → art/audio → 009 Tauri/Steam.
+- **When starting 002:** expose the engine's hex neighbour/pool helpers from `core/index.ts` (flagged during tasking — gameplay needs adjacency for pool enumeration).
 - Self-host fonts (Bricolage + Nunito) before the Tauri build (currently Google Fonts).
 
 ## Blockers

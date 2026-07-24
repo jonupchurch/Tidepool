@@ -1,7 +1,7 @@
 <!--
 Sync Impact Report
 ==================
-Version: 2.1.1 (was 2.1.0)
+Version: 2.2.0 (was 2.1.1)
 Status: General engineering-process constitution for building software
   well — whether greenfield in a project you own or dropped into someone
   else's existing, unfamiliar codebase. Adapted from the playm8z project's
@@ -23,6 +23,9 @@ Amendment (2.1.0): tuned for the Tidepools greenfield project — strengthened
   PLAN.md, STATUS.md, CHANGELOG.md).
 Amendment (2.1.1): clarified that CHANGELOG.md tracks actual code/feature
   changes only, not process/setup meta-work.
+Amendment (2.2.0): ratified for the Tidepools build — added Principle XI
+  (Determinism & Solvability, NON-NEGOTIABLE), the core engine invariant.
+  Principles I–X remain the portable process baseline; XI is project-specific.
 -->
 
 # Reference Constitution — Working in a Codebase, Fast and Well
@@ -185,6 +188,22 @@ Rationale: a solo, long-running project loses the thread between sessions and
 context resets. These three answer "what are we building," "where are we," and
 "what happened" at a glance, keeping intent durable when memory isn't.
 
+### XI. Determinism & Solvability (NON-NEGOTIABLE)
+
+Every board — curated or endless — is fully determined by its seed and provably
+has exactly one solution reachable by pure logic, with no guessing. Generation
+and solving use a seeded RNG only; no wall-clock, ambient randomness, or platform
+entropy anywhere in `core/`. The generator must run its logic solver to confirm a
+unique, guess-free solution before a board is ever served, and clue reduction may
+remove a clue only if the solver still reaches that unique solution. The same seed
+yields the identical board on every machine, forever.
+
+Rationale: this invariant is the foundation the whole product rests on — curated
+packs, endless mode, shareable seeds, reproducible bug reports, and the CI test
+oracle all fall out of it for free. A board unsolvable by logic, or that varies by
+machine, is a defect, not a difficulty. (Project-specific: this principle is
+particular to Tidepools; Principles I–X are the portable process baseline.)
+
 ## Workflow
 
 **Starting a project (its initial feature set):** plan the whole set first
@@ -235,4 +254,4 @@ plan lighter, and commit/branch as the setting allows. The verification
 and testing bar (Principles V and VIII) and the non-negotiables (I and IV)
 still hold.
 
-**Version**: 2.1.1 | **Ratified**: 2026-07-15 | **Last Amended**: 2026-07-24
+**Version**: 2.2.0 | **Ratified**: 2026-07-15 | **Last Amended**: 2026-07-24

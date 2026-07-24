@@ -14,7 +14,8 @@ deduce water vs. rock; solved pools bloom into hand-drawn creatures.
 
 - **Stack:** Vite + TypeScript + Canvas board, wrapped in **Tauri** for the Steam build.
 - **Web-first, then wrap** (not a rewrite). Local-first: all state in localStorage/IndexedDB, no backend.
-- **Seed-determinism invariant:** every board is fully seed-determined and solver-verified to have a unique, guess-free solution.
+- **Seed-determinism invariant:** every board is fully seed-determined and solver-verified to have a unique, guess-free solution. (Constitution XI.)
+- **Connectivity clues = local / Hexcells-style:** `{n}` = the counted water cells are consecutive among themselves (adjacent around the clue cell, or no gaps along the line); `-n-` = they are not all consecutive. Not global connected-components.
 - **Steam:** achievements + Auto-Cloud saves are enough; in-game overlay not required.
 - **Ruled out:** C#/MonoGame, Godot, Unity, Next.js.
 

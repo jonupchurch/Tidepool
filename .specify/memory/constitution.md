@@ -1,7 +1,7 @@
 <!--
 Sync Impact Report
 ==================
-Version: 2.1.0 (was 2.0.0)
+Version: 2.1.1 (was 2.1.0)
 Status: General engineering-process constitution for building software
   well — whether greenfield in a project you own or dropped into someone
   else's existing, unfamiliar codebase. Adapted from the playm8z project's
@@ -21,6 +21,8 @@ Amendment (2.1.0): tuned for the Tidepools greenfield project — strengthened
   Principle I (default to asking over assuming), added a brevity/TL;DR note to
   Principle VI, and added Principle X (maintain living root artifacts:
   PLAN.md, STATUS.md, CHANGELOG.md).
+Amendment (2.1.1): clarified that CHANGELOG.md tracks actual code/feature
+  changes only, not process/setup meta-work.
 -->
 
 # Reference Constitution — Working in a Codebase, Fast and Well
@@ -173,9 +175,11 @@ continuously, not once and abandoned:
   major decision changes.
 - **`STATUS.md`** — a living snapshot: current phase, what's done /
   in-progress / next, and any blockers. Update it each work session.
-- **`CHANGELOG.md`** — a dated dev-progress log of what actually changed,
-  appended as changes land (adopt versioned release-note format once Steam
-  builds start).
+- **`CHANGELOG.md`** — a dated log of **actual code/feature changes**, appended
+  as implementation lands. Process/setup meta-work (repo bootstrap, doc/config
+  edits, tooling) does **not** belong here — that's what `STATUS.md` and the
+  commit history are for. Adopt versioned release-note format once Steam builds
+  start.
 
 Rationale: a solo, long-running project loses the thread between sessions and
 context resets. These three answer "what are we building," "where are we," and
@@ -214,7 +218,8 @@ before implementing any. Then take each feature through the loop below.
    for the end.
 
 Throughout, keep the living artifacts current (Principle X): `STATUS.md` each
-session, `CHANGELOG.md` as changes land, `PLAN.md` when scope or order shifts.
+session, `CHANGELOG.md` as code/feature changes land, `PLAN.md` when scope or
+order shifts.
 
 ## Governance
 
@@ -230,4 +235,4 @@ plan lighter, and commit/branch as the setting allows. The verification
 and testing bar (Principles V and VIII) and the non-negotiables (I and IV)
 still hold.
 
-**Version**: 2.1.0 | **Ratified**: 2026-07-15 | **Last Amended**: 2026-07-24
+**Version**: 2.1.1 | **Ratified**: 2026-07-15 | **Last Amended**: 2026-07-24

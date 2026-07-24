@@ -4,7 +4,7 @@ _Snapshot; updated each work session. Last updated: 2026-07-24._
 
 ## Current phase
 
-Project scaffold complete and verified. Ready to start the Spec-Kit feature chain (engine first).
+**Planning complete** — all 9 features (001–009) specced + planned under `specs/`. Ready to start implementation (engine first). No code written yet.
 
 ## Done
 
@@ -16,11 +16,14 @@ Project scaffold complete and verified. Ready to start the Spec-Kit feature chai
 - Scaffolded the app on branch `chore/project-scaffold`: Vite 8 + React 19 + TS (strict) + Tailwind v4, module skeleton `src/{core,game,render,ui,platform}`, Vitest + Playwright. **Verified: typecheck + build + unit + e2e all green.**
 - Wrote `stacks/tidepools.md` stack pack.
 - Decided: no database for v1 — seeds + localStorage/IndexedDB behind the `platform/` seam.
+- Scaffold merged to `main`.
+- **Specced + planned all 9 features (001–009)** via Spec-Kit (engine got specify→clarify→plan; the rest specify→plan). Feature map + build order in `PLAN.md`.
 
-## Next
+## Next — implementation (engine first)
 
-- Merge `chore/project-scaffold` → `main`.
-- Start the Spec-Kit chain: `/speckit-specify` → `/speckit-plan` across the feature set (engine first).
+- **001 Engine** — implement `src/core/` (RNG → generator → solver → reducer → difficulty) test-first with Vitest; the contract tests in `specs/001-*/contracts/` are the target. First real CHANGELOG entry lands here.
+- Then follow the build order: 008 persistence seam → 002 gameplay → 003/004 shell + modes → 005/006 journal + settings → 007 tutorial → art/audio → 009 Tauri/Steam.
+- `/speckit-tasks` per feature (starting with the engine) to generate the ordered task list before coding it.
 - Self-host fonts (Bricolage + Nunito) before the Tauri build (currently Google Fonts).
 
 ## Blockers

@@ -26,23 +26,27 @@ deduce water vs. rock; solved pools bloom into hand-drawn creatures.
 `ui/` (screens) · `platform/` (web vs. tauri seam).
 Tests: **Vitest** (engine) + **Playwright** (e2e).
 
-## Feature set — plan all before building (Constitution VII)
+## Feature set — all specced + planned (Constitution VII) ✅
 
-1. **Engine** (generator / solver / reducer / difficulty) — load-bearing; first.
-2. Board + gameplay screen
-3. Home / main menu
-4. Endless tide (difficulty picker)
-5. Curated shores (level pack)
-6. Shore journal (creature collection)
-7. Settings (+ Night Tide dark mode)
-8. Tutorial / how-to-play (consolidate the two mockups into one)
-9. Splash + pause
-10. Tauri / Steam packaging
+Every feature below has a `spec.md` + `plan.md` under `specs/`. Detail lives there; this is the map.
 
-## Build order (high level)
+| # | Feature | What it covers |
+|---|---------|----------------|
+| 001 | **Puzzle Engine** | Deterministic generate → solve → reduce → rate; the shared board/clue model. Load-bearing. |
+| 002 | **Gameplay & Board** | The playable Canvas board: marking, undo/redo, pool/board completion, reward loop. |
+| 003 | **App Shell** | Home, Splash, Pause, navigation; resume + stats. |
+| 004 | **Board Modes** | Endless stream, Curated pack (oracle-validated manifest), Enter-a-seed. |
+| 005 | **Shore Journal** | Creature collection over one shared catalog; discovery records. |
+| 006 | **Settings & Themes** | Grouped settings + accessibility + Night Tide dark mode (owns theme tokens). |
+| 007 | **Tutorial** | One consolidated teach-by-doing onboarding (incl. the `-n-` split lesson). |
+| 008 | **Persistence & Platform** | The `SaveStore` seam (web backend now, Tauri later); versioned + migratable. No DB. |
+| 009 | **Desktop Packaging** | Tauri wrap for Steam; native save backend, achievements + Auto-Cloud, self-hosted fonts. |
 
-Engine + shared data models → gameplay board → screens → persistence/platform seam
-→ Night Tide dark mode → art + audio → Tauri wrap + Steamworks → Steam release prep.
+**Clarified engine scope (001):** filled hex field via a present-cell set (irregular later); difficulty rated by solver technique + depth; water-number clues out of v1; on-demand off-thread generation.
+
+## Build order (dependency order)
+
+001 Engine → 008 Persistence seam → 002 Gameplay → 003 App Shell + 004 Board Modes → 005 Journal + 006 Settings/Themes → 007 Tutorial → art + audio pass → 009 Tauri/Steam packaging → Steam release prep.
 
 ## Known gaps (from `resources/` review)
 

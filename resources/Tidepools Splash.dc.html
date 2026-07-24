@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E9E7DC; }
+  a { color: #274A54; text-decoration: none; }
+  a:hover { color: #DE8368; }
+  @keyframes tp-fill { 0%,100% { transform: translateY(84%); } 50% { transform: translateY(4%); } }
+  @keyframes tp-shimmer { 0% { background-position: -120% 0; } 100% { background-position: 220% 0; } }
+  @keyframes tp-bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+  @keyframes tp-ring { 0% { transform: scale(.3); opacity: .55; } 80% { opacity: 0; } 100% { transform: scale(1.6); opacity: 0; } }
+  @keyframes tp-amble { 0% { transform: translateX(-58px) rotate(-2deg); } 50% { transform: translateX(58px) rotate(2deg); } 100% { transform: translateX(-58px) rotate(-2deg); } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</helmet>
+
+<div style="min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; font-family: 'Nunito', sans-serif; color: #22303A; background: radial-gradient(130% 90% at 50% 38%, #F2F0E7 0%, #E9E7DC 62%, #DFDCCF 100%); padding: 48px 24px; position: relative; overflow: hidden;">
+
+  <!-- emblem -->
+  <div style="width: 66px; height: 66px; border-radius: 50%; overflow: hidden; box-shadow: 0 10px 20px -10px rgba(34,48,58,.4), inset 0 -4px 8px rgba(34,48,58,.15); animation: tp-bob 3.6s ease-in-out infinite; margin-bottom: 22px;">
+    <img src="assets/crab.png" alt="Tidepools crab" style="width: 100%; height: 100%; object-fit: cover; object-position: 50% 47%;">
+  </div>
+
+  <!-- wordmark -->
+  <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 76px; line-height: .9; letter-spacing: -.035em; color: #274A54;">Tidepools</div>
+  <div style="font-size: 14px; letter-spacing: .18em; text-transform: uppercase; color: #68716d; font-weight: 700; margin-top: 14px;">A deduction game at low tide</div>
+
+  <!-- loader: tide filling a pool -->
+  <sc-if value="{{ isPool }}" hint-placeholder-val="{{ true }}">
+    <div style="margin-top: 52px; display: flex; flex-direction: column; align-items: center; gap: 16px;">
+      <div style="position: relative; width: 108px; height: 122px; clip-path: polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%); background: #D9D6C7; overflow: hidden; box-shadow: inset 0 -5px 10px rgba(34,48,58,.16), inset 0 3px 6px rgba(255,255,255,.5);">
+        <div style="position: absolute; inset: -20% 0 0 0; background: linear-gradient(180deg, #A6CFC8 0%, #6FA8A0 100%); box-shadow: 0 -2px 0 rgba(246,244,236,.5) inset; animation: tp-fill 3.2s ease-in-out infinite;"></div>
+        <div style="position: absolute; inset: 0; background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.35) 50%, transparent 70%); background-size: 220% 100%; animation: tp-shimmer 3.6s linear infinite;"></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- loader: expanding ripples -->
+  <sc-if value="{{ isRipples }}" hint-placeholder-val="{{ false }}">
+    <div style="margin-top: 60px; position: relative; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center;">
+      <div style="position: absolute; width: 100px; height: 100px; border-radius: 50%; border: 2.5px solid #6FA8A0; animation: tp-ring 2.6s ease-out infinite;"></div>
+      <div style="position: absolute; width: 100px; height: 100px; border-radius: 50%; border: 2.5px solid #6FA8A0; animation: tp-ring 2.6s ease-out infinite; animation-delay: .87s;"></div>
+      <div style="position: absolute; width: 100px; height: 100px; border-radius: 50%; border: 2.5px solid #6FA8A0; animation: tp-ring 2.6s ease-out infinite; animation-delay: 1.74s;"></div>
+      <div style="width: 20px; height: 20px; border-radius: 50%; background: #274A54;"></div>
+    </div>
+  </sc-if>
+
+  <!-- loader: hermit crab ambling -->
+  <sc-if value="{{ isCrab }}" hint-placeholder-val="{{ false }}">
+    <div style="margin-top: 56px; width: 200px;">
+      <div style="height: 60px; display: flex; align-items: flex-end; justify-content: center;">
+        <div style="width: 46px; height: 46px; border-radius: 50%; overflow: hidden; box-shadow: 0 6px 12px -6px rgba(34,48,58,.5); animation: tp-amble 3.4s ease-in-out infinite;"><img src="assets/crab.png" alt="crab" style="width: 100%; height: 100%; object-fit: cover; object-position: 50% 47%;"></div>
+      </div>
+      <div style="height: 6px; border-radius: 4px; background: linear-gradient(90deg, transparent, #D9D6C7 12%, #D9D6C7 88%, transparent); margin-top: 4px;"></div>
+    </div>
+  </sc-if>
+
+  <!-- rotating tip -->
+  <div style="margin-top: 42px; height: 26px; display: flex; align-items: center;">
+    <div ref="{{ tipRef }}" style="font-style: italic; font-size: 17px; color: #4d5a56; transition: opacity .4s ease; text-align: center; max-width: 460px;">Numbers count the water next door.</div>
+  </div>
+
+  <!-- credit -->
+  <sc-if value="{{ showCredit }}" hint-placeholder-val="{{ true }}">
+    <div style="position: absolute; bottom: 34px; left: 0; right: 0; text-align: center; font-size: 13px; color: #909389; letter-spacing: .04em;">Made with care, by the shore.</div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:720},&quot;loader&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;pool&quot;,&quot;ripples&quot;,&quot;crab&quot;],&quot;default&quot;:&quot;pool&quot;,&quot;tsType&quot;:&quot;'pool'|'ripples'|'crab'&quot;,&quot;section&quot;:&quot;Loader&quot;},&quot;showCredit&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Loader&quot;},&quot;tipCycleMs&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:4200,&quot;min&quot;:2500,&quot;max&quot;:7000,&quot;step&quot;:100,&quot;unit&quot;:&quot;ms&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Loader&quot;}}">
+class Component extends DCLogic {
+  tips = [
+    "Numbers count the water next door.",
+    "Pools like to hold hands — that's what the { } means.",
+    "There's always a right answer. Take your time.",
+  ];
+  constructor(props) {
+    super(props);
+    this.tipRef = React.createRef();
+    this.i = 0;
+  }
+  componentDidMount() {
+    const ms = this.props.tipCycleMs ?? 4200;
+    this.timer = setInterval(() => {
+      const el = this.tipRef.current;
+      if (!el) return;
+      el.style.opacity = 0;
+      setTimeout(() => {
+        this.i = (this.i + 1) % this.tips.length;
+        el.textContent = this.tips[this.i];
+        el.style.opacity = 1;
+      }, 400);
+    }, ms);
+  }
+  componentWillUnmount() { clearInterval(this.timer); }
+  renderVals() {
+    const loader = this.props.loader ?? 'pool';
+    return {
+      tipRef: this.tipRef,
+      isPool: loader === 'pool',
+      isRipples: loader === 'ripples',
+      isCrab: loader === 'crab',
+      showCredit: this.props.showCredit ?? true,
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E9E7DC; }
+  a { color: #274A54; text-decoration: none; }
+  a:hover { color: #DE8368; }
+  @keyframes tp-pulse { 0%,100% { box-shadow: inset 0 0 0 3px rgba(222,131,104,.7); } 50% { box-shadow: inset 0 0 0 3px rgba(222,131,104,.25); } }
+  @keyframes tp-doubt { 0% { opacity: .55; } 100% { opacity: 0; } }
+  @keyframes tp-shimmer { 0% { background-position: -120% 0; } 100% { background-position: 220% 0; } }
+  @keyframes tp-panelin { 0% { transform: translateY(10px) scale(.97); opacity: 0; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</helmet>
+
+<div data-screen-label="How to Play" style="position: relative; min-height: 100vh; font-family: 'Nunito', sans-serif; color: #22303A; background: radial-gradient(130% 100% at 50% 0%, #EFEDE3 0%, #E9E7DC 55%, #E1DED0 100%); display: flex; flex-direction: column; user-select: none;">
+
+  <!-- top -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 20px 26px;">
+    <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 18px; color: #274A54;">How to play</div>
+    <button onClick="{{ skip }}" style="font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;color:#68716d;background:transparent;border:none;cursor:pointer;">Skip &#8594;</button>
+  </div>
+
+  <!-- coaching card -->
+  <div style="max-width: 560px; margin: 0 auto; text-align: center; padding: 4px 24px 0 24px;">
+    <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 27px; color: #274A54; line-height: 1.1;">{{ stepTitle }}</div>
+    <div style="font-size: 16px; color: #4d5a56; margin-top: 10px; line-height: 1.5;">{{ stepBody }}</div>
+    <sc-if value="{{ showChips }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; gap: 20px; justify-content: center; margin-top: 16px;">
+        <div style="display:flex;align-items:center;gap:8px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:50px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#274A54;color:#F6F4EC;font-weight:800;font-size:16px;">&#123;3&#125;</span><span style="font-size:13px;color:#68716d;font-weight:700;">one pool</span></div>
+        <div style="display:flex;align-items:center;gap:8px;"><span style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:50px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#274A54;color:#F6F4EC;font-weight:800;font-size:16px;">-3-</span><span style="font-size:13px;color:#68716d;font-weight:700;">separate pools</span></div>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- board -->
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 16px;">
+    <div style="position: relative; width: {{ boardW }}; height: {{ boardH }};" onContextMenu="{{ preventCtx }}">
+      <sc-for list="{{ lineTotals }}" as="t" hint-placeholder-count="3"><div style="{{ t.style }}">{{ t.text }}</div></sc-for>
+      <sc-for list="{{ cells }}" as="cell" hint-placeholder-count="9">
+        <div style="{{ cell.box }}" onClick="{{ cell.onClick }}" onContextMenu="{{ cell.onCtx }}">
+          <sc-if value="{{ cell.doubt }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;background:rgba(222,131,104,.55);animation:tp-doubt .7s ease-out forwards;pointer-events:none;"></div></sc-if>
+          <span style="{{ cell.labelStyle }}">{{ cell.label }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+
+  <!-- controls -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 40px 30px 40px;">
+    <div style="font-size: 13px; color: #909389;"><b style="color:#4d5a56;">Left-click</b> water · <b style="color:#4d5a56;">Right-click</b> rock</div>
+    <div style="display: flex; gap: 8px; align-items: center;">
+      <sc-for list="{{ dots }}" as="d" hint-placeholder-count="4"><span style="{{ d }}"></span></sc-for>
+    </div>
+    <button onClick="{{ next }}" style="{{ nextStyle }}">{{ nextLabel }}</button>
+  </div>
+
+  <!-- done overlay -->
+  <sc-if value="{{ done }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; background: rgba(34,48,58,.32); backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 24px;">
+      <div style="width: 360px; background: #F6F4EC; border-radius: 24px; padding: 32px 30px; text-align: center; box-shadow: 0 30px 60px -24px rgba(34,48,58,.7); animation: tp-panelin .35s cubic-bezier(.2,.8,.2,1);">
+        <div style="width: 62px; height: 62px; border-radius: 50%; overflow: hidden; margin: 0 auto 14px auto; background: #F1EEE5; box-shadow: 0 8px 16px -8px rgba(34,48,58,.5);"><img src="assets/crab.png" alt="crab" style="width:118%;height:118%;object-fit:cover;object-position:50% 46%;"></div>
+        <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 26px; color: #274A54;">That's the whole game.</div>
+        <div style="font-size: 15px; color: #4d5a56; margin-top: 8px;">Read the clues, fill the pools, meet the shore. You can find this again from the menu anytime.</div>
+        <div style="display: flex; gap: 10px; margin-top: 24px;">
+          <button style="flex:1;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;color:#F6F4EC;background:#DE8368;border:none;border-radius:14px;padding:13px;cursor:pointer;" style-hover="background:#d0755b;">Play a board</button>
+          <button onClick="{{ restart }}" style="font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;color:#274A54;background:transparent;border:1.5px solid rgba(34,48,58,.2);border-radius:14px;padding:12px 18px;cursor:pointer;">Replay</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:760}}">
+class Component extends DCLogic {
+  state = { step: 0, marks: {}, stepDone: false, done: false, doubt: null };
+
+  steps = [
+    { title: 'Rock numbers count the water', body: 'This rock shows a 2 — exactly two of its neighbours are water. Left-click those two cells to fill them.', spotlight: ['0,0'], targets: { '1,0': 'water', '0,1': 'water' } },
+    { title: 'Rule cells out with rock', body: 'Not every cell holds water. Right-click the two dry corner cells to mark them as rock.', spotlight: [], targets: { '0,2': 'rock', '2,2': 'rock' } },
+    { title: 'Brackets mean one connected pool', body: 'A {number} says its water neighbours all belong to a single connected pool. This {3} needs two more — left-click them to join the pool.', spotlight: ['2,0'], targets: { '1,1': 'water', '2,1': 'water' }, chips: true },
+    { title: 'Edge totals count a whole line', body: 'Numbers along the edge count all the water in that row. This row says 1 — fill the last water cell to finish the shore.', spotlight: [], targets: { '1,2': 'water' }, row: 2 },
+  ];
+
+  constructor(props) { super(props); this.buildGrid(); }
+
+  buildGrid() {
+    this.size = 46; this.W = Math.sqrt(3) * this.size; this.H = 2 * this.size; this.ystep = 1.5 * this.size; this.pad = 66;
+    const SOL = [['R','W','R'],['W','W','W'],['R','W','R']];
+    const cols = 3, rows = 3;
+    const GIVEN = new Set(['0,0','2,0']);
+    const CONN = new Set(['2,0']);
+    this.cells = {}; this.order = [];
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const key = `${c},${r}`;
+      const x = c * this.W + (r % 2 ? this.W / 2 : 0) + this.pad;
+      const y = r * this.ystep + this.pad;
+      this.cells[key] = { c, r, sol: SOL[r][c], given: GIVEN.has(key), conn: CONN.has(key), x, y };
+      this.order.push(key);
+    }
+    const dirsE = [[1,0],[-1,0],[0,-1],[-1,-1],[0,1],[-1,1]];
+    const dirsO = [[1,0],[-1,0],[1,-1],[0,-1],[1,1],[0,1]];
+    this.neighbors = {};
+    this.order.forEach(key => { const { c, r } = this.cells[key]; const dirs = r % 2 ? dirsO : dirsE; const ns = []; dirs.forEach(([dc, dr]) => { const k = `${c + dc},${r + dr}`; if (this.cells[k]) ns.push(k); }); this.neighbors[key] = ns; });
+    this.order.forEach(key => { const cell = this.cells[key]; cell.num = this.neighbors[key].filter(n => this.cells[n].sol === 'W').length; cell.frame = cell.conn ? 'conn' : 'plain'; });
+    this.lineTotals = [];
+    for (let r = 0; r < rows; r++) { let cnt = 0; for (let c = 0; c < cols; c++) if (SOL[r][c] === 'W') cnt++; this.lineTotals.push({ key: 'row' + r, row: r, x: (r % 2 ? this.W / 2 : 0) + this.pad - this.W * 0.62, y: r * this.ystep + this.pad + this.H / 2, text: String(cnt) }); }
+    this.boardW = cols * this.W + this.W / 2 + 2 * this.pad;
+    this.boardH = (rows - 1) * this.ystep + this.H + 2 * this.pad;
+  }
+
+  flashDoubt(key) { this.setState({ doubt: key }); clearTimeout(this._dt); this._dt = setTimeout(() => this.setState({ doubt: null }), 700); }
+
+  mark(key, want) {
+    const t = this.steps[this.state.step].targets;
+    if (!(key in t)) return;
+    const m = { ...this.state.marks, [key]: want };
+    if (want !== t[key]) this.flashDoubt(key);
+    this.setState({ marks: m }, () => this.checkStep());
+  }
+
+  checkStep() {
+    const t = this.steps[this.state.step].targets;
+    const ok = Object.keys(t).every(k => this.state.marks[k] === t[k]);
+    if (ok && !this.state.stepDone) { this.setState({ stepDone: true }); clearTimeout(this._at); this._at = setTimeout(() => this.advance(), 950); }
+  }
+
+  advance() { const n = this.state.step + 1; if (n >= this.steps.length) this.setState({ done: true }); else this.setState({ step: n, stepDone: false }); }
+  skip() { this.setState({ done: true }); }
+  restart() { this.setState({ step: 0, marks: {}, stepDone: false, done: false, doubt: null }); }
+
+  cellLabel(cell) { if (!cell.given) return ''; if (cell.frame === 'conn') return `{${cell.num}}`; return String(cell.num); }
+
+  renderVals() {
+    const st = this.steps[this.state.step];
+    const spot = new Set([...(st.spotlight || []), ...Object.keys(st.targets)]);
+    const marks = this.state.marks;
+    const cells = this.order.map(key => {
+      const cell = this.cells[key];
+      const active = cell.given || spot.has(key) || !!marks[key];
+      const isTarget = key in st.targets;
+      const unmarkedTarget = isTarget && marks[key] !== st.targets[key];
+      const rock = 'linear-gradient(160deg,#B4AE9E,#8E877A)';
+      const water = 'linear-gradient(160deg,#A6CFC8,#6FA8A0)';
+      let bg, shadow = 'inset 0 -4px 8px rgba(34,48,58,.16), inset 0 3px 6px rgba(255,255,255,.4)';
+      if (cell.given) { if (cell.frame !== 'plain') { bg = '#274A54'; shadow = 'inset 0 -4px 8px rgba(0,0,0,.28)'; } else bg = rock; }
+      else if (marks[key] === 'water') { bg = water; shadow = 'inset 0 -4px 8px rgba(39,74,84,.35)'; }
+      else if (marks[key] === 'rock') bg = rock;
+      else bg = '#D9D6C7';
+      const box = {
+        position: 'absolute', left: cell.x + 'px', top: cell.y + 'px', width: this.W + 'px', height: this.H + 'px',
+        clipPath: 'polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)',
+        background: bg, boxShadow: shadow,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        cursor: isTarget ? 'pointer' : 'default',
+        opacity: active ? 1 : .38,
+        transition: 'opacity .3s ease, background .3s ease',
+        zIndex: 1,
+      };
+      if (unmarkedTarget) box.animation = 'tp-pulse 1.6s ease-in-out infinite';
+      return { key, box, label: this.cellLabel(cell), labelStyle: { position: 'relative', zIndex: 2, fontFamily: "'Nunito',sans-serif", fontWeight: 900, fontSize: cell.frame !== 'plain' ? '22px' : '28px', color: (cell.given && cell.frame !== 'plain') ? '#F6F4EC' : '#22303A' }, doubt: this.state.doubt === key, onClick: () => this.mark(key, 'water'), onCtx: (e) => { e.preventDefault(); this.mark(key, 'rock'); } };
+    });
+    const lineTotals = this.lineTotals.map(t => ({ key: t.key, text: t.text, style: { position: 'absolute', left: t.x + 'px', top: t.y + 'px', transform: 'translate(-50%,-50%)', fontFamily: "'Bricolage Grotesque',sans-serif", fontWeight: 800, fontSize: '22px', color: st.row === t.row ? '#DE8368' : '#8E877A', transition: 'color .3s ease' } }));
+    const dots = this.steps.map((_, i) => ({ width: i === this.state.step ? '22px' : '8px', height: '8px', borderRadius: '6px', background: i === this.state.step ? '#274A54' : (i < this.state.step ? '#6FA8A0' : '#CBC8B8'), transition: 'all .3s ease', display: 'inline-block' }));
+    const canNext = this.state.stepDone;
+    return {
+      cells, lineTotals, boardW: this.boardW + 'px', boardH: this.boardH + 'px',
+      stepTitle: st.title, stepBody: st.body, showChips: !!st.chips,
+      dots, done: this.state.done,
+      preventCtx: (e) => e.preventDefault(),
+      next: () => { if (canNext) this.advance(); }, skip: () => this.skip(), restart: () => this.restart(),
+      nextLabel: this.state.step === this.steps.length - 1 ? 'Finish' : 'Next',
+      nextStyle: { fontFamily: "'Nunito',sans-serif", fontWeight: 800, fontSize: '15px', border: 'none', borderRadius: '12px', padding: '11px 26px', cursor: canNext ? 'pointer' : 'default', background: canNext ? '#DE8368' : '#E1DED0', color: canNext ? '#F6F4EC' : '#a7a99e', transition: 'all .2s ease' },
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E9E7DC; }
+  a { color: #274A54; text-decoration: none; }
+  a:hover { color: #DE8368; }
+</style>
+</helmet>
+
+<div data-screen-label="Curated" style="min-height: 100vh; font-family: 'Nunito', sans-serif; color: #22303A; background: radial-gradient(130% 80% at 50% 0%, #EFEDE3 0%, #E9E7DC 60%, #E1DED0 100%); padding: 40px 24px 90px 24px;">
+  <div style="max-width: 720px; margin: 0 auto;">
+
+    <!-- header -->
+    <div style="margin-bottom: 32px;">
+      <a href="#" style="font-size: 14px; color: #68716d; font-weight: 700;">&#8592; Home</a>
+      <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 42px; letter-spacing: -.02em; color: #274A54; margin-top: 6px;">Curated Shores</div>
+      <div style="font-size: 16px; color: #68716d; margin-top: 6px; max-width: 520px;">A designed coastline — each stop a hand-tuned pool. Walk it at your own pace. <b style="color:#22303A;">{{ solvedCount }} of {{ total }} solved.</b></div>
+    </div>
+
+    <!-- path -->
+    <div style="display: flex; flex-direction: column; gap: 14px;">
+      <sc-for list="{{ stops }}" as="s" hint-placeholder-count="9">
+        <div>
+          <sc-if value="{{ s.showNote }}" hint-placeholder-val="{{ false }}">
+            <div style="text-align: center; font-size: 13px; color: #a7a99e; font-style: italic; padding: 8px 0 18px 0;">Solve a couple more to unlock the next stretch</div>
+          </sc-if>
+          <div style="display: flex; align-items: stretch; gap: 18px;">
+            <!-- node column -->
+            <div style="position: relative; width: 48px; flex-shrink: 0;">
+              <div style="{{ s.lineStyle }}"></div>
+              <div style="{{ s.node }}">{{ s.n }}</div>
+            </div>
+            <!-- card -->
+            <div style="{{ s.card }}">
+              <div style="flex: 1;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                  <span style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 19px; color: {{ s.nameColor }};">{{ s.name }}</span>
+                  <span style="display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: {{ s.diffColor }};"><span style="width:8px;height:8px;border-radius:50%;background:{{ s.diffColor }};"></span>{{ s.diff }}</span>
+                </div>
+                <div style="font-size: 12px; color: #a7a99e; letter-spacing: .06em; margin-top: 6px;">seed {{ s.seed }}</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <sc-if value="{{ s.solved }}" hint-placeholder-val="{{ false }}">
+                  <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="{{ s.creatureWrap }}">
+                      <sc-if value="{{ s.isCrab }}" hint-placeholder-val="{{ true }}"><img src="assets/crab.png" alt="" style="width:118%;height:118%;object-fit:cover;object-position:50% 46%;"></sc-if>
+                      <sc-if value="{{ s.notCrab }}" hint-placeholder-val="{{ false }}"><span style="font-family:ui-monospace,monospace;font-size:8px;color:#F6F4EC;">{{ s.creature }}</span></sc-if>
+                    </div>
+                    <span style="font-size: 13px; font-weight: 700; color: #6FA8A0;">Solved</span>
+                  </div>
+                </sc-if>
+                <sc-if value="{{ s.open }}" hint-placeholder-val="{{ true }}">
+                  <button style="font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;color:#F6F4EC;background:#DE8368;border:none;border-radius:12px;padding:10px 22px;cursor:pointer;box-shadow:0 8px 16px -10px rgba(222,131,104,.9);" style-hover="background:#d0755b;">Play</button>
+                </sc-if>
+                <sc-if value="{{ s.locked }}" hint-placeholder-val="{{ false }}">
+                  <span style="font-size: 18px; color: #c3c0b4;">&#128274;</span>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  data = [
+    { n: 1, name: 'First Light Pool', diff: 'Calm', seed: 'DAWN-0101', state: 'solved', creature: 'crab' },
+    { n: 2, name: 'Barnacle Step', diff: 'Calm', seed: 'SALT-0207', state: 'solved', creature: 'snail' },
+    { n: 3, name: 'Kelp Curtain', diff: 'Calm', seed: 'KELP-2231', state: 'solved', creature: 'anemone' },
+    { n: 4, name: 'The Split Channel', diff: 'Tricky', seed: 'CORAL-4417', state: 'solved', creature: 'limpet' },
+    { n: 5, name: 'Hollow Rock', diff: 'Tricky', seed: 'DRIFT-0090', state: 'solved', creature: 'starfish' },
+    { n: 6, name: 'Twin Basins', diff: 'Tricky', seed: 'EBB-6620', state: 'open' },
+    { n: 7, name: 'The Long Reach', diff: 'Deep', seed: 'TIDE-8801', state: 'open' },
+    { n: 8, name: 'Undertow', diff: 'Deep', seed: 'MOON-9143', state: 'locked' },
+    { n: 9, name: 'The Deep Shelf', diff: 'Deep', seed: 'ABYSS-0000', state: 'locked' },
+  ];
+
+  renderVals() {
+    const diffColor = { Calm: '#6FA8A0', Tricky: '#274A54', Deep: '#C99A54' };
+    const solvedCount = this.data.filter(d => d.state === 'solved').length;
+    let firstLocked = true;
+    const stops = this.data.map((d, i) => {
+      const solved = d.state === 'solved', open = d.state === 'open', locked = d.state === 'locked';
+      const isCrab = solved && d.creature === 'crab';
+      const showNote = locked && firstLocked; if (locked) firstLocked = false;
+      const isFirst = i === 0, isLast = i === this.data.length - 1;
+      const nodeBg = solved ? 'linear-gradient(160deg,#84C4BA,#4E948C)' : open ? '#8FBDB2' : '#D9D6C7';
+      const lineDone = i < solvedCount;
+      return {
+        key: d.seed, n: d.n, name: d.name, diff: d.diff, seed: d.seed, creature: d.creature || '',
+        solved, open, locked, isCrab, notCrab: solved && !isCrab, showNote,
+        diffColor: diffColor[d.diff], nameColor: locked ? '#a7a99e' : '#22303A',
+        node: {
+          position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%,-50%)',
+          width: '44px', height: '50px', clipPath: 'polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)',
+          background: nodeBg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontFamily: "'Nunito',sans-serif", fontWeight: 800, fontSize: '17px',
+          color: solved ? '#F6F4EC' : open ? '#1F3A34' : '#a7a99e', zIndex: 2,
+          boxShadow: open ? '0 0 0 4px rgba(222,131,104,.35)' : 'none',
+        },
+        lineStyle: {
+          position: 'absolute', left: '50%', transform: 'translateX(-50%)', width: '3px',
+          top: isFirst ? '50%' : '0', bottom: isLast ? '50%' : '0',
+          background: lineDone ? '#6FA8A0' : '#D9D6C7', zIndex: 1,
+        },
+        creatureWrap: {
+          width: '38px', height: '38px', borderRadius: '50%', overflow: 'hidden',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: isCrab ? '#F1EEE5' : 'radial-gradient(circle at 40% 34%,#A6CFC8,#6FA8A0)',
+          border: '2px solid #F6F4EC', boxShadow: '0 4px 10px -6px rgba(34,48,58,.5)',
+        },
+        card: {
+          flex: 1, display: 'flex', alignItems: 'center', gap: '16px',
+          background: '#F6F4EC', border: '1px solid rgba(34,48,58,.08)', borderRadius: '18px',
+          padding: '18px 22px', opacity: locked ? .68 : 1,
+          boxShadow: locked ? 'none' : '0 12px 28px -22px rgba(34,48,58,.5)',
+        },
+      };
+    });
+    return { stops, solvedCount, total: this.data.length };
+  }
+}
+</script>
+</body>
+</html>

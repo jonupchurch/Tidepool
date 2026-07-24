@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E9E7DC; }
+  a { color: #274A54; text-decoration: none; }
+  a:hover { color: #DE8368; }
+  @keyframes tp-pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(222,131,104,.5); } 50% { box-shadow: 0 0 0 10px rgba(222,131,104,0); } }
+  @keyframes tp-hop { 0% { transform: translate(-50%,-20%) scale(.4); opacity: 0; } 60% { transform: translate(-50%,-58%) scale(1.08); opacity: 1; } 100% { transform: translate(-50%,-50%) scale(1); opacity: 1; } }
+  @keyframes tp-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</helmet>
+
+<div data-screen-label="Tutorial" style="min-height: 100vh; font-family: 'Nunito', sans-serif; color: #22303A; background: radial-gradient(130% 100% at 50% 0%, #EFEDE3 0%, #E9E7DC 55%, #E1DED0 100%); display: flex; flex-direction: column; user-select: none;">
+
+  <!-- top -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 22px 30px;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div style="width: 34px; height: 34px; border-radius: 50%; overflow: hidden; background: #F1EEE5;"><img src="assets/crab.png" alt="" style="width:118%;height:118%;object-fit:cover;object-position:50% 46%;"></div>
+      <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 20px; color: #274A54;">Learning the shore</div>
+    </div>
+    <button style="font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;color:#68716d;background:transparent;border:1.5px solid rgba(34,48,58,.16);border-radius:12px;padding:9px 18px;cursor:pointer;" style-hover="background:rgba(34,48,58,.05);">Skip tutorial</button>
+  </div>
+
+  <!-- step dots -->
+  <div style="display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0 10px 0;">
+    <sc-for list="{{ dots }}" as="d" hint-placeholder-count="4"><div style="{{ d.style }}"></div></sc-for>
+  </div>
+
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center; gap: 52px; padding: 10px 40px 40px 40px; flex-wrap: wrap;">
+
+    <!-- board -->
+    <div style="position: relative; width: {{ boardW }}; height: {{ boardH }};" onContextMenu="{{ preventCtx }}">
+      <sc-for list="{{ lineTotals }}" as="t" hint-placeholder-count="0"><div style="{{ t.style }}">{{ t.text }}</div></sc-for>
+      <sc-for list="{{ cells }}" as="cell" hint-placeholder-count="7">
+        <div style="{{ cell.box }}" onClick="{{ cell.onClick }}" onContextMenu="{{ cell.onCtx }}">
+          <span style="{{ cell.labelStyle }}">{{ cell.label }}</span>
+        </div>
+      </sc-for>
+      <sc-for list="{{ creatures }}" as="cr" hint-placeholder-count="0">
+        <div style="{{ cr.wrap }}"><img src="assets/crab.png" alt="" style="width:118%;height:118%;object-fit:cover;object-position:50% 46%;"></div>
+      </sc-for>
+    </div>
+
+    <!-- coaching card -->
+    <div style="width: 360px; background: #F6F4EC; border: 1px solid rgba(34,48,58,.08); border-radius: 22px; padding: 30px 32px; box-shadow: 0 20px 44px -26px rgba(34,48,58,.6);">
+      <div style="font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: #909389;">Step {{ stepNo }} of 4</div>
+      <div ref="{{ cardRef }}" style="animation: tp-fade .3s ease;">
+        <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 26px; color: #274A54; margin-top: 8px; line-height: 1.1;">{{ title }}</div>
+        <div style="font-size: 16px; color: #4d5a56; line-height: 1.55; margin-top: 12px;">{{ body }}</div>
+        <div style="{{ hintStyle }}">
+          <span style="font-size: 15px;">&#128161;</span>
+          <span style="font-size: 14px; color: #325149; font-weight: 700;">{{ hint }}</span>
+        </div>
+        <div style="{{ doneStyle }}">
+          <span style="font-size: 15px; color: #6FA8A0;">&#10003;</span>
+          <span style="font-size: 14px; color: #4E948C; font-weight: 800;">{{ doneText }}</span>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; margin-top: 24px;">
+        <button onClick="{{ back }}" style="{{ backStyle }}">Back</button>
+        <button onClick="{{ next }}" style="{{ nextStyle }}">{{ nextLabel }}</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:640}}">
+class Component extends DCLogic {
+  // tiny board, 7 cells: a center + ring layout, guaranteed solvable
+  // layout (col,row) offset hex; solution W=water R=rock
+  state = { step: 0, marks: {}, done: true };
+
+  constructor(props) {
+    super(props);
+    this.cardRef = React.createRef();
+    this.size = 40; this.W = Math.sqrt(3) * this.size; this.H = 2 * this.size; this.ystep = 1.5 * this.size; this.pad = 60;
+    // 3-column arrangement, small
+    // positions: use axial-ish manual coords
+    this.defs = {
+      c0: { x: 0, y: 0, sol: 'R', given: true },   // top-left clue
+      c1: { x: 1, y: 0, sol: 'W' },
+      m0: { x: 0, y: 1, sol: 'W' },                 // middle row (shifted)
+      m1: { x: 1, y: 1, sol: 'R', given: true, frame: 'conn' }, // connectivity clue
+      m2: { x: 2, y: 1, sol: 'W' },
+      b0: { x: 0, y: 2, sol: 'R', given: true },
+      b1: { x: 1, y: 2, sol: 'W' },
+    };
+    this.keys = Object.keys(this.defs);
+    // neighbor adjacency (hand-authored for this tiny board)
+    this.adj = {
+      c0: ['c1', 'm0', 'm1'], c1: ['c0', 'm1', 'm2'],
+      m0: ['c0', 'm1', 'b0', 'b1'], m1: ['c0', 'c1', 'm0', 'm2', 'b0', 'b1'], m2: ['c1', 'm1', 'b1'],
+      b0: ['m0', 'm1', 'b1'], b1: ['m0', 'm1', 'm2', 'b0'],
+    };
+    this.keys.forEach(k => {
+      const d = this.defs[k];
+      d.px = d.x * this.W + (d.y % 2 ? 0 : this.W / 2) + this.pad;
+      d.py = d.y * this.ystep + this.pad;
+      d.num = this.adj[k].filter(n => this.defs[n].sol === 'W').length;
+    });
+    this.boardW = 3.2 * this.W + 2 * this.pad;
+    this.boardH = 2 * this.ystep + this.H + 2 * this.pad;
+
+    this.steps = [
+      { title: 'Rocks count the water', body: 'A rock cell with a number tells you how many of its neighbors are water. See the corner rock marked 2 — two of its six neighbors are pools.',
+        hint: 'Hover the numbered rock to feel the board. Then press Next.', target: null, need: () => true, done: 'Good — now let’s mark some water.' },
+      { title: 'Mark water & rock', body: 'Left-click a cell to fill it with water. Right-click to mark it as exposed rock. Both are free and reversible.',
+        hint: 'Left-click the two glowing cells to fill them with water.', targets: ['c1', 'm2'], need: (m) => m.c1 === 'water' && m.m2 === 'water', done: 'Two pools filled. Nice and calm.' },
+      { title: 'Pools that hold hands', body: 'A clue in { } braces means all its water neighbors form one connected pool. Here { } tells you the water around it is a single body — so this middle cell must be water too.',
+        hint: 'Left-click the glowing cell to connect the pool.', targets: ['m0'], need: (m) => m.m0 === 'water', done: 'One connected pool — that’s the { } clue.' },
+      { title: 'Edge totals finish it', body: 'Numbers along the border count all the water in that row. The last row needs one more water. Fill it and the shore comes alive.',
+        hint: 'Left-click the glowing cell to complete the shore.', targets: ['b1'], need: (m) => m.b1 === 'water', done: 'The tide’s in. You’ve got it.' },
+    ];
+  }
+
+  markFor(step) {
+    // pre-fill everything solved up to (but not requiring) the current step's target
+    const m = {};
+    if (step >= 2) { m.c1 = 'water'; m.m2 = 'water'; }
+    if (step >= 3) { m.m0 = 'water'; }
+    return m;
+  }
+
+  setStep(step) {
+    const s = Math.max(0, Math.min(3, step));
+    this.setState({ step: s, marks: this.markFor(s), done: this.steps[s].need(this.markFor(s)) });
+    if (this.cardRef.current) { this.cardRef.current.style.animation = 'none'; requestAnimationFrame(() => { if (this.cardRef.current) this.cardRef.current.style.animation = 'tp-fade .3s ease'; }); }
+  }
+
+  click(key, want) {
+    const step = this.steps[this.state.step];
+    const targets = step.targets || [];
+    if (!targets.includes(key)) return;               // guided: only allow lesson cells
+    const cur = this.state.marks[key] || null;
+    const val = cur === want ? null : want;
+    const m = { ...this.state.marks }; if (val) m[key] = val; else delete m[key];
+    this.setState({ marks: m, done: step.need(m) });
+  }
+
+  isTarget(key) { const step = this.steps[this.state.step]; return (step.targets || []).includes(key) && this.state.marks[key] !== 'water'; }
+
+  cellBox(k) {
+    const d = this.defs[k]; const mark = this.state.marks[k];
+    const rock = 'linear-gradient(160deg,#B4AE9E,#8E877A)';
+    const water = 'linear-gradient(160deg,#A6CFC8,#6FA8A0)';
+    let bg, shadow = 'inset 0 -4px 8px rgba(34,48,58,.16), inset 0 3px 6px rgba(255,255,255,.4)';
+    if (d.given) { if (d.frame === 'conn') { bg = '#274A54'; shadow = 'inset 0 -4px 8px rgba(0,0,0,.28)'; } else bg = rock; }
+    else if (mark === 'water') { bg = water; shadow = 'inset 0 -4px 8px rgba(39,74,84,.35)'; }
+    else if (mark === 'rock') bg = rock;
+    else bg = '#D9D6C7';
+    const target = this.isTarget(k);
+    return {
+      position: 'absolute', left: d.px + 'px', top: d.py + 'px', width: this.W + 'px', height: this.H + 'px',
+      clipPath: 'polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)',
+      background: bg, boxShadow: shadow,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      cursor: target ? 'pointer' : (d.given ? 'default' : 'default'),
+      animation: target ? 'tp-pulse 1.6s ease-in-out infinite' : 'none',
+      transition: 'background .3s ease', zIndex: target ? 4 : 1,
+    };
+  }
+
+  label(k) { const d = this.defs[k]; if (!d.given) return ''; if (d.frame === 'conn') return `{${d.num}}`; return String(d.num); }
+
+  renderVals() {
+    const step = this.steps[this.state.step];
+    const done = this.state.done;
+    const cells = this.keys.map(k => ({
+      key: k, box: this.cellBox(k), label: this.label(k),
+      labelStyle: { position: 'relative', zIndex: 2, fontFamily: "'Nunito',sans-serif", fontWeight: 900, fontSize: this.defs[k].frame ? '22px' : '26px', color: (this.defs[k].given && this.defs[k].frame === 'conn') ? '#F6F4EC' : '#22303A' },
+      onClick: () => this.click(k, 'water'),
+      onCtx: (e) => { e.preventDefault(); this.click(k, 'rock'); },
+    }));
+    const lineTotals = [];
+    if (this.state.step === 3) lineTotals.push({ key: 'lt', text: '2', style: { position: 'absolute', left: (this.defs.b0.px - this.W * 0.55) + 'px', top: (this.defs.b0.py + this.H / 2) + 'px', transform: 'translate(-50%,-50%)', fontFamily: "'Bricolage Grotesque',sans-serif", fontWeight: 800, fontSize: '22px', color: '#8E877A' } });
+    // creature appears on final completion
+    const creatures = (this.state.step === 3 && done) ? [{ key: 'cr', wrap: { position: 'absolute', left: (this.defs.m1.px + this.W / 2) + 'px', top: (this.defs.m1.py + this.H / 2) + 'px', width: '56px', height: '56px', borderRadius: '50%', overflow: 'hidden', background: '#F1EEE5', border: '2px solid #F6F4EC', boxShadow: '0 8px 16px -8px rgba(34,48,58,.6)', zIndex: 8, animation: 'tp-hop .55s cubic-bezier(.2,.8,.2,1)' } }] : [];
+
+    const dots = this.steps.map((_, i) => ({ key: i, style: { width: i === this.state.step ? '26px' : '9px', height: '9px', borderRadius: '6px', background: i === this.state.step ? '#DE8368' : (i < this.state.step ? '#6FA8A0' : '#D9D6C7'), transition: 'all .3s ease' } }));
+
+    const isLast = this.state.step === 3;
+    const canNext = done;
+    return {
+      cells, lineTotals, creatures, dots,
+      boardW: this.boardW + 'px', boardH: this.boardH + 'px',
+      cardRef: this.cardRef,
+      stepNo: this.state.step + 1,
+      title: step.title, body: step.body, hint: step.hint,
+      hintStyle: { display: done ? 'none' : 'flex', alignItems: 'flex-start', gap: '8px', background: '#E7EFEA', borderRadius: '12px', padding: '12px 14px', marginTop: '16px' },
+      doneStyle: { display: done ? 'flex' : 'none', alignItems: 'center', gap: '8px', background: '#E3F0EA', borderRadius: '12px', padding: '12px 14px', marginTop: '16px' },
+      doneText: step.done,
+      back: () => this.setStep(this.state.step - 1),
+      next: () => { if (!canNext) return; if (isLast) return; this.setStep(this.state.step + 1); },
+      nextLabel: isLast ? 'Play for real' : 'Next',
+      backStyle: { display: this.state.step === 0 ? 'none' : 'block', fontFamily: "'Nunito',sans-serif", fontWeight: 700, fontSize: '15px', color: '#68716d', background: 'transparent', border: '1.5px solid rgba(34,48,58,.18)', borderRadius: '12px', padding: '12px 20px', cursor: 'pointer' },
+      nextStyle: { flex: 1, fontFamily: "'Nunito',sans-serif", fontWeight: 800, fontSize: '15px', color: '#F6F4EC', background: canNext ? '#DE8368' : '#d9c8bd', border: 'none', borderRadius: '12px', padding: '12px', cursor: canNext ? 'pointer' : 'default', transition: 'background .2s ease' },
+      preventCtx: (e) => e.preventDefault(),
+    };
+  }
+}
+</script>
+</body>
+</html>

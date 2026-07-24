@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E9E7DC; }
+  a { color: #274A54; text-decoration: none; }
+  a:hover { color: #DE8368; }
+  @keyframes tp-shimmer { 0% { background-position: -120% 0; } 100% { background-position: 220% 0; } }
+  @keyframes tp-doubt { 0% { opacity: .55; } 100% { opacity: 0; } }
+  @keyframes tp-hop { 0% { transform: translate(-50%, -20%) scale(.4); opacity: 0; } 60% { transform: translate(-50%, -58%) scale(1.08); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+  @keyframes tp-slideup { 0% { transform: translate(-50%, 120%); opacity: 0; } 100% { transform: translate(-50%, 0); opacity: 1; } }
+  @keyframes tp-toastin { 0% { transform: translate(-50%, 8px); opacity: 0; } 100% { transform: translate(-50%, 0); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</helmet>
+
+<div data-screen-label="Gameplay" style="position: relative; min-height: 100vh; font-family: 'Nunito', sans-serif; color: #22303A; background: radial-gradient(130% 100% at 50% 0%, #EFEDE3 0%, #E9E7DC 55%, #E1DED0 100%); display: flex; flex-direction: column; user-select: none;">
+
+  <!-- TOP BAR -->
+  <div style="display: flex; align-items: center; justify-content: space-between; padding: 18px 26px; gap: 20px;">
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <button title="Menu" style="width: 40px; height: 40px; border-radius: 12px; border: 1.5px solid rgba(34,48,58,.14); background: #F6F4EC; cursor: pointer; font-size: 16px; color: #4d5a56;">&#9776;</button>
+      <div>
+        <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 700; font-size: 18px; color: #274A54; line-height: 1;">Curated · Shore 7</div>
+        <div style="font-size: 12px; color: #909389; letter-spacing: .06em; margin-top: 3px;">seed CORAL-4417</div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <div style="text-align: right;">
+        <div style="font-size: 12px; color: #909389; font-weight: 700; letter-spacing: .04em; text-transform: uppercase;">Pools found</div>
+        <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 18px; color: #274A54; line-height: 1.1;">{{ poolsFound }} / {{ poolsTotal }}</div>
+      </div>
+      <div style="width: 130px; height: 10px; background: #E1DED0; border-radius: 6px; overflow: hidden;"><div style="height: 100%; background: linear-gradient(90deg,#8FBDB2,#6FA8A0); border-radius: 6px; transition: width .4s ease; width: {{ waterlinePct }};"></div></div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 8px;">
+      <button onClick="{{ undo }}" title="Undo" style="{{ undoStyle }}">&#8630;</button>
+      <button onClick="{{ redo }}" title="Redo" style="{{ redoStyle }}">&#8631;</button>
+      <div style="width: 1px; height: 26px; background: rgba(34,48,58,.14); margin: 0 4px;"></div>
+      <button onClick="{{ toggleTeach }}" title="Teaching highlights" style="{{ teachStyle }}">Hints</button>
+      <button onClick="{{ toggleSoft }}" title="Soft feedback" style="{{ softStyle }}">Nudge</button>
+    </div>
+  </div>
+
+  <!-- BOARD -->
+  <div style="flex: 1; display: flex; align-items: center; justify-content: center; padding: 10px 20px 40px 20px; position: relative;">
+    <div style="position: relative; width: {{ boardW }}; height: {{ boardH }};" onContextMenu="{{ preventCtx }}">
+
+      <sc-for list="{{ lineTotals }}" as="t" hint-placeholder-count="4">
+        <div style="{{ t.style }}">{{ t.text }}</div>
+      </sc-for>
+
+      <sc-for list="{{ cells }}" as="cell" hint-placeholder-count="20">
+        <div style="{{ cell.box }}" onClick="{{ cell.onClick }}" onContextMenu="{{ cell.onCtx }}" onMouseEnter="{{ cell.onEnter }}" onMouseLeave="{{ cell.onLeave }}">
+          <sc-if value="{{ cell.completed }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;background:linear-gradient(115deg,transparent 30%,rgba(255,255,255,.45) 50%,transparent 70%);background-size:220% 100%;animation:tp-shimmer 3.4s linear infinite;pointer-events:none;"></div></sc-if>
+          <sc-if value="{{ cell.doubt }}" hint-placeholder-val="{{ false }}"><div style="position:absolute;inset:0;background:rgba(222,131,104,.55);animation:tp-doubt .7s ease-out forwards;pointer-events:none;"></div></sc-if>
+          <span style="{{ cell.labelStyle }}">{{ cell.label }}</span>
+        </div>
+      </sc-for>
+
+      <sc-for list="{{ creatures }}" as="cr" hint-placeholder-count="0">
+        <div style="{{ cr.wrap }}">
+          <sc-if value="{{ cr.isCrab }}" hint-placeholder-val="{{ true }}"><img src="assets/crab.png" alt="crab" style="width:118%;height:118%;object-fit:cover;object-position:50% 46%;"></sc-if>
+          <sc-if value="{{ cr.notCrab }}" hint-placeholder-val="{{ false }}"><span style="font-family:ui-monospace,monospace;font-size:9px;color:#F6F4EC;text-align:center;line-height:1.1;">{{ cr.type }}</span></sc-if>
+        </div>
+      </sc-for>
+
+    </div>
+
+    <!-- pool-complete toast -->
+    <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+      <div style="position: absolute; top: 14px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; background: #274A54; color: #F6F4EC; padding: 10px 18px 10px 12px; border-radius: 40px; box-shadow: 0 14px 28px -14px rgba(34,48,58,.7); animation: tp-toastin .35s ease-out;">
+        <div style="width: 34px; height: 34px; border-radius: 50%; overflow: hidden; background: #F1EEE5; flex-shrink: 0;"><img src="assets/crab.png" alt="" style="width:118%;height:118%;object-fit:cover;object-position:50% 46%;"></div>
+        <span style="font-weight: 700; font-size: 15px;">{{ toastText }}</span>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- controls hint -->
+  <div style="text-align: center; padding-bottom: 20px; font-size: 13px; color: #909389;">
+    <b style="color:#4d5a56;">Left-click</b> water &nbsp;·&nbsp; <b style="color:#4d5a56;">Right-click</b> rock &nbsp;·&nbsp; hover a cell to see what it informs
+  </div>
+
+  <!-- PREVIEW STATE SWITCHER (reviewer aid) -->
+  <div style="position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; background: rgba(246,244,236,.92); backdrop-filter: blur(6px); border: 1px solid rgba(34,48,58,.12); border-radius: 40px; padding: 6px 8px; box-shadow: 0 10px 24px -14px rgba(34,48,58,.5); z-index: 40;">
+    <span style="font-size: 11px; color: #909389; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; padding: 0 8px;">Preview</span>
+    <button onClick="{{ demoDefault }}" style="{{ dBtn }}">Default</button>
+    <button onClick="{{ demoMid }}" style="{{ dBtn }}">Mid-solve</button>
+    <button onClick="{{ demoMoment }}" style="{{ dBtn }}">Pool moment</button>
+    <button onClick="{{ demoComplete }}" style="{{ dBtn }}">Complete</button>
+  </div>
+
+  <!-- BOARD COMPLETE PANEL -->
+  <sc-if value="{{ complete }}" hint-placeholder-val="{{ false }}">
+    <div style="position: fixed; inset: 0; background: rgba(34,48,58,.28); display: flex; align-items: flex-end; justify-content: center; z-index: 50; padding-bottom: 0;">
+      <div style="width: 100%; max-width: 520px; background: #F6F4EC; border-radius: 24px 24px 0 0; padding: 32px 36px 40px 36px; text-align: center; box-shadow: 0 -20px 50px -20px rgba(34,48,58,.5); animation: tp-slideup .5s cubic-bezier(.2,.8,.2,1);">
+        <div style="width: 68px; height: 68px; border-radius: 50%; overflow: hidden; margin: 0 auto 16px auto; background: #F1EEE5; box-shadow: 0 10px 20px -10px rgba(34,48,58,.4);"><img src="assets/crab.png" alt="crab" style="width:118%;height:118%;object-fit:cover;object-position:50% 46%;"></div>
+        <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 32px; color: #274A54;">The tide's in.</div>
+        <div style="font-size: 16px; color: #4d5a56; margin-top: 8px;">Every pool solved — the whole shore's alive.</div>
+        <div style="display: flex; gap: 12px; margin-top: 26px;">
+          <button onClick="{{ demoDefault }}" style="flex: 1; font-family: 'Nunito',sans-serif; font-weight: 800; font-size: 16px; color: #F6F4EC; background: #DE8368; border: none; border-radius: 14px; padding: 14px; cursor: pointer;" style-hover="background:#d0755b;">Next board</button>
+          <button style="font-family: 'Nunito',sans-serif; font-weight: 700; font-size: 16px; color: #1F3A34; background: #8FBDB2; border: none; border-radius: 14px; padding: 14px 22px; cursor: pointer;">Journal</button>
+          <button style="font-family: 'Nunito',sans-serif; font-weight: 700; font-size: 16px; color: #274A54; background: transparent; border: 1.5px solid rgba(34,48,58,.2); border-radius: 14px; padding: 13px 22px; cursor: pointer;">Home</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:820}}">
+class Component extends DCLogic {
+  state = { marks: {}, hist: [], future: [], revealed: [], complete: false, hover: null, toast: null, doubt: null, teach: true, soft: true };
+
+  constructor(props) {
+    super(props);
+    this.buildGrid();
+    this._seen = new Set();
+  }
+
+  buildGrid() {
+    this.size = 38; this.W = Math.sqrt(3) * this.size; this.H = 2 * this.size; this.ystep = 1.5 * this.size; this.pad = 74;
+    const SOL = [
+      ['R','W','W','R','W'],
+      ['R','W','R','R','W'],
+      ['W','W','R','R','R'],
+      ['R','R','R','W','W'],
+    ];
+    const cols = 5, rows = 4;
+    const GIVEN = new Set(['0,0','3,0','2,1','3,1','4,2','2,3','0,3','1,1']);
+    const CONN = new Set(['2,1','3,1']);
+    this.cells = {}; this.order = [];
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const key = `${c},${r}`;
+      const x = c * this.W + (r % 2 ? this.W / 2 : 0) + this.pad;
+      const y = r * this.ystep + this.pad;
+      this.cells[key] = { c, r, sol: SOL[r][c], given: GIVEN.has(key), conn: CONN.has(key), x, y };
+      this.order.push(key);
+    }
+    const dirsE = [[1,0],[-1,0],[0,-1],[-1,-1],[0,1],[-1,1]];
+    const dirsO = [[1,0],[-1,0],[1,-1],[0,-1],[1,1],[0,1]];
+    this.neighbors = {};
+    this.order.forEach(key => {
+      const { c, r } = this.cells[key];
+      const dirs = r % 2 ? dirsO : dirsE; const ns = [];
+      dirs.forEach(([dc, dr]) => { const k = `${c + dc},${r + dr}`; if (this.cells[k]) ns.push(k); });
+      this.neighbors[key] = ns;
+    });
+    // pools = connected water components
+    const seen = new Set(); this.pools = []; let id = 0;
+    this.order.forEach(key => {
+      if (this.cells[key].sol !== 'W' || seen.has(key)) return;
+      const stack = [key], comp = []; seen.add(key);
+      while (stack.length) { const k = stack.pop(); comp.push(k); this.neighbors[k].forEach(n => { if (this.cells[n].sol === 'W' && !seen.has(n)) { seen.add(n); stack.push(n); } }); }
+      this.pools.push({ id: id++, keys: comp });
+    });
+    this.poolOf = {}; this.pools.forEach(p => p.keys.forEach(k => this.poolOf[k] = p.id));
+    const types = ['crab','starfish','anemone','snail','limpet','urchin'];
+    [...this.pools].sort((a, b) => b.keys.length - a.keys.length).forEach((p, i) => { p.type = types[i] || 'snail'; });
+    this.pools.forEach(p => { let sx = 0, sy = 0; p.keys.forEach(k => { sx += this.cells[k].x + this.W / 2; sy += this.cells[k].y + this.H / 2; }); p.cx = sx / p.keys.length; p.cy = sy / p.keys.length; });
+    this.order.forEach(key => {
+      const cell = this.cells[key];
+      const wns = this.neighbors[key].filter(n => this.cells[n].sol === 'W');
+      cell.num = wns.length;
+      cell.frame = cell.conn ? (new Set(wns.map(n => this.poolOf[n])).size > 1 ? 'split' : 'conn') : 'plain';
+    });
+    this.lineTotals = [];
+    for (let r = 0; r < rows; r++) { let cnt = 0; for (let c = 0; c < cols; c++) if (SOL[r][c] === 'W') cnt++; this.lineTotals.push({ key: `row${r}`, x: (r % 2 ? this.W / 2 : 0) + this.pad - this.W * 0.6, y: r * this.ystep + this.pad + this.H / 2, text: String(cnt) }); }
+    this.boardW = 5.5 * this.W + 2 * this.pad;
+    this.boardH = 3 * this.ystep + this.H + 2 * this.pad;
+  }
+
+  compute(marks) {
+    const completed = this.pools.filter(p => p.keys.every(k => this.cells[k].given || marks[k] === 'water')).map(p => p.id);
+    const boardComplete = this.order.every(k => { const c = this.cells[k]; if (c.given) return true; return c.sol === 'W' ? marks[k] === 'water' : marks[k] === 'rock'; });
+    return { completed, boardComplete };
+  }
+
+  poolType(id) { return this.pools.find(p => p.id === id).type; }
+  toastFor(type) { return `A ${type} joins your journal`; }
+
+  commit(newMarks) {
+    const { completed, boardComplete } = this.compute(newMarks);
+    const newly = completed.filter(id => !this._seen.has(id));
+    this._seen = new Set(completed);
+    let toast = this.state.toast;
+    if (newly.length) { toast = { type: this.poolType(newly[0]) }; clearTimeout(this._tt); this._tt = setTimeout(() => this.setState({ toast: null }), 2800); }
+    this.setState(s => ({ hist: [...s.hist, s.marks], future: [], marks: newMarks, revealed: completed, complete: boardComplete, toast }));
+  }
+
+  mark(key, want) {
+    const cell = this.cells[key]; if (cell.given) return;
+    const cur = this.state.marks[key] || null;
+    const val = cur === want ? null : want;
+    const m = { ...this.state.marks }; if (val) m[key] = val; else delete m[key];
+    if (this.state.soft && val) { const correct = cell.sol === 'W' ? 'water' : 'rock'; if (val !== correct) { this.setState({ doubt: key }); clearTimeout(this._dt); this._dt = setTimeout(() => this.setState({ doubt: null }), 700); } }
+    this.commit(m);
+  }
+
+  undo() { this.setState(s => { if (!s.hist.length) return {}; const prev = s.hist[s.hist.length - 1]; const { completed, boardComplete } = this.compute(prev); this._seen = new Set(completed); return { marks: prev, hist: s.hist.slice(0, -1), future: [s.marks, ...s.future], revealed: completed, complete: boardComplete, toast: null }; }); }
+  redo() { this.setState(s => { if (!s.future.length) return {}; const next = s.future[0]; const { completed, boardComplete } = this.compute(next); this._seen = new Set(completed); return { marks: next, hist: [...s.hist, s.marks], future: s.future.slice(1), revealed: completed, complete: boardComplete }; }); }
+
+  solutionMarks() { const m = {}; this.order.forEach(k => { const c = this.cells[k]; if (!c.given) m[k] = c.sol === 'W' ? 'water' : 'rock'; }); return m; }
+
+  setDemo(kind) {
+    clearTimeout(this._tt); clearTimeout(this._dt);
+    if (kind === 'default') { this._seen = new Set(); this.setState({ marks: {}, hist: [], future: [], revealed: [], complete: false, hover: null, toast: null, doubt: null }); return; }
+    if (kind === 'mid') { const m = { '0,1':'rock','3,2':'rock','1,0':'water','4,0':'water','1,3':'rock' }; this._seen = new Set(); const { completed } = this.compute(m); this.setState({ marks: m, hist: [], future: [], revealed: completed, complete: false, hover: '2,1', doubt: null, toast: null, teach: true }); return; }
+    if (kind === 'moment') { const crab = this.pools.find(p => p.type === 'crab'); const m = {}; crab.keys.forEach(k => { if (!this.cells[k].given) m[k] = 'water'; }); ['0,1','3,2'].forEach(k => m[k] = 'rock'); this._seen = new Set([crab.id]); const { completed } = this.compute(m); this.setState({ marks: m, hist: [], future: [], revealed: completed, complete: false, hover: null, doubt: null, toast: { type: 'crab' } }); return; }
+    if (kind === 'complete') { const m = this.solutionMarks(); this._seen = new Set(this.pools.map(p => p.id)); const { completed } = this.compute(m); this.setState({ marks: m, hist: [], future: [], revealed: completed, complete: true, hover: null, doubt: null, toast: null }); return; }
+  }
+
+  cellBox(cell, key, marks, revealedSet) {
+    const inPool = revealedSet.has(this.poolOf[key]);
+    const rock = 'linear-gradient(160deg,#B4AE9E,#8E877A)';
+    const water = 'linear-gradient(160deg,#A6CFC8,#6FA8A0)';
+    const waterDone = 'linear-gradient(160deg,#84C4BA,#4E948C)';
+    let bg, shadow = 'inset 0 -4px 8px rgba(34,48,58,.16), inset 0 3px 6px rgba(255,255,255,.4)';
+    const mark = marks[key];
+    if (cell.given) {
+      if (cell.sol === 'W') { bg = water; shadow = 'inset 0 -4px 8px rgba(39,74,84,.35)'; }
+      else if (cell.frame !== 'plain') { bg = '#274A54'; shadow = 'inset 0 -4px 8px rgba(0,0,0,.28)'; }
+      else bg = rock;
+    } else if (mark === 'water') { bg = inPool ? waterDone : water; shadow = 'inset 0 -4px 8px rgba(39,74,84,.35)'; }
+    else if (mark === 'rock') bg = rock;
+    else bg = '#D9D6C7';
+
+    const hovered = this.state.hover === key;
+    const highlighted = this.state.teach && this.state.hover && this.neighbors[this.state.hover] && this.neighbors[this.state.hover].includes(key);
+    if (highlighted) shadow += ', inset 0 0 0 3px rgba(39,74,84,.5)';
+
+    return {
+      position: 'absolute', left: cell.x + 'px', top: cell.y + 'px', width: this.W + 'px', height: this.H + 'px',
+      clipPath: 'polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)',
+      background: bg, boxShadow: shadow,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      cursor: cell.given ? 'default' : 'pointer',
+      transform: hovered ? 'translateY(-5px)' : 'none',
+      filter: hovered ? 'drop-shadow(0 10px 12px rgba(39,74,84,.35))' : 'none',
+      transition: 'transform .18s ease, filter .18s ease, background .3s ease',
+      zIndex: hovered ? 5 : 1,
+    };
+  }
+
+  cellLabel(cell) {
+    if (!cell.given) return '';
+    if (cell.sol === 'W') return String(cell.num);
+    if (cell.frame === 'conn') return `{${cell.num}}`;
+    if (cell.frame === 'split') return `-${cell.num}-`;
+    return String(cell.num);
+  }
+
+  labelStyle(cell) {
+    let color = '#22303A';
+    if (cell.given && cell.sol === 'W') color = '#F6F4EC';
+    else if (cell.given && cell.frame !== 'plain') color = '#F6F4EC';
+    return { position: 'relative', zIndex: 2, fontFamily: "'Nunito',sans-serif", fontWeight: 900, fontSize: cell.frame !== 'plain' ? '22px' : '27px', color, letterSpacing: '.01em' };
+  }
+
+  renderVals() {
+    const { marks, revealed, hover, teach, soft, hist, future } = this.state;
+    const revealedSet = new Set(revealed);
+    const cells = this.order.map(key => {
+      const cell = this.cells[key];
+      return {
+        key,
+        box: this.cellBox(cell, key, marks, revealedSet),
+        label: this.cellLabel(cell),
+        labelStyle: this.labelStyle(cell),
+        completed: (marks[key] === 'water' || (cell.given && cell.sol === 'W')) && revealedSet.has(this.poolOf[key]),
+        doubt: this.state.doubt === key,
+        onClick: () => this.mark(key, 'water'),
+        onCtx: (e) => { e.preventDefault(); this.mark(key, 'rock'); },
+        onEnter: () => this.setState({ hover: key }),
+        onLeave: () => this.setState({ hover: null }),
+      };
+    });
+    const lineTotals = this.lineTotals.map(t => ({ key: t.key, text: t.text, style: { position: 'absolute', left: t.x + 'px', top: t.y + 'px', transform: 'translate(-50%,-50%)', fontFamily: "'Bricolage Grotesque',sans-serif", fontWeight: 800, fontSize: '22px', color: '#8E877A' } }));
+    const creatures = this.pools.filter(p => revealedSet.has(p.id)).map(p => {
+      const isCrab = p.type === 'crab';
+      const sz = isCrab ? 58 : 46;
+      return { key: 'cr' + p.id, isCrab, notCrab: !isCrab, type: p.type,
+        wrap: { position: 'absolute', left: p.cx + 'px', top: p.cy + 'px', width: sz + 'px', height: sz + 'px', borderRadius: '50%', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: isCrab ? '#F1EEE5' : 'radial-gradient(circle at 38% 34%, #A6CFC8, #6FA8A0)', border: '2px solid #F6F4EC', boxShadow: '0 8px 16px -8px rgba(34,48,58,.6)', zIndex: 8, animation: 'tp-hop .55s cubic-bezier(.2,.8,.2,1)' } };
+    });
+
+    const seg = (on) => ({ padding: '7px 14px', borderRadius: '30px', border: 'none', cursor: 'pointer', fontFamily: "'Nunito',sans-serif", fontWeight: 700, fontSize: '13px', background: on ? '#274A54' : 'transparent', color: on ? '#F6F4EC' : '#68716d', transition: 'all .2s ease' });
+    const iconBtn = (enabled) => ({ width: '40px', height: '40px', borderRadius: '12px', border: '1.5px solid rgba(34,48,58,.14)', background: '#F6F4EC', cursor: enabled ? 'pointer' : 'default', fontSize: '18px', color: enabled ? '#4d5a56' : '#c3c0b4', opacity: enabled ? 1 : .55 });
+
+    return {
+      cells, lineTotals, creatures,
+      boardW: this.boardW + 'px', boardH: this.boardH + 'px',
+      poolsFound: revealed.length, poolsTotal: this.pools.length,
+      waterlinePct: Math.round((revealed.length / this.pools.length) * 100) + '%',
+      toast: !!this.state.toast, toastText: this.state.toast ? this.toastFor(this.state.toast.type) : '',
+      complete: this.state.complete,
+      undo: () => this.undo(), redo: () => this.redo(),
+      undoStyle: iconBtn(hist.length > 0), redoStyle: iconBtn(future.length > 0),
+      toggleTeach: () => this.setState({ teach: !teach }), toggleSoft: () => this.setState({ soft: !soft }),
+      teachStyle: seg(teach), softStyle: seg(soft),
+      preventCtx: (e) => e.preventDefault(),
+      demoDefault: () => this.setDemo('default'), demoMid: () => this.setDemo('mid'), demoMoment: () => this.setDemo('moment'), demoComplete: () => this.setDemo('complete'),
+      dBtn: { padding: '7px 14px', borderRadius: '30px', border: 'none', cursor: 'pointer', fontFamily: "'Nunito',sans-serif", fontWeight: 700, fontSize: '13px', background: 'transparent', color: '#4d5a56' },
+    };
+  }
+}
+</script>
+</body>
+</html>

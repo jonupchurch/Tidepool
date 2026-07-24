@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E9E7DC; }
+  a { color: #274A54; text-decoration: none; }
+  a:hover { color: #DE8368; }
+  @keyframes tp-panelin { 0% { transform: translateY(10px) scale(.97); opacity: 0; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+</style>
+</helmet>
+
+<div data-screen-label="Pause" style="position: relative; min-height: 100vh; overflow: hidden; font-family: 'Nunito', sans-serif; color: #22303A; background: radial-gradient(130% 100% at 50% 0%, #EFEDE3 0%, #E9E7DC 55%, #E1DED0 100%);">
+
+  <!-- frozen board behind -->
+  <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; filter: blur(2px); opacity: .8;">
+    <div style="display: flex; gap: 4px;">
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:linear-gradient(160deg,#B4AE9E,#8E877A);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:#22303A;">1</div>
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#D9D6C7;"></div>
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#6FA8A0;"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-top:38px;">
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#6FA8A0;"></div>
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#274A54;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;color:#F6F4EC;">&#123;2&#125;</div>
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#D9D6C7;"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#D9D6C7;"></div>
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:linear-gradient(160deg,#B4AE9E,#8E877A);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:#22303A;">3</div>
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#6FA8A0;"></div>
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#D9D6C7;"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-top:38px;">
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#6FA8A0;"></div>
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#D9D6C7;"></div>
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:linear-gradient(160deg,#B4AE9E,#8E877A);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:24px;color:#22303A;">2</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;">
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#D9D6C7;"></div>
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#6FA8A0;"></div>
+        <div style="width:64px;height:72px;clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#D9D6C7;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- scrim -->
+  <div style="position: absolute; inset: 0; background: rgba(34,48,58,.34); backdrop-filter: blur(3px);"></div>
+
+  <!-- panel -->
+  <div style="position: relative; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px;">
+    <div style="width: 340px; background: #F6F4EC; border-radius: 24px; padding: 30px 28px; text-align: center; box-shadow: 0 30px 60px -24px rgba(34,48,58,.7); animation: tp-panelin .35s cubic-bezier(.2,.8,.2,1);">
+      <div style="width: 54px; height: 54px; border-radius: 50%; overflow: hidden; margin: 0 auto 14px auto; background: #F1EEE5; box-shadow: 0 6px 14px -8px rgba(34,48,58,.5);"><img src="assets/crab.png" alt="crab" style="width:118%;height:118%;object-fit:cover;object-position:50% 46%;"></div>
+      <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 28px; color: #274A54; line-height: 1;">Paused</div>
+      <div style="font-size: 14px; color: #909389; margin-top: 8px;">Your board is saved. Step away anytime.</div>
+
+      <div style="display: flex; flex-direction: column; gap: 10px; margin-top: 24px;">
+        <button style="font-family:'Nunito',sans-serif;font-weight:800;font-size:16px;color:#F6F4EC;background:#DE8368;border:none;border-radius:14px;padding:14px;cursor:pointer;box-shadow:0 10px 20px -12px rgba(222,131,104,.9);" style-hover="background:#d0755b;">Resume</button>
+        <button style="font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;color:#1F3A34;background:#8FBDB2;border:none;border-radius:14px;padding:13px;cursor:pointer;" style-hover="background:#7fb2a4;">New board</button>
+        <button style="font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;color:#274A54;background:transparent;border:1.5px solid rgba(34,48,58,.16);border-radius:14px;padding:12px;cursor:pointer;" style-hover="background:rgba(34,48,58,.05);">Restart this board</button>
+        <div style="display: flex; gap: 10px;">
+          <button style="flex:1;font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;color:#274A54;background:transparent;border:1.5px solid rgba(34,48,58,.16);border-radius:14px;padding:12px;cursor:pointer;" style-hover="background:rgba(34,48,58,.05);">Settings</button>
+          <button style="flex:1;font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;color:#274A54;background:transparent;border:1.5px solid rgba(34,48,58,.16);border-radius:14px;padding:12px;cursor:pointer;" style-hover="background:rgba(34,48,58,.05);">Home</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:720}}"></script>
+</body>
+</html>

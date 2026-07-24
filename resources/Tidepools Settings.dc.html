@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E9E7DC; }
+  a { color: #274A54; text-decoration: none; }
+  a:hover { color: #DE8368; }
+  input[type=range] { -webkit-appearance: none; appearance: none; background: transparent; }
+  input[type=range]::-webkit-slider-runnable-track { height: 8px; border-radius: 6px; background: #E1DED0; }
+  input[type=range]::-moz-range-track { height: 8px; border-radius: 6px; background: #E1DED0; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #F6F4EC; border: 3px solid #274A54; margin-top: -7px; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,.15); }
+  input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #F6F4EC; border: 3px solid #274A54; cursor: pointer; }
+</style>
+</helmet>
+
+<div data-screen-label="Settings" style="min-height: 100vh; font-family: 'Nunito', sans-serif; color: #22303A; background: radial-gradient(130% 90% at 50% 0%, #EFEDE3 0%, #E9E7DC 60%, #E1DED0 100%); padding: 40px 24px 80px 24px;">
+  <div style="max-width: 660px; margin: 0 auto;">
+
+    <!-- header -->
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+      <div style="font-family: 'Bricolage Grotesque', sans-serif; font-weight: 800; font-size: 38px; letter-spacing: -.02em; color: #274A54;">Settings</div>
+      <button onClick="{{ done }}" style="font-family: 'Nunito',sans-serif; font-weight: 800; font-size: 16px; color: #F6F4EC; background: #DE8368; border: none; border-radius: 14px; padding: 12px 30px; cursor: pointer; box-shadow: 0 10px 20px -12px rgba(222,131,104,.9);" style-hover="background:#d0755b;">Done</button>
+    </div>
+    <div style="font-size: 14px; color: #909389; margin-bottom: 28px;">Changes apply as you go. Take what makes the shore feel good.</div>
+
+    <!-- SOUND -->
+    <div style="background: #F6F4EC; border: 1px solid rgba(34,48,58,.08); border-radius: 20px; padding: 24px 26px; margin-bottom: 18px;">
+      <div style="font-family: 'Bricolage Grotesque',sans-serif; font-weight: 700; font-size: 20px; color: #22303A; margin-bottom: 6px;">Sound</div>
+      <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 16px 0 6px 0;">
+        <div style="min-width: 130px;"><div style="font-weight: 700; font-size: 15px;">Master volume</div></div>
+        <input type="range" min="0" max="100" value="{{ volume }}" onInput="{{ onVol }}" style="flex: 1; height: 22px; cursor: pointer;">
+        <div style="width: 44px; text-align: right; font-weight: 800; font-size: 14px; color: #274A54;">{{ volumeLabel }}</div>
+      </div>
+      <sc-for list="{{ sound }}" as="t" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 0;border-top:1px solid rgba(34,48,58,.07);">
+          <div><div style="font-weight:700;font-size:15px;">{{ t.label }}</div><div style="font-size:13px;color:#909389;margin-top:2px;">{{ t.desc }}</div></div>
+          <button onClick="{{ t.onToggle }}" style="{{ t.track }}"><span style="{{ t.knob }}"></span></button>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- VISUALS -->
+    <div style="background: #F6F4EC; border: 1px solid rgba(34,48,58,.08); border-radius: 20px; padding: 24px 26px; margin-bottom: 18px;">
+      <div style="font-family: 'Bricolage Grotesque',sans-serif; font-weight: 700; font-size: 20px; color: #22303A; margin-bottom: 6px;">Visuals</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 0;">
+        <div><div style="font-weight:700;font-size:15px;">Theme</div><div style="font-size:13px;color:#909389;margin-top:2px;">Warm day or a moonlit shore</div></div>
+        <div style="display:inline-flex;background:#E1DED0;border-radius:12px;padding:4px;gap:2px;">
+          <sc-for list="{{ themeOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</button></sc-for>
+        </div>
+      </div>
+      <sc-for list="{{ visual }}" as="t" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 0;border-top:1px solid rgba(34,48,58,.07);">
+          <div><div style="font-weight:700;font-size:15px;">{{ t.label }}</div><div style="font-size:13px;color:#909389;margin-top:2px;">{{ t.desc }}</div></div>
+          <button onClick="{{ t.onToggle }}" style="{{ t.track }}"><span style="{{ t.knob }}"></span></button>
+        </div>
+      </sc-for>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 0 6px 0;border-top:1px solid rgba(34,48,58,.07);">
+        <div style="min-width: 130px;"><div style="font-weight:700;font-size:15px;">Cell size</div></div>
+        <input type="range" min="80" max="130" step="5" value="{{ cellSize }}" onInput="{{ onCell }}" style="flex:1;height:22px;cursor:pointer;">
+        <div style="width:44px;text-align:right;font-weight:800;font-size:14px;color:#274A54;">{{ cellLabel }}</div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div style="background: #F6F4EC; border: 1px solid rgba(34,48,58,.08); border-radius: 20px; padding: 24px 26px; margin-bottom: 18px;">
+      <div style="font-family: 'Bricolage Grotesque',sans-serif; font-weight: 700; font-size: 20px; color: #22303A; margin-bottom: 6px;">Controls</div>
+      <sc-for list="{{ controls }}" as="t" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 0;border-top:1px solid rgba(34,48,58,.07);">
+          <div><div style="font-weight:700;font-size:15px;">{{ t.label }}</div><div style="font-size:13px;color:#909389;margin-top:2px;">{{ t.desc }}</div></div>
+          <button onClick="{{ t.onToggle }}" style="{{ t.track }}"><span style="{{ t.knob }}"></span></button>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- ASSIST -->
+    <div style="background: #F6F4EC; border: 1px solid rgba(34,48,58,.08); border-radius: 20px; padding: 24px 26px; margin-bottom: 18px;">
+      <div style="font-family: 'Bricolage Grotesque',sans-serif; font-weight: 700; font-size: 20px; color: #22303A;">Comfort</div>
+      <div style="font-size: 13px; color: #909389; margin-top: 4px;">Little helpers to make deduction feel good. Use any, all, or none.</div>
+      <sc-for list="{{ assist }}" as="t" hint-placeholder-count="3">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 0;border-top:1px solid rgba(34,48,58,.07);">
+          <div><div style="font-weight:700;font-size:15px;">{{ t.label }}</div><div style="font-size:13px;color:#909389;margin-top:2px;">{{ t.desc }}</div></div>
+          <button onClick="{{ t.onToggle }}" style="{{ t.track }}"><span style="{{ t.knob }}"></span></button>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- PLAY -->
+    <div style="background: #F6F4EC; border: 1px solid rgba(34,48,58,.08); border-radius: 20px; padding: 24px 26px; margin-bottom: 18px;">
+      <div style="font-family: 'Bricolage Grotesque',sans-serif; font-weight: 700; font-size: 20px; color: #22303A; margin-bottom: 6px;">Play</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 0;">
+        <div><div style="font-weight:700;font-size:15px;">Default size</div></div>
+        <div style="display:inline-flex;background:#E1DED0;border-radius:12px;padding:4px;gap:2px;">
+          <sc-for list="{{ sizeOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</button></sc-for>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:16px 0;border-top:1px solid rgba(34,48,58,.07);">
+        <div><div style="font-weight:700;font-size:15px;">Default difficulty</div></div>
+        <div style="display:inline-flex;background:#E1DED0;border-radius:12px;padding:4px;gap:2px;">
+          <sc-for list="{{ diffOpts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.onClick }}" style="{{ o.style }}">{{ o.label }}</button></sc-for>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;padding:14px 0;border-top:1px solid rgba(34,48,58,.07);">
+        <div><div style="font-weight:700;font-size:15px;">{{ stopwatch.label }}</div><div style="font-size:13px;color:#909389;margin-top:2px;">{{ stopwatch.desc }}</div></div>
+        <button onClick="{{ stopwatch.onToggle }}" style="{{ stopwatch.track }}"><span style="{{ stopwatch.knob }}"></span></button>
+      </div>
+      <div style="padding-top:16px;border-top:1px solid rgba(34,48,58,.07);">
+        <sc-if value="{{ askReset }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;background:#FBEEE9;border:1px solid rgba(222,131,104,.4);border-radius:14px;padding:14px 16px;">
+            <div style="font-size:14px;color:#9c4a30;font-weight:700;">Reset all progress and creatures? This can't be undone.</div>
+            <div style="display:flex;gap:8px;flex-shrink:0;">
+              <button onClick="{{ doReset }}" style="font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;color:#F6F4EC;background:#DE8368;border:none;border-radius:10px;padding:9px 16px;cursor:pointer;">Yes, reset</button>
+              <button onClick="{{ cancelReset }}" style="font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;color:#68716d;background:transparent;border:1.5px solid rgba(34,48,58,.2);border-radius:10px;padding:8px 16px;cursor:pointer;">Cancel</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ notAsking }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ startReset }}" style="font-family:'Nunito',sans-serif;font-weight:700;font-size:14px;color:#c96a4e;background:transparent;border:1.5px solid rgba(201,106,78,.4);border-radius:12px;padding:11px 20px;cursor:pointer;">Reset progress…</button>
+        </sc-if>
+      </div>
+    </div>
+
+    <!-- DATA -->
+    <div style="background: #F6F4EC; border: 1px solid rgba(34,48,58,.08); border-radius: 20px; padding: 24px 26px;">
+      <div style="font-family: 'Bricolage Grotesque',sans-serif; font-weight: 700; font-size: 20px; color: #22303A; margin-bottom: 6px;">Data</div>
+      <div style="font-size: 14px; color: #68716d; line-height: 1.55; margin-bottom: 16px;">Your shore is saved locally on this device — nothing leaves your browser. Move your journal to another machine by exporting and importing a save file.</div>
+      <div style="display: flex; gap: 12px;">
+        <button style="display:flex;align-items:center;gap:8px;font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;color:#274A54;background:transparent;border:1.5px solid rgba(34,48,58,.2);border-radius:12px;padding:11px 20px;cursor:pointer;" style-hover="background:rgba(34,48,58,.05);">&#8681; Export save</button>
+        <button style="display:flex;align-items:center;gap:8px;font-family:'Nunito',sans-serif;font-weight:700;font-size:15px;color:#274A54;background:transparent;border:1.5px solid rgba(34,48,58,.2);border-radius:12px;padding:11px 20px;cursor:pointer;" style-hover="background:rgba(34,48,58,.05);">&#8679; Import save</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:&quot;100%&quot;,&quot;height&quot;:900}}">
+class Component extends DCLogic {
+  state = { s: {
+    volume: 70, sfx: true, ambient: true, music: false,
+    theme: 'Daylight', reduceMotion: false, highContrast: false, cbPalette: false, cellSize: 100,
+    swapClick: false, tapCycle: false, confirmClear: true,
+    hoverHint: true, misNudge: true, lineHelper: true,
+    defSize: 'Medium', defDiff: 'Tricky', stopwatch: false,
+  }, askReset: false };
+
+  set(k, v) { this.setState(st => ({ s: { ...st.s, [k]: v } })); }
+  toggle(k) { this.setState(st => ({ s: { ...st.s, [k]: !st.s[k] } })); }
+
+  sw(k, label, desc) {
+    const on = this.state.s[k];
+    return {
+      key: k, label, desc, onToggle: () => this.toggle(k),
+      track: { width: '52px', height: '30px', borderRadius: '20px', border: 'none', cursor: 'pointer', position: 'relative', flexShrink: 0, background: on ? '#274A54' : '#CBC8B8', transition: 'background .2s ease' },
+      knob: { position: 'absolute', top: '3px', left: on ? '25px' : '3px', width: '24px', height: '24px', borderRadius: '50%', background: '#F6F4EC', boxShadow: '0 1px 3px rgba(0,0,0,.25)', transition: 'left .2s ease' },
+    };
+  }
+
+  seg(on) { return { padding: '8px 16px', borderRadius: '9px', border: 'none', cursor: 'pointer', fontFamily: "'Nunito',sans-serif", fontWeight: on ? 800 : 700, fontSize: '14px', whiteSpace: 'nowrap', background: on ? '#F6F4EC' : 'transparent', color: on ? '#274A54' : '#68716d', boxShadow: on ? '0 2px 6px rgba(34,48,58,.14)' : 'none', transition: 'all .2s ease' }; }
+
+  opts(list, key) { return list.map(o => ({ label: o, style: this.seg(this.state.s[key] === o), onClick: () => this.set(key, o) })); }
+
+  renderVals() {
+    const s = this.state.s;
+    return {
+      volume: s.volume, volumeLabel: s.volume + '%', onVol: (e) => this.set('volume', +e.target.value),
+      cellSize: s.cellSize, cellLabel: s.cellSize + '%', onCell: (e) => this.set('cellSize', +e.target.value),
+      theme: s.theme, themeOpts: this.opts(['Daylight', 'Night Tide', 'Auto'], 'theme'),
+      sizeOpts: this.opts(['Small', 'Medium', 'Large'], 'defSize'),
+      diffOpts: this.opts(['Calm', 'Tricky', 'Deep'], 'defDiff'),
+      sound: [
+        this.sw('sfx', 'Sound effects', 'Soft clicks as you mark cells'),
+        this.sw('ambient', 'Ambient shore', 'A gentle loop of distant waves'),
+        this.sw('music', 'Music', 'Quiet background melody'),
+      ],
+      visual: [
+        this.sw('reduceMotion', 'Reduce motion', 'Calm the ripples and creature hops'),
+        this.sw('highContrast', 'High-contrast cells', 'Stronger edges between states'),
+        this.sw('cbPalette', 'Colorblind-safe palette', 'Distinct water & rock without relying on hue'),
+      ],
+      controls: [
+        this.sw('swapClick', 'Swap click mapping', 'Left marks rock, right marks water'),
+        this.sw('tapCycle', 'Tap-to-cycle', 'One tap cycles unknown → water → rock (trackpad-friendly)'),
+        this.sw('confirmClear', 'Confirm before clearing', 'Ask before wiping a marked cell'),
+      ],
+      assist: [
+        this.sw('hoverHint', 'Highlight related clues', 'On hover, show the cells a clue informs'),
+        this.sw('misNudge', 'Gentle mis-mark feedback', 'A faint ripple when a mark contradicts a clue'),
+        this.sw('lineHelper', 'Line-total helper counts', 'Show remaining water along each edge line'),
+      ],
+      stopwatch: this.sw('stopwatch', 'Show stopwatch', 'Optional timer — off by default, never required'),
+      askReset: this.state.askReset, notAsking: !this.state.askReset,
+      startReset: () => this.setState({ askReset: true }),
+      cancelReset: () => this.setState({ askReset: false }),
+      doReset: () => this.setState({ askReset: false }),
+      done: () => {},
+    };
+  }
+}
+</script>
+</body>
+</html>

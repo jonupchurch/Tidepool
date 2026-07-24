@@ -4,7 +4,7 @@ _Snapshot; updated each work session. Last updated: 2026-07-24._
 
 ## Current phase
 
-**Planning complete** — all 9 features (001–009) specced + planned under `specs/`. Ready to start implementation (engine first). No code written yet.
+**Engine built (001 complete).** All 9 features specced + planned; the deterministic puzzle engine (`src/core/`) is implemented, tested (106 green), and verified. Next up: persistence seam (008), then gameplay (002).
 
 ## Done
 
@@ -18,12 +18,13 @@ _Snapshot; updated each work session. Last updated: 2026-07-24._
 - Decided: no database for v1 — seeds + localStorage/IndexedDB behind the `platform/` seam.
 - Scaffold merged to `main`.
 - **Specced + planned all 9 features (001–009)** via Spec-Kit (engine got specify→clarify→plan; the rest specify→plan). Feature map + build order in `PLAN.md`.
+- **001 Engine implemented + verified** — `src/core/`: RNG → hex geometry → board/clues → technique solver + uniqueness oracle → difficulty rater → clue reducer → generation pipeline → serialization + public API. 106 unit/contract tests green; typecheck + build pass. All 36 tasks in `specs/001-*/tasks.md` done. See CHANGELOG for the SC-001…SC-006 verification.
 
-## Next — implementation (engine first)
+## Next — implementation (build order)
 
-- **001 Engine** — implement `src/core/` (RNG → generator → solver → reducer → difficulty) test-first with Vitest; the contract tests in `specs/001-*/contracts/` are the target. First real CHANGELOG entry lands here.
-- Then follow the build order: 008 persistence seam → 002 gameplay → 003/004 shell + modes → 005/006 journal + settings → 007 tutorial → art/audio → 009 Tauri/Steam.
-- `/speckit-tasks` per feature (starting with the engine) to generate the ordered task list before coding it.
+- **008 Persistence & platform seam** — the `SaveStore` interface + web backend; unblocks every stateful feature. Run `/speckit-tasks` then implement.
+- Then: 002 gameplay → 003/004 shell + modes → 005/006 journal + settings → 007 tutorial → art/audio → 009 Tauri/Steam.
+- `/speckit-tasks` per feature to generate the ordered task list before coding it.
 - Self-host fonts (Bricolage + Nunito) before the Tauri build (currently Google Fonts).
 
 ## Blockers

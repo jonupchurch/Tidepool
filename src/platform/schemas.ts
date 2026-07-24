@@ -1,0 +1,180 @@
+// schemas.ts — the versioned, namespaced persisted record shapes, their current
+// versions, default factories, and shape validators. Each namespace is owned by
+// a feature (noted below); 008 defines the initial v1 shapes + the plumbing.
+// `SaveBlob` / `Migration` types live here too. No storage/OS access.
+import type { BoardParams } from '@/core'
+
+/** App version stamped into export blobs (kept in sync with package.json). */
+export const APP_VERSION = '0.0.0'
+
+/** Storage-layout version used in the key prefix `tp:v{N}:{namespace}`. */
+export const STORE_VERSION = 1
+
+/** Current export-blob envelope version. */
+export const BLOB_SCHEMA_VERSION = 1
+
+// ── Namespaced record shapes (each carries its own schema version `v`) ────────
+
+/** The resumable session — only player state is stored; the board is regenerated
+ *  from `request` via the engine (keeps saves tiny + robust to engine drift). */
+export interface InProgressBoardRecord {
+  v: number
+  request: BoardParams
+  marks: Record<string, 'water' | 'rock'>
+  revealed: string[]
+}
+
+/** Owned/extended by feature 006 (Settings & themes). */
+export interface SettingsRecord {
+  v: number
+  sound: { muted: boolean; volume: number }
+  visuals: { theme: string; reducedMotion: boolean; textScale: number; colorblind: boolean }
+  controls: { swapMarkButtons: boolean }
+  play: { defaultSize: string; defaultDifficulty: string }
+}
+
+/** Owned by feature 005 (Shore journal). */
+export interface JournalRecord {
+  v: number
+  discoveries: Record<string, { firstFoundSeed: string; count: number }>
+}
+
+export interface StatsRecord {
+  v: number
+  boardsSolved: number
+  poolsFilled: number
+  creaturesFound: number
+}
+
+/** Owned by feature 004 (Board modes / curated). */
+export interface CuratedProgressRecord {
+  v: number
+  solved: Record<string, { earnedCreatureId: string }>
+}
+
+/** Owned by feature 007 (Tutorial). */
+export interface OnboardingRecord {
+  v: number
+  completed: boolean
+  seen: boolean
+}
+
+/** Owned by feature 003 (App shell). */
+export interface ShellPrefsRecord {
+  v: number
+  theme: string
+  muted: boolean
+}
+
+/** The full namespace → record-shape map. */
+export interface SchemaMap {
+  inProgressBoard: InProgressBoardRecord
+  settings: SettingsRecord
+  journal: JournalRecord
+  stats: StatsRecord
+  curatedProgress: CuratedProgressRecord
+  onboarding: OnboardingRecord
+  shellPrefs: ShellPrefsRecord
+}
+
+export type Namespace = keyof SchemaMap
+export type SchemaFor<N extends Namespace> = SchemaMap[N]
+
+export const NAMESPACES: readonly Namespace[] = [
+  'inProgressBoard',
+  'settings',
+  'journal',
+  'stats',
+  'curatedProgress',
+  'onboarding',
+  'shellPrefs',
+]
+
+/** Namespaces stored as larger blobs (IndexedDB) rather than small KV (localStorage). */
+export const BLOB_NAMESPACES: ReadonlySet<Namespace> = new Set<Namespace>(['inProgressBoard'])
+
+/** Current schema version per namespace (drives read-path migration). */
+export const CURRENT_VERSION: Record<Namespace, number> = {
+  inProgressBoard: 1,
+  settings: 1,
+  journal: 1,
+  stats: 1,
+  curatedProgress: 1,
+  onboarding: 1,
+  shellPrefs: 1,
+}
+
+// ── Default factories (fresh object each call — never share mutable state) ────
+
+export const DEFAULTS: { [N in Namespace]: () => SchemaMap[N] } = {
+  inProgressBoard: () => ({
+    v: 1,
+    request: {
+      seed: '',
+      size: 'Small',
+      difficulty: 'Calm',
+      clues: { connectivity: true, lineTotals: true },
+    },
+    marks: {},
+    revealed: [],
+  }),
+  settings: () => ({
+    v: 1,
+    sound: { muted: false, volume: 0.8 },
+    visuals: { theme: 'Day', reducedMotion: false, textScale: 1, colorblind: false },
+    controls: { swapMarkButtons: false },
+    play: { defaultSize: 'Small', defaultDifficulty: 'Calm' },
+  }),
+  journal: () => ({ v: 1, discoveries: {} }),
+  stats: () => ({ v: 1, boardsSolved: 0, poolsFilled: 0, creaturesFound: 0 }),
+  curatedProgress: () => ({ v: 1, solved: {} }),
+  onboarding: () => ({ v: 1, completed: false, seen: false }),
+  shellPrefs: () => ({ v: 1, theme: 'Day', muted: false }),
+}
+
+// ── Shape validators (lightweight structural checks, not exhaustive) ──────────
+
+function isObj(x: unknown): x is Record<string, unknown> {
+  return typeof x === 'object' && x !== null
+}
+function isRecordOf(x: unknown, valueCheck: (v: unknown) => boolean): boolean {
+  return isObj(x) && Object.values(x).every(valueCheck)
+}
+
+export const VALIDATORS: { [N in Namespace]: (x: unknown) => boolean } = {
+  inProgressBoard: (x) =>
+    isObj(x) &&
+    typeof x.v === 'number' &&
+    isObj(x.request) &&
+    typeof (x.request as Record<string, unknown>).seed === 'string' &&
+    isObj(x.marks) &&
+    Array.isArray(x.revealed),
+  settings: (x) =>
+    isObj(x) && typeof x.v === 'number' && isObj(x.sound) && isObj(x.visuals) && isObj(x.play),
+  journal: (x) =>
+    isObj(x) &&
+    typeof x.v === 'number' &&
+    isRecordOf(x.discoveries, (d) => isObj(d) && typeof (d as Record<string, unknown>).count === 'number'),
+  stats: (x) =>
+    isObj(x) &&
+    typeof x.v === 'number' &&
+    typeof x.boardsSolved === 'number' &&
+    typeof x.poolsFilled === 'number' &&
+    typeof x.creaturesFound === 'number',
+  curatedProgress: (x) => isObj(x) && typeof x.v === 'number' && isObj(x.solved),
+  onboarding: (x) =>
+    isObj(x) && typeof x.v === 'number' && typeof x.completed === 'boolean' && typeof x.seen === 'boolean',
+  shellPrefs: (x) =>
+    isObj(x) && typeof x.v === 'number' && typeof x.theme === 'string' && typeof x.muted === 'boolean',
+}
+
+// ── Export/import + migration types ───────────────────────────────────────────
+
+export interface SaveBlob {
+  appVersion: string
+  schemaVersion: number
+  records: Partial<{ [N in Namespace]: SchemaMap[N] }>
+}
+
+/** A single forward step for one namespace: `vN` shape → `vN+1` shape. */
+export type Migration = (old: Record<string, unknown>) => Record<string, unknown>

@@ -4,7 +4,7 @@ _Snapshot; updated each work session. Last updated: 2026-07-24._
 
 ## Current phase
 
-**Engine built (001 complete).** All 9 features specced + planned; the deterministic puzzle engine (`src/core/`) is implemented, tested (106 green), and verified. Next up: persistence seam (008), then gameplay (002).
+**Engine built (001 complete) + all features tasked.** The deterministic puzzle engine (`src/core/`) is implemented, tested (106 green), and verified. Every remaining feature (002–009) now has a full `tasks.md` (277 tasks total, test-first per Constitution VIII). Ready to implement in build order — **008 persistence seam is next.**
 
 ## Done
 

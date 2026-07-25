@@ -19,6 +19,7 @@ import {
   tickSegment,
 } from './line-labels'
 import { type Palette, readPalette } from './palette'
+import { backingSize, currentPixelRatio } from './pixel-ratio'
 import { BOULDER, WAVES, spriteReady } from './sprites'
 
 export interface RenderInput {
@@ -89,9 +90,15 @@ class CanvasBoardRenderer implements BoardRenderer {
     this.ctx = ctx
     this.palette = readPalette()
     this.anchors = lineAnchors(board)
-    this._layout = this.fit(canvas.width || 1, canvas.height || 1)
-    this.width = canvas.width
-    this.height = canvas.height
+    // No CSS layout has happened and resize() hasn't run, so the canvas
+    // attributes are still DOM defaults and safe to read as CSS pixels. The
+    // first resize() replaces all of this — backing store and transform
+    // included — and it fires as soon as the ResizeObserver is attached.
+    const cssWidth = canvas.clientWidth || canvas.width || 1
+    const cssHeight = canvas.clientHeight || canvas.height || 1
+    this._layout = this.fit(cssWidth, cssHeight)
+    this.width = cssWidth
+    this.height = cssHeight
     this.labels = lineLabels(board, this._layout)
   }
 
@@ -114,11 +121,26 @@ class CanvasBoardRenderer implements BoardRenderer {
     return this.labels
   }
 
+  /**
+   * Size to a CSS-pixel box.
+   *
+   * The backing store is allocated in *device* pixels so the board stays sharp
+   * on a scaled display, then the context is scaled so every drawing routine
+   * below still works in CSS pixels — as does layout, and therefore hit-testing,
+   * which reads pointer coordinates straight from `getBoundingClientRect`. The
+   * CSS box itself is left to the stylesheet (`w-full h-full`).
+   */
   resize(width: number, height: number): void {
     this.width = width
     this.height = height
-    this.canvas.width = width
-    this.canvas.height = height
+
+    const backing = backingSize(width, height, currentPixelRatio())
+    this.canvas.width = backing.width
+    this.canvas.height = backing.height
+    // Assigning width/height resets the context — including its transform — so
+    // the scale has to be re-applied here, after, on every resize.
+    this.ctx.setTransform(backing.scale, 0, 0, backing.scale, 0, 0)
+
     this.palette = readPalette()
     this._layout = this.fit(width, height)
     this.labels = lineLabels(this.board, this._layout)

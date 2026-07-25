@@ -4,6 +4,28 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — The board is sharp on scaled displays
+
+### Fixed
+
+- **The board rendered at 1× and was upscaled by the browser.** The canvas
+  allocated its pixel buffer in CSS pixels, so on 150% Windows scaling or any
+  Retina Mac — most machines — the hexes, numerals and tile motifs were all
+  visibly soft. The buffer is now allocated in device pixels and the context
+  scaled to match, so every drawing routine still works in CSS pixels and layout
+  (and therefore hit-testing) is untouched.
+
+Capped at 2×: past that the difference isn't visible at normal viewing distance
+while the buffer keeps growing with the square of the ratio — a 2560×1440 window
+at 3× is a 33-megapixel buffer reallocated on every resize.
+
+The maths is a pure function (`render/pixel-ratio.ts`) with its own tests,
+because a canvas can't be built in jsdom and the clamp, the rounding and the
+zero-size case all deserve coverage. A 2× e2e test guards both halves: that the
+buffer really doubles, and that clicks still land on the intended hex — a
+transform applied the wrong way would have silently broken every click on the
+board, which is the failure worth catching here.
+
 ## 2026-07-25 — Achievements (009 US3, the half that isn't blocked)
 
 ### Added

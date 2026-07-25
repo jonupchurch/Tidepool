@@ -5,7 +5,14 @@ import { lineIndex, parseKey } from '@/core'
 import { hexRegion, presentSet } from '@/core/hex'
 import { fullyClued, layoutOf } from '@/core/test-helpers'
 import { fitLayout, hexToPixel } from './layout'
-import { AXIS_STEP, guideSegment, labelAt, lineAnchors, lineLabels } from './line-labels'
+import {
+  AXIS_STEP,
+  guideSegment,
+  labelAt,
+  lineAnchors,
+  lineLabels,
+  tickSegment,
+} from './line-labels'
 
 // A fully-clued board shows EVERY line on all three axes — the densest label
 // case there is, and so the strongest test of the anti-overlap rule. (Generated
@@ -22,7 +29,7 @@ const layout = fitLayout(
   W,
   H,
   24,
-  lineAnchors(board).map((a) => a.coord),
+  lineAnchors(board).flatMap((a) => [a.coord, a.tip]),
 )
 const labels = lineLabels(board, layout)
 
@@ -60,6 +67,31 @@ describe('lineLabels placement', () => {
         false,
       )
     }
+  })
+
+  it('hugs the board edge rather than floating out in the margin', () => {
+    const step = Math.sqrt(3) * layout.size
+    const gaps = labels.map((l) => {
+      const first = hexToPixel(layout, parseKey(l.cells[0]))
+      return Math.hypot(l.x - first.x, l.y - first.y) / step
+    })
+    // Hard bound: nothing may drift past the last nudge the placer will try.
+    for (const [i, g] of gaps.entries()) {
+      expect(g, `${labels[i].id} drifted too far from its row`).toBeLessThanOrEqual(2.51)
+    }
+    // And on this every-line-clued worst case, most still sit right on the edge.
+    const snug = gaps.filter((g) => g < 0.9).length
+    expect(snug / gaps.length).toBeGreaterThan(0.8)
+  })
+
+  it('resolves crowding by flipping to the row\'s other end, not by pushing out', () => {
+    // With every line clued, both ends get used — proof the flip is doing the
+    // work. (`cells[0]` is the end the label sits at, in linesOf order.)
+    const flipped = labels.filter((l) => {
+      const line = l.cells
+      return line[0] > line[line.length - 1] // reversed => placed at the far end
+    })
+    expect(flipped.length).toBeGreaterThan(0)
   })
 
   it('keeps every label on the row it reports', () => {
@@ -133,7 +165,7 @@ describe('lineLabels placement', () => {
 })
 
 describe('labelAt (click to toggle a row)', () => {
-  const radius = layout.size * 0.7
+  const radius = layout.size * 0.55
 
   it('picks the label under the pointer', () => {
     for (const l of labels) {
@@ -145,10 +177,18 @@ describe('labelAt (click to toggle a row)', () => {
     expect(labelAt(labels, -5000, -5000, radius)).toBeNull()
   })
 
-  it('does not claim a cell centre', () => {
+  it('never reaches inside a hex — a label may not steal a mark', () => {
+    // Sample each cell's centre and its six corners: the whole tile must be
+    // free of every label's touch target.
     for (const k of board.present) {
-      const p = hexToPixel(layout, parseKey(k))
-      expect(labelAt(labels, p.x, p.y, radius)).toBeNull()
+      const c = hexToPixel(layout, parseKey(k))
+      expect(labelAt(labels, c.x, c.y, radius), `centre of ${k}`).toBeNull()
+      for (let i = 0; i < 6; i++) {
+        const a = (Math.PI / 180) * (60 * i - 30)
+        const x = c.x + layout.size * 0.98 * Math.cos(a)
+        const y = c.y + layout.size * 0.98 * Math.sin(a)
+        expect(labelAt(labels, x, y, radius), `corner ${i} of ${k}`).toBeNull()
+      }
     }
   })
 })
@@ -170,6 +210,63 @@ describe('guideSegment', () => {
         expect(offAxis(p, { x: seg.x1, y: seg.y1 }, dir)).toBeLessThan(layout.size * 0.02)
       }
     }
+  })
+})
+
+describe('tickSegment (direction dash)', () => {
+  it('lies along its row and never crosses into a hex', () => {
+    const cellCentres = [...board.present].map((k) => hexToPixel(layout, parseKey(k)))
+    // A pointy-top hex's apothem — inside this radius the dash is over a tile.
+    const apothem = (Math.sqrt(3) / 2) * layout.size
+    for (const l of labels) {
+      const t = tickSegment(l, layout)
+      // Collinear with the row it belongs to...
+      const first = hexToPixel(layout, parseKey(l.cells[0]))
+      const dir = { x: t.x2 - t.x1, y: t.y2 - t.y1 }
+      expect(offAxis(first, { x: t.x1, y: t.y1 }, dir)).toBeLessThan(layout.size * 0.02)
+      // ...on the far side of the number from the board...
+      const away = { x: l.x - first.x, y: l.y - first.y }
+      expect(dir.x * away.x + dir.y * away.y).toBeGreaterThan(0)
+      // ...and clear of every tile, sampled along its length.
+      for (let s = 0; s <= 1; s += 0.05) {
+        const p = { x: t.x1 + (t.x2 - t.x1) * s, y: t.y1 + (t.y2 - t.y1) * s }
+        for (const c of cellCentres) {
+          expect(Math.hypot(p.x - c.x, p.y - c.y), `${l.id} dash overlaps a hex`).toBeGreaterThan(
+            apothem,
+          )
+        }
+      }
+    }
+  })
+
+  it('starts clear of the numeral', () => {
+    for (const l of labels) {
+      const t = tickSegment(l, layout)
+      expect(Math.hypot(t.x1 - l.x, t.y1 - l.y)).toBeGreaterThan(layout.size * 0.5)
+    }
+  })
+
+  it('stays on-canvas — the fit reserves room for the dash, not just the number', () => {
+    for (const l of labels) {
+      const t = tickSegment(l, layout)
+      for (const [x, y] of [
+        [t.x1, t.y1],
+        [t.x2, t.y2],
+      ]) {
+        expect(x, `${l.id} dash off the left/right edge`).toBeGreaterThanOrEqual(0)
+        expect(x).toBeLessThanOrEqual(W)
+        expect(y, `${l.id} dash off the top/bottom edge`).toBeGreaterThanOrEqual(0)
+        expect(y).toBeLessThanOrEqual(H)
+      }
+    }
+  })
+
+  it('is the same length for every label, however far it was nudged out', () => {
+    const lengths = labels.map((l) => {
+      const t = tickSegment(l, layout)
+      return Math.hypot(t.x2 - t.x1, t.y2 - t.y1)
+    })
+    for (const len of lengths) expect(len).toBeCloseTo(lengths[0], 6)
   })
 })
 

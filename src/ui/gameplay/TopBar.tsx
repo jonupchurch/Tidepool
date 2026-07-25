@@ -5,6 +5,10 @@ interface TopBarProps {
   /** Water cells left to fill — in cells, so it reads in the same unit as stones. */
   waterRemaining: number
   stonesRemaining: number
+  /** Whole pools left to complete — counted in pools, hence its own counter. */
+  poolsRemaining: number
+  /** Running tally of wrong marks placed this session. */
+  errorsMade: number
   /** Cells currently marked against the solution — surfaced as a soft flag. */
   mistakeCount: number
   canUndo: boolean
@@ -18,6 +22,8 @@ export function TopBar({
   label,
   waterRemaining,
   stonesRemaining,
+  poolsRemaining,
+  errorsMade,
   mistakeCount,
   canUndo,
   canRedo,
@@ -42,6 +48,17 @@ export function TopBar({
         </span>
         <span className="text-rock" title="Stones left to place">
           🪨 {stonesRemaining} {stonesRemaining === 1 ? 'stone' : 'stones'} left
+        </span>
+        {/* Counted in whole pools, not cells — hence its own counter. */}
+        <span className="text-tide" title="Whole pools left to complete">
+          🐚 {poolsRemaining} {poolsRemaining === 1 ? 'pool' : 'pools'} left
+        </span>
+        {/* A running record, not a penalty: it never counts back down. */}
+        <span
+          className={errorsMade > 0 ? 'text-coral' : 'text-rock'}
+          title="Wrong marks made so far this board"
+        >
+          ⚠ {errorsMade} {errorsMade === 1 ? 'error' : 'errors'}
         </span>
         {mistakeCount > 0 && (
           <span

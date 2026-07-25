@@ -24,7 +24,7 @@ import {
   makeTimeline,
   whenSpritesReady,
 } from '@/render'
-import { getSaveStore, loadRecord, saveRecord } from '@/platform'
+import { DEFAULTS, getSaveStore, loadRecord, saveRecord } from '@/platform'
 import { getAudioEngine } from '@/audio'
 import { CompletePanel } from './CompletePanel'
 import { PoolToast } from './PoolToast'
@@ -80,6 +80,8 @@ export function GameplayScreen({
   const highlightRef = useRef<Set<string>>(new Set())
   /** Line-label ids the player has toggled a row guide on. View-only, not saved. */
   const guidesRef = useRef<Set<string>>(new Set())
+  /** Line-label ids struck off as satisfied (right-click). View-only, not saved. */
+  const doneLinesRef = useRef<Set<string>>(new Set())
   const settingsRef = useRef<Settings>({
     swap: false,
     reducedMotion: false,
@@ -93,6 +95,8 @@ export function GameplayScreen({
   const [label, setLabel] = useState('')
   const [waterLeft, setWaterLeft] = useState(0)
   const [stonesLeft, setStonesLeft] = useState(0)
+  const [poolsLeft, setPoolsLeft] = useState(0)
+  const [errorsMade, setErrorsMade] = useState(0)
   const [complete, setComplete] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [canUndo, setCanUndo] = useState(false)
@@ -113,6 +117,7 @@ export function GameplayScreen({
       pools: s.pools,
       colorblind: settingsRef.current.colorblind,
       guides: guidesRef.current,
+      doneLines: doneLinesRef.current,
     })
   }, [])
 
@@ -121,24 +126,37 @@ export function GameplayScreen({
     if (!s) return
     setWaterLeft(s.waterRemaining)
     setStonesLeft(s.stonesRemaining)
+    setPoolsLeft(s.poolsRemaining)
+    setErrorsMade(s.errorsMade)
     setMistakeCount(s.mistakeCells().size)
     setCanUndo(s.canUndo())
     setCanRedo(s.canRedo())
     setComplete(s.isComplete)
   }, [])
 
-  const save = useCallback(() => {
-    const s = sessionRef.current
-    if (!s) return
-    const p = saveRecord(storeRef.current, 'inProgressBoard', s.serialize())
-    // Dev-only: expose the in-flight persist so e2e can await a real commit
-    // before reloading (the write resolves after IndexedDB commits).
+  /** Dev-only: expose the in-flight persist so e2e can await a real commit. */
+  const trackSave = useCallback((p: Promise<void>) => {
     if (import.meta.env.DEV && typeof window !== 'undefined') {
       const hook = (window as unknown as { __TIDEPOOLS__?: { lastSave?: Promise<void> } }).__TIDEPOOLS__
       if (hook) hook.lastSave = p
     }
     void p
   }, [])
+
+  const save = useCallback(() => {
+    const s = sessionRef.current
+    if (!s) return
+    // (the write resolves after IndexedDB commits)
+    trackSave(saveRecord(storeRef.current, 'inProgressBoard', s.serialize()))
+  }, [trackSave])
+
+  /**
+   * Drop the resume record. A finished board must never be offered as
+   * "continue" — an empty seed is how the shell reads "nothing in progress".
+   */
+  const clearSaved = useCallback(() => {
+    trackSave(saveRecord(storeRef.current, 'inProgressBoard', DEFAULTS.inProgressBoard()))
+  }, [trackSave])
 
   const applyDelta = useCallback(
     (delta: MarkDelta) => {
@@ -154,7 +172,11 @@ export function GameplayScreen({
       }
       redraw()
       syncChrome()
-      save()
+      // A solved board is not something to resume — clear it rather than saving
+      // it, so Home offers no "continue" for a board that is already done (and
+      // reopening the app can't land back on the completion panel).
+      if (delta.complete) clearSaved()
+      else save()
       if (delta.complete) {
         // The "prize" creature = the largest pool's creature (the curated seam).
         const s = sessionRef.current
@@ -163,7 +185,7 @@ export function GameplayScreen({
         onSolved?.(largest ? largest.creatureId : null)
       }
     },
-    [redraw, syncChrome, save, onSolved],
+    [redraw, syncChrome, save, clearSaved, onSolved],
   )
 
   // Record discoveries + lifetime stats to the journal (005). Forward marks only
@@ -226,17 +248,21 @@ export function GameplayScreen({
       const rect = canvas.getBoundingClientRect()
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
-      // A line total is a toggle for that row's reading guide, not a board mark.
-      const label = r.lineLabelAt(x, y)
-      if (label) {
-        const guides = guidesRef.current
-        if (guides.has(label.id)) guides.delete(label.id)
-        else guides.add(label.id)
+      const cellKey = r.cellAt(x, y)
+      if (!cellKey) {
+        // Off the board: a line total is never a board mark — left-click toggles
+        // that row's reading guide, right-click strikes the total off as
+        // satisfied. Both ignore the swap-buttons setting, which is about marks.
+        // Cells are tested first so a label's touch target can never steal a
+        // mark from the edge hex it sits against.
+        const label = r.lineLabelAt(x, y)
+        if (!label) return
+        const set = e.button === 0 ? guidesRef.current : doneLinesRef.current
+        if (set.has(label.id)) set.delete(label.id)
+        else set.add(label.id)
         redraw()
         return
       }
-      const cellKey = r.cellAt(x, y)
-      if (!cellKey) return
       const swap = settingsRef.current.swap
       const kind: MarkKind =
         e.button === 0 ? (swap ? 'rock' : 'water') : swap ? 'water' : 'rock'
@@ -316,6 +342,7 @@ export function GameplayScreen({
           solution,
           lineLabels: renderer.lineLabels.map((l) => ({ id: l.id, x: l.x, y: l.y, total: l.total })),
           guides: () => [...guidesRef.current].sort(),
+          doneLines: () => [...doneLinesRef.current].sort(),
           progress: () => {
             let correct = 0
             let total = 0
@@ -333,6 +360,7 @@ export function GameplayScreen({
       hoveredRef.current = null
       highlightRef.current = new Set()
       guidesRef.current = new Set()
+      doneLinesRef.current = new Set()
       setComplete(false)
       syncChrome()
       redraw()
@@ -425,6 +453,8 @@ export function GameplayScreen({
         label={label}
         waterRemaining={waterLeft}
         stonesRemaining={stonesLeft}
+        poolsRemaining={poolsLeft}
+        errorsMade={errorsMade}
         mistakeCount={mistakeCount}
         canUndo={canUndo}
         canRedo={canRedo}

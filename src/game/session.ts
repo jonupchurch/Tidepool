@@ -42,6 +42,13 @@ export class PlaySession {
   private ptr = 0
   private revealedSet = new Set<string>()
   private complete = false
+  /**
+   * Running tally of wrong marks placed this session — counted at the moment
+   * the player places one, so undo/redo replays never re-count it. Distinct
+   * from `mistakeCells()`, which is the *outstanding* set and clears on fix.
+   * In-memory only: not carried in the save record.
+   */
+  private errors = 0
 
   constructor(board: Board) {
     this.board = board
@@ -103,6 +110,10 @@ export class PlaySession {
     }
     return this.totalStones - placed
   }
+  /** Wrong marks placed so far this session (a record, not a penalty). */
+  get errorsMade(): number {
+    return this.errors
+  }
   /** Non-given cells whose current mark contradicts the solution (gentle-flag). */
   mistakeCells(): Set<string> {
     const wrong = new Set<string>()
@@ -143,6 +154,7 @@ export class PlaySession {
     const delta = this.recompute()
     delta.changed = true
     delta.correct = next === 'unknown' ? null : next === cell.state
+    if (delta.correct === false) this.errors++
     return delta
   }
 

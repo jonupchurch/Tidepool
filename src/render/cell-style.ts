@@ -18,8 +18,10 @@ export function cellStyle(visual: CellVisual, colorblind: boolean): CellStyle {
       return { fill: 'water', outline: 'tide', glyph: colorblind ? '≈' : '' }
     case 'rock':
       return { fill: 'rock', outline: 'deepPool', glyph: colorblind ? '▲' : '' }
+    // `deepPool` matches the numeral drawn on top, so a clue tile reads as one
+    // unit with a defined edge (`rock` on `driftwood` was near-invisible).
     case 'clue':
-      return { fill: 'driftwood', outline: 'rock', glyph: '' } // number drawn separately
+      return { fill: 'driftwood', outline: 'deepPool', glyph: '' } // number drawn separately
     default:
       return { fill: 'foam', outline: 'seaGlass', glyph: '' }
   }

@@ -52,3 +52,30 @@ test('leave mid-solve → reopen → resume restores the exact board', async ({ 
   expect(after.seed, 'same board restored').toBe(seedBefore)
   expect((await progress(page)).correct, 'the mark survived').toBeGreaterThanOrEqual(1)
 })
+
+// A finished board is not something to continue: solving one must drop the
+// resume record, whether you leave via Home or by closing the app.
+test('solve a board → Home offers no resume, and neither does a reload', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: /^play$/i }).click()
+
+  const hook = await readHook(page)
+  const canvas = page.locator('canvas')
+  for (const [key, state] of Object.entries(hook.solution)) {
+    const c = hook.centres[key]
+    await canvas.click({ position: { x: c.x, y: c.y }, button: state === 'water' ? 'left' : 'right' })
+  }
+  await expect(page.getByRole('heading', { name: /the tide's in/i })).toBeVisible()
+  await page.evaluate(
+    () => (window as unknown as { __TIDEPOOLS__: { lastSave: Promise<void> } }).__TIDEPOOLS__.lastSave,
+  )
+
+  await page.getByRole('button', { name: /^home$/i }).click()
+  await expect(page.getByRole('button', { name: /^play$/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /continue your pool/i })).toHaveCount(0)
+
+  // And the cleared record is durable, not just cleared in memory.
+  await page.reload()
+  await expect(page.getByRole('button', { name: /^play$/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /continue your pool/i })).toHaveCount(0)
+})

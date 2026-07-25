@@ -25,3 +25,26 @@
     color: var(--color-ink);
   }
 }
+
+/* Calm screen transitions (feature 003). Applied via motion-safe:* so
+   reduced-motion users get an instant swap. */
+@keyframes tp-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Night Tide — provisional token overrides so the theme toggle is visible.
+   Feature 006 (Settings) owns the final Night Tide palette. */
+:root[data-theme='night'] {
+  --color-sand: #16303a;
+  --color-driftwood: #21414c;
+  --color-foam: #1d3b45;
+  --color-deep-pool: #cfe8e2;
+  --color-tide: #7fb8ae;
+  --color-rock: #8ea3a3;
+  --color-ink: #e8f1ee;
+}

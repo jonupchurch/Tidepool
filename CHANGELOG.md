@@ -4,6 +4,43 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-24 — App shell: Home, Splash & Pause (feature 003)
+
+The connective tissue: a calm Home that routes into the game, a warm Splash, a
+soft Pause, and the navigation between them. The app now has a real front door.
+
+### Added
+
+- **Navigation host** (`src/ui/shell/`) — `AppShell` hosts a pure bounded-history
+  nav reducer (`nav.ts`), swaps screens with a calm cross-fade (reduced-motion
+  gated), applies the theme app-wide via `data-theme`, and wires the Gameplay
+  launch/resume/pause handoff. Warm placeholders stand in for the not-yet-built
+  screens (Curated/Journal/Settings/Tutorial).
+- **Home** (`HomeScreen.tsx`) — warm shoreline landing: primary Play at the
+  last-used size/difficulty, the Endless size/difficulty picker, seed entry
+  (jump to a friend's board), secondary entries, a "Continue your pool" resume
+  card (shown iff a board is in progress), light stats, and mute + Day/Night
+  toggles. Renders correctly with zero saved data.
+- **Splash** (`SplashScreen.tsx`) — wordmark + crab + a themed pool loader + a
+  rotating flavor tip; dismisses to Home when ready (no progress bar).
+- **Pause** (`PauseOverlay.tsx`) — a soft scrim over the frozen board with
+  Resume / New board / Restart / Settings / Home and a "board is saved" line.
+- **Shell persistence adapter** (`shell-store.ts`) — prefs, last-used play,
+  resume snapshot, and Home stats, all read/written through the 008 `SaveStore`
+  seam (never `localStorage` directly). Provisional Night Tide tokens in
+  `index.css` (final palette owned by 006).
+- **GameplayScreen seam** — `resume` + `onPause` props so the shell controls
+  fresh-vs-restore and opens Pause; board seed + in-flight autosave exposed on
+  the dev hook for deterministic e2e.
+
+### Verified
+
+- 69 new tests (nav reducer, shell-store, Home, ResumeCard, Splash, Pause,
+  toggles/theme, a11y sweep, token guard) — full unit suite **287 green** — plus
+  Playwright e2e for cold-open → Play (SC-001), leave→reopen→resume (SC-002),
+  Pause → Resume / Home-saved (SC-003), and Night persists across reload
+  (SC-004). SC-005 (warm zero-state) covered in unit. typecheck + build pass.
+
 ## 2026-07-24 — Gameplay & board (feature 002)
 
 The playable screen: render a board and deduce it. The full "one more pool" loop.

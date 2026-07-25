@@ -1,11 +1,7 @@
-import { GameplayScreen } from '@/ui'
+import { AppShell } from '@/ui/shell'
 
-// The gameplay board is the app root for now; feature 003 (App Shell) will add
-// Home/routing around it.
+// The app shell (feature 003) is the root: it lands on Home and routes to
+// Gameplay, Splash, Pause, and the secondary screens.
 export default function App() {
-  return (
-    <main className="h-screen w-screen overflow-hidden bg-sand text-ink">
-      <GameplayScreen />
-    </main>
-  )
+  return <AppShell />
 }

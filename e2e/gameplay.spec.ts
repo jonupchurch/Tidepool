@@ -21,7 +21,8 @@ test('play a board to completion → creature + "The tide\'s in." panel', async 
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
 
   await page.goto('/')
-  // The gameplay chrome mounts immediately.
+  // Land on Home, then Play into a board.
+  await page.getByRole('button', { name: /^play$/i }).click()
   await expect(page.getByRole('button', { name: /menu/i })).toBeVisible()
 
   const hook = await readHook(page)

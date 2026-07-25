@@ -2,9 +2,11 @@ import { render, screen } from '@testing-library/react'
 import App from '@/App'
 
 describe('App', () => {
-  it('mounts the gameplay screen chrome', () => {
+  it('boots to the splash (wordmark + crab)', () => {
     render(<App />)
-    // The gameplay TopBar renders immediately (board loads asynchronously).
-    expect(screen.getByRole('button', { name: /menu/i })).toBeInTheDocument()
+    // Splash is the first impression; it dismisses to Home once ready
+    // (the Home reveal is exercised end-to-end by the e2e suite).
+    expect(screen.getByRole('heading', { name: /tidepools/i })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /crab/i })).toBeInTheDocument()
   })
 })

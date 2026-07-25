@@ -4,6 +4,30 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-24 — Audio scaffold: drop-in SFX
+
+Sound plumbing wired to every game event; silent until sound files are added.
+
+### Added
+
+- **Audio engine** (`src/audio/`) — a small Web Audio player (`getAudioEngine`)
+  that decodes each present clip once and plays overlapping-safe SFX through a
+  master gain (mute + volume honored from the 008 settings). Degrades to a silent
+  no-op where Web Audio is unavailable (tests / SSR).
+- **Build-time asset discovery** — sound files are auto-bundled from
+  `src/assets/audio/` via `import.meta.glob` (no manifest, and no runtime 404s for
+  files that don't exist yet). Drop `<id>.mp3` in and it's picked up on the next
+  reload; the folder README maps each id → event.
+- **Triggers** (`GameplayScreen`) — water/rock on a correct mark, `mistake` on a
+  wrong one, `poolComplete`/`boardComplete` on reveals, and `undo`/`redo`. The
+  audio context unlocks on the first pointer gesture (browser autoplay policy).
+
+### Verified
+
+- 6 audio unit tests (gain resolution, catalog, silent-fallback contract) — full
+  suite **407 unit** green; typecheck + build pass; the gameplay e2e (zero console
+  errors) confirms the wired path stays clean with no sound files present.
+
 ## 2026-07-24 — Board visuals: water/stone motifs + clearer mistake feedback
 
 A playtest follow-up: legible tile art and an unmistakable error indicator.

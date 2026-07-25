@@ -8,6 +8,7 @@ import type { BoardParams } from '@/core'
 import { type SaveStore, getSaveStore } from '@/platform'
 import { GameplayScreen } from '@/ui/gameplay/GameplayScreen'
 import { HomeScreen } from './HomeScreen'
+import { PauseOverlay } from './PauseOverlay'
 import { SplashScreen } from './SplashScreen'
 import { boardRequest, freshSeed } from './board-request'
 import { current, initialNav, navReducer } from './nav'
@@ -111,6 +112,21 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
     [],
   )
 
+  // Pause actions — the board stays saved throughout; Resume returns to it.
+  const currentGameParams = entry.launch?.params
+  const onNewBoard = useCallback(
+    () => onPlay(boardRequest(freshSeed(), lastPlay.size, lastPlay.difficulty)),
+    [onPlay, lastPlay],
+  )
+  const onRestart = useCallback(() => {
+    if (currentGameParams) launchGameplay(currentGameParams, false)
+    else onNewBoard()
+  }, [currentGameParams, launchGameplay, onNewBoard])
+  const onPauseSettings = useCallback(() => {
+    setPaused(false)
+    navigate('Settings')
+  }, [navigate])
+
   function renderScreen() {
     switch (screen) {
       case 'Home':
@@ -159,7 +175,15 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-sand text-ink">
       {renderScreen()}
-      {paused && screen === 'Gameplay' && null /* PauseOverlay wired in US4 */}
+      {paused && screen === 'Gameplay' && (
+        <PauseOverlay
+          onResume={() => setPaused(false)}
+          onNewBoard={onNewBoard}
+          onRestart={onRestart}
+          onSettings={onPauseSettings}
+          onHome={goHome}
+        />
+      )}
     </main>
   )
 }

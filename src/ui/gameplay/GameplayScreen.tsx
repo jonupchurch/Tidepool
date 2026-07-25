@@ -13,6 +13,8 @@ import {
   cellInforms,
   creatureDef,
   loadBoard,
+  recordBoardSolved,
+  recordDiscovery,
 } from '@/game'
 import { type BoardRenderer, animate, createBoardRenderer, hexToPixel, makeTimeline } from '@/render'
 import { getSaveStore, loadRecord, saveRecord } from '@/platform'
@@ -151,6 +153,31 @@ export function GameplayScreen({
     [redraw, syncChrome, save, onSolved],
   )
 
+  // Record discoveries + lifetime stats to the journal (005). Forward marks only
+  // (not undo/redo, which would inflate counts on churn): a newly revealed pool
+  // records its creature (first-found seed + count) and a completed board bumps
+  // boards-solved. Persisted via the 008 seam; folded into the dev hook's
+  // `lastSave` so e2e can await a real commit before reload.
+  const recordProgress = useCallback((delta: MarkDelta) => {
+    const s = sessionRef.current
+    if (!s || (delta.revealed.length === 0 && !delta.complete)) return
+    const seed = s.board.params.seed
+    const p = (async () => {
+      for (const id of delta.revealed) {
+        const pool = s.pools.find((pp) => pp.id === id)
+        if (pool) await recordDiscovery(storeRef.current, pool.creatureId, seed)
+      }
+      if (delta.complete) await recordBoardSolved(storeRef.current)
+    })()
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      const hook = (window as unknown as { __TIDEPOOLS__?: { lastSave?: Promise<void> } }).__TIDEPOOLS__
+      if (hook) {
+        hook.lastSave = Promise.all([hook.lastSave ?? Promise.resolve(), p]).then(() => undefined)
+      }
+    }
+    void p
+  }, [])
+
   const mark = useCallback(
     (cellKey: string, kind: MarkKind, px: number, py: number) => {
       const s = sessionRef.current
@@ -164,8 +191,9 @@ export function GameplayScreen({
         window.setTimeout(() => setRipple(null), 550)
       }
       applyDelta(delta)
+      recordProgress(delta)
     },
-    [applyDelta],
+    [applyDelta, recordProgress],
   )
 
   const onPointerDown = useCallback(

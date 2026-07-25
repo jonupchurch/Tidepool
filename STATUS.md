@@ -4,7 +4,7 @@ _Snapshot; updated each work session. Last updated: 2026-07-24._
 
 ## Current phase
 
-**Implementing (001 + 008 + 002 + 003 + 004 complete).** Engine (`src/core/`), persistence seam (`src/platform/`), gameplay board (`src/game/` + `src/render/` + `src/ui/gameplay/`), app shell (`src/ui/shell/`), and board modes (`src/game/board-source/` + `src/content/curated.json` + `src/ui/curated/`) are built, tested, and verified — **353 unit tests + 11 e2e green**, plus a CI oracle gate over the curated pack. Endless is a deterministic stream, Curated is an oracle-blessed pack with persisted completion, and any seed jumps to its exact board. Next in the build order: **005 shore journal** + **006 settings/themes**.
+**Implementing (001 + 008 + 002 + 003 + 004 + 005 complete).** Engine (`src/core/`), persistence seam (`src/platform/`), gameplay board (`src/game/` + `src/render/` + `src/ui/gameplay/`), app shell (`src/ui/shell/`), board modes (`src/game/board-source/` + `src/content/curated.json` + `src/ui/curated/`), and the Shore Journal (shared creature catalog + `src/game/journal*` + `src/ui/journal/`) are built, tested, and verified — **397 unit tests + 13 e2e green**, plus a CI oracle gate over the curated pack. The journal fills as you play (discoveries + gentle lifetime stats persist through 008), and the mockups' creature/seed conflict is resolved by one shared catalog. Next in the build order: **006 settings/themes**.
 
 ## Done
 
@@ -24,13 +24,14 @@ _Snapshot; updated each work session. Last updated: 2026-07-24._
 - **003 App shell implemented + verified** — `src/ui/shell/`: `AppShell` nav host (pure bounded-history reducer, calm cross-fade, `data-theme`), Home (Play + Endless picker + seed entry + resume card + stats + mute/theme toggles), Splash (crab + loader + rotating tips), Pause overlay (Resume/New/Restart/Settings/Home), and the shell-store adapter over 008. 69 tests + 4 new e2e (cold-open Play, resume, pause, theme-persist). All 37 tasks done. Added `resume`/`onPause` seam props to GameplayScreen; provisional Night Tide tokens (006 owns final).
 - **004 Board modes implemented + verified** — `src/game/board-source/` (pure, purity-guarded): `BoardRequest` funnel, deterministic Endless stream (`nextSeed`), total `parseSeedEntry`, curated load/merge/gating. `src/content/curated.json` (8 oracle-blessed seeds) + `CuratedScreen`; CI oracle `scripts/validate-curated.ts` (`npm run validate:curated` + `.github/workflows/ci.yml`). Home reuses `SeedEntry`; shell "Next board" advances the stream; curated completion recorded via GameplayScreen's new `onSolved` seam. 55 tests + 6 e2e. All 37 tasks done (standalone EndlessPicker/ModeSelect consolidated into Home).
 - **All 9 features tasked** — full `tasks.md` for 001–009 (313 tasks total).
+- **005 Shore Journal implemented + verified** — one shared creature catalog (`src/content/creatures.json` + `src/game/creatures.ts`, 12 creatures, also Gameplay's reward mapping), the pure journal model (`journal.ts`: view/filters/discovery branch), the persistence adapter + recorder over 008 (`journal-store.ts`), and the Journal screen (`src/ui/journal/`: grid + filter + gentle stats footer, replaces the shell placeholder). Discoveries + lifetime stats accrue from forward pool completion. 35 tests + 2 e2e. All 32 tasks done.
 
 ## Next — implementation (build order)
 
-- **005 Shore Journal** — creature catalog + persisted discovery records; the Journal screen + lifetime stats. Fills Home's Journal placeholder + resolves the mockups' creature/seed data conflict.
 - **006 Settings & Themes** — settings model + Settings screen + the real Day/Night Tide token system (replaces the provisional Night tokens; adds Auto/OS) + save export/import.
 - Then: 007 tutorial → art/audio → 009 Tauri/Steam.
 - **Deferred seams to revisit:** control/hover/nudge defaults use local values (wire to 006 settings); Night Tide uses provisional tokens (006 owns the final palette); curated gating ships OFF with no runtime toggle (wire one if a curved pack opts in); crab.png is a 1.9 MB unoptimized splash asset (optimize before Tauri).
+- **Creature content is placeholder** — the 12-creature catalog (names/rarities/descriptions in `creatures.json`) is a reasonable starter set; only the crab has real art. Easy to curate/expand later (edit JSON + a couple of catalog-test numbers); real creature art is a later art pass.
 - Self-host fonts (Bricolage + Nunito) before the Tauri build (currently Google Fonts).
 
 ## Blockers

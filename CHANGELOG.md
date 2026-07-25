@@ -4,6 +4,21 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — About screen
+
+### Added
+
+- **About**, off Home alongside Shore journal and How to play: the wordmark, the
+  version, and the credit line "A game by Gravytraining, copyright 2026". The
+  strings live in one place (`ui/about/about.ts`) so nothing else hard-codes
+  them.
+- **A stated version — 1.0.** `package.json` moves off `0.0.0` to match, and a
+  test asserts the two agree on major.minor so they can't quietly drift.
+
+The copyright year is a fixed constant rather than `new Date().getFullYear()`:
+a copyright year marks publication, and a build that changes with the wall clock
+would undercut the determinism this repo otherwise holds to.
+
 ## 2026-07-25 — How to play, live settings + Night Tide, first sounds
 
 ### Added

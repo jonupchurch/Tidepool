@@ -7,7 +7,7 @@ import type { BoardParams, DifficultyTier, SizeTier } from '@/core'
 /** Every top-level view the shell can show. Only Home/Gameplay/Splash are fully
  *  built in this feature; Curated/Journal/Settings/Tutorial render warm
  *  placeholders until their owning features (004/005/006/007) land. */
-export type Screen = 'Splash' | 'Home' | 'Gameplay' | 'Curated' | 'Journal' | 'Tutorial'
+export type Screen = 'Splash' | 'Home' | 'Gameplay' | 'Curated' | 'Journal' | 'Tutorial' | 'About'
 
 /** Day / Night Tide. Token *values* are owned by Settings (006); the shell only
  *  stores the choice and applies it via a `data-theme` attribute. */

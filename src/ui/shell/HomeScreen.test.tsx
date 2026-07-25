@@ -1,7 +1,7 @@
 import { fireEvent, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { HomeScreen, type HomeScreenProps } from './HomeScreen'
-import { renderShell, sampleLastPlay, sampleShellPrefs } from './test-helpers'
+import { renderShell, sampleLastPlay, sampleResumeSnapshot, sampleShellPrefs } from './test-helpers'
 
 function props(over: Partial<HomeScreenProps> = {}): HomeScreenProps {
   return {
@@ -100,5 +100,39 @@ describe('HomeScreen (US1)', () => {
     expect(screen.getByRole('heading', { name: /tidepools/i })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /^play$/i }))
     expect(onPlay.mock.calls[0][0]).toMatchObject({ size: 'Small', difficulty: 'Calm' })
+  })
+})
+
+describe('HomeScreen resume + stats (US2)', () => {
+  it('shows the resume card when a board is in progress, and activates it', () => {
+    const onResume = vi.fn()
+    renderShell(<HomeScreen {...props({ resume: sampleResumeSnapshot, onResume })} />)
+    expect(screen.getByText(/continue your pool/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /continue your pool/i }))
+    expect(onResume).toHaveBeenCalledTimes(1)
+  })
+
+  it('omits the resume card when no board is in progress (not an empty shell)', () => {
+    renderShell(<HomeScreen {...props({ resume: null })} />)
+    expect(screen.queryByText(/continue your pool/i)).not.toBeInTheDocument()
+  })
+
+  it('renders light stats', () => {
+    renderShell(
+      <HomeScreen
+        {...props({
+          stats: { boardsSolved: 12, creaturesFound: 2, totalCreatures: 6, featuredCreature: 'Shore Crab' },
+        })}
+      />,
+    )
+    expect(screen.getByText(/12/)).toBeInTheDocument()
+    expect(screen.getByText(/boards solved/i)).toBeInTheDocument()
+    expect(screen.getByText(/of 6 creatures/i)).toBeInTheDocument()
+    expect(screen.getByText(/newest find: shore crab/i)).toBeInTheDocument()
+  })
+
+  it('shows a warm zero-state when nothing has been found yet', () => {
+    renderShell(<HomeScreen {...props()} />)
+    expect(screen.getByText(/your shore awaits/i)).toBeInTheDocument()
   })
 })

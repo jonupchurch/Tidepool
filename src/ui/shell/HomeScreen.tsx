@@ -5,6 +5,7 @@
 import { useEffect, useState } from 'react'
 import type { BoardParams, DifficultyTier, SizeTier } from '@/core'
 import { DIFFICULTY_TIERS, SIZE_TIERS } from '@/core'
+import { ResumeCard } from './ResumeCard'
 import { boardRequest, freshSeed } from './board-request'
 import type { HomeStats, LastPlay, ResumeSnapshot, Screen, ShellPrefs } from './types'
 
@@ -29,7 +30,7 @@ const SECONDARY: readonly { label: string; screen: Screen }[] = [
   { label: 'How to play', screen: 'Tutorial' },
 ]
 
-export function HomeScreen({ lastPlay, onPlay, onNavigate }: HomeScreenProps) {
+export function HomeScreen({ lastPlay, resume, stats, onPlay, onResume, onNavigate }: HomeScreenProps) {
   const [size, setSize] = useState<SizeTier>(lastPlay.size)
   const [difficulty, setDifficulty] = useState<DifficultyTier>(lastPlay.difficulty)
   const [seed, setSeed] = useState('')
@@ -53,6 +54,9 @@ export function HomeScreen({ lastPlay, onPlay, onNavigate }: HomeScreenProps) {
           <h1 className="font-display text-5xl text-deep-pool">Tidepools</h1>
           <p className="mt-2 text-tide">Read the shoreline. Fill the pools.</p>
         </div>
+
+        {/* Continue your pool — shown only when a board is in progress (US2). */}
+        {resume && <ResumeCard snapshot={resume} onResume={onResume} />}
 
         {/* Primary Play — drops into a board at the current selection. */}
         <button
@@ -109,6 +113,25 @@ export function HomeScreen({ lastPlay, onPlay, onNavigate }: HomeScreenProps) {
               Jump in
             </button>
           </div>
+        </section>
+
+        {/* Light stats — warm even at zero (US2). */}
+        <section aria-label="Your shore" className="w-full text-sm text-tide">
+          <div className="flex justify-center gap-6">
+            <span>
+              <span className="font-display text-2xl text-deep-pool">{stats.boardsSolved}</span>{' '}
+              boards solved
+            </span>
+            <span>
+              <span className="font-display text-2xl text-deep-pool">{stats.creaturesFound}</span> of{' '}
+              {stats.totalCreatures} creatures
+            </span>
+          </div>
+          <p className="mt-1 text-xs text-rock">
+            {stats.featuredCreature
+              ? `Newest find: ${stats.featuredCreature}`
+              : 'Your shore awaits — fill your first pool.'}
+          </p>
         </section>
 
         {/* Secondary entries. */}

@@ -107,7 +107,15 @@ export function GameplayScreen({
 
   const save = useCallback(() => {
     const s = sessionRef.current
-    if (s) void saveRecord(storeRef.current, 'inProgressBoard', s.serialize())
+    if (!s) return
+    const p = saveRecord(storeRef.current, 'inProgressBoard', s.serialize())
+    // Dev-only: expose the in-flight persist so e2e can await a real commit
+    // before reloading (the write resolves after IndexedDB commits).
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      const hook = (window as unknown as { __TIDEPOOLS__?: { lastSave?: Promise<void> } }).__TIDEPOOLS__
+      if (hook) hook.lastSave = p
+    }
+    void p
   }, [])
 
   const applyDelta = useCallback(
@@ -228,6 +236,8 @@ export function GameplayScreen({
         }
         ;(window as unknown as { __TIDEPOOLS__?: unknown }).__TIDEPOOLS__ = {
           ready: true,
+          seed: board.params.seed,
+          lastSave: Promise.resolve(),
           centres,
           solution,
           progress: () => {

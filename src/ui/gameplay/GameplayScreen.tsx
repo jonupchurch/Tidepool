@@ -203,6 +203,34 @@ export function GameplayScreen({ params, onHome, onJournal, nextParams }: Gamepl
       }
       renderer.resize(container.clientWidth || 800, container.clientHeight || 600)
       rendererRef.current = renderer
+
+      // Dev-only test hook (stripped from production builds): lets the e2e drive
+      // the board through real pointer clicks by exposing cell centres + the
+      // solution for this fixed-seed board.
+      if (import.meta.env.DEV && typeof window !== 'undefined') {
+        const centres: Record<string, { x: number; y: number }> = {}
+        const solution: Record<string, MarkKind> = {}
+        for (const [k, cell] of board.cells) {
+          centres[k] = hexToPixel(renderer.layout, cell.coord)
+          if (!cell.given) solution[k] = cell.state
+        }
+        ;(window as unknown as { __TIDEPOOLS__?: unknown }).__TIDEPOOLS__ = {
+          ready: true,
+          centres,
+          solution,
+          progress: () => {
+            let correct = 0
+            let total = 0
+            for (const [k, cell] of board.cells) {
+              if (cell.given) continue
+              total++
+              if (session.markAt(k) === cell.state) correct++
+            }
+            return { complete: session.isComplete, correct, total }
+          },
+        }
+      }
+
       setLabel(`${board.params.seed} · ${board.params.size} · ${board.params.difficulty}`)
       setTotalPools(session.pools.length)
       hoveredRef.current = null

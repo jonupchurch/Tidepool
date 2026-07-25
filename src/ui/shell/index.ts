@@ -1,0 +1,13 @@
+// shell — the app shell: navigation host + Home / Splash / Pause surfaces.
+export { AppShell } from './AppShell'
+export { HomeScreen } from './HomeScreen'
+export type { HomeScreenProps } from './HomeScreen'
+export { SplashScreen } from './SplashScreen'
+export type { SplashScreenProps } from './SplashScreen'
+export { PauseOverlay } from './PauseOverlay'
+export type { PauseOverlayProps } from './PauseOverlay'
+export { ResumeCard } from './ResumeCard'
+export type { ResumeCardProps } from './ResumeCard'
+export { navReducer, current } from './nav'
+export type { NavState, NavAction, NavEntry } from './nav'
+export type { Screen, Theme, ShellPrefs, LastPlay, ResumeSnapshot, HomeStats, GameplayLaunch } from './types'

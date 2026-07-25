@@ -53,6 +53,8 @@ export interface GameplayScreenProps {
   resume?: boolean
   onHome?: () => void
   onJournal?: () => void
+  /** Return to the curated map — the shell supplies it only for curated boards. */
+  onCurated?: () => void
   /** Open the shell Pause overlay (003 seam); falls back to onHome. */
   onPause?: () => void
   /** Fires when the board is solved, with the earned (largest-pool) creature id
@@ -74,6 +76,7 @@ export function GameplayScreen({
   resume = true,
   onHome,
   onJournal,
+  onCurated,
   onPause,
   onSolved,
   nextParams,
@@ -541,6 +544,7 @@ export function GameplayScreen({
             onNext={onNext}
             onJournal={() => onJournal?.()}
             onHome={() => onHome?.()}
+            onCurated={onCurated}
           />
         )}
         </div>

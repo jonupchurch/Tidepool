@@ -4,6 +4,39 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — Achievements (009 US3, the half that isn't blocked)
+
+### Added
+
+- **29 achievements** (`game/achievements.ts`) over data the game already saves —
+  no new tracking. First steps, one per creature plus the full journal, one per
+  curated group plus the whole coastline and two flawless awards, four volume
+  tiers, and a collector.
+- **`npm run check:achievements`** prints the catalogue as API name → display
+  name → description. Steamworks has no bulk import; every achievement is typed
+  into the partner site by hand, and this is the list to work from.
+
+### Why it's a pure function, not an event
+
+`evaluateAchievements(save)` recomputes from scratch rather than firing on the
+moment something happens. That buys three things: a player who earns something
+with Steam unreachable still gets it next launch; an achievement added later
+unlocks retroactively for anyone who already met the condition, with no backfill;
+and Steam reduces to a thin adapter — `newlyEarned(save, alreadyPushed)` at one
+call site.
+
+### Two traps it's tested against
+
+An `every` over an empty list is `true`, so a mis-specified achievement would
+hand itself out on first launch — a test asserts a brand-new player has earned
+exactly nothing. And curated entries solved before mistake-tracking existed carry
+no `errors` field: those are *not* counted as flawless, because we don't know,
+and awarding "without a single mistake" to a run that may have been full of them
+is a lie the player can spot.
+
+Steam wiring itself stays blocked on the App ID — it can't be written or tested
+without one.
+
 ## 2026-07-25 — The game is "Tidepool", singular
 
 ### Changed

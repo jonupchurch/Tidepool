@@ -33,3 +33,22 @@ describe('CuratedScreen (US2)', () => {
     )
   })
 })
+
+describe('CuratedScreen gating (US4)', () => {
+  const GATING = { enabled: true, unlockAfter: 1 }
+
+  it('shows a soft lock on gated entries and makes them non-selectable', () => {
+    const onSelect = vi.fn()
+    const rows = manifestRows(sampleManifest, {}, GATING) // kelp-3 locked
+    render(<CuratedScreen rows={rows} onSelect={onSelect} onBack={vi.fn()} />)
+    expect(screen.getByText(/unlock soon/i)).toBeInTheDocument()
+    // Only the two open entries expose a Play action; the locked one does not.
+    expect(screen.getAllByRole('button', { name: /^play$/i })).toHaveLength(2)
+  })
+
+  it('unlocks the gated entry once its prerequisite is solved', () => {
+    const rows = manifestRows(sampleManifest, { 'cove-1': { earnedCreatureId: 'limpet' } }, GATING)
+    render(<CuratedScreen rows={rows} onSelect={vi.fn()} onBack={vi.fn()} />)
+    expect(screen.queryByText(/unlock soon/i)).not.toBeInTheDocument()
+  })
+})

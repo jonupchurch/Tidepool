@@ -1,8 +1,8 @@
-// TopBar — board label/seed, pool progress, pause + undo/redo controls (FR-009).
+// TopBar — board label/seed, remaining pools + stones, pause + undo/redo (FR-009).
 interface TopBarProps {
   label: string
-  poolsFound: number
-  totalPools: number
+  poolsRemaining: number
+  stonesRemaining: number
   canUndo: boolean
   canRedo: boolean
   onUndo: () => void
@@ -12,8 +12,8 @@ interface TopBarProps {
 
 export function TopBar({
   label,
-  poolsFound,
-  totalPools,
+  poolsRemaining,
+  stonesRemaining,
   canUndo,
   canRedo,
   onUndo,
@@ -31,8 +31,13 @@ export function TopBar({
         ☰
       </button>
       <div className="font-display text-deep-pool truncate">{label}</div>
-      <div className="ml-auto text-sm text-tide tabular-nums" aria-live="polite">
-        {poolsFound}/{totalPools} pools
+      <div className="ml-auto flex items-center gap-3 text-sm tabular-nums" aria-live="polite">
+        <span className="text-tide" title="Water pools left to fill">
+          🌊 {poolsRemaining} {poolsRemaining === 1 ? 'pool' : 'pools'} left
+        </span>
+        <span className="text-rock" title="Stones left to place">
+          🪨 {stonesRemaining} {stonesRemaining === 1 ? 'stone' : 'stones'} left
+        </span>
       </div>
       <div className="flex gap-1">
         <button

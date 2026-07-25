@@ -4,6 +4,36 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — It's a desktop app (009 US1)
+
+### Added
+
+- **A native Windows build.** `npm run desktop:build` produces `tidepools.exe`
+  (4.8 MB) plus NSIS and MSI installers (2.9 / 3.5 MB). Tauri wraps the existing
+  web build — no game code moved, `src/` is still the only source of truth.
+- **An app icon**, derived from the crab (the game's mascot, already on the
+  splash) by [`scripts/make-icons.ts`](scripts/make-icons.ts). The crop centres
+  the crab's own bounding box so the subject fills the frame and neither claw
+  clips — the full illustration turns to mush at the 16px a taskbar renders.
+  Also fixes the web build having no favicon at all.
+- **A strict CSP** (`default-src 'self'`), which the self-contained build can now
+  afford. Verified not to block fonts, audio, images, or the generator worker.
+- **Version parity tests.** The version now lives in four places — `about.ts`,
+  `package.json`, `tauri.conf.json`, `Cargo.toml`. An installer reading 0.1.0
+  while the About screen reads 1.0.1 is the kind of thing that ships unnoticed,
+  so the suite now fails instead. The Tauri placeholder identifier is guarded
+  too: `com.tauri.dev` decides where saves live and would collide with every
+  other unconfigured Tauri app on a player's machine.
+
+Verified by attaching to the running desktop app over the WebView2 debugging
+protocol: real board rendered (1056×784 canvas), both self-hosted fonts loaded,
+Tauri bridge present, console and network log clean.
+
+Two things worth knowing for the next session: the release profile is tuned for
+size (`opt-level = "s"`, LTO, stripped), and rustup must be on the **MSVC**
+toolchain — `windows-gnu` fails at link time against WebView2 with unhelpful
+errors.
+
 ## 2026-07-25 — Self-hosted fonts (009 US4)
 
 ### Fixed

@@ -11,7 +11,13 @@ export {
   toDifficultyTier,
   toSizeTier,
 } from './request'
-export { nextSeed, createEndlessStream, loadEndlessPrefs, saveEndlessPrefs } from './endless'
+export {
+  nextSeed,
+  createEndlessStream,
+  seedAtIndex,
+  loadEndlessPrefs,
+  saveEndlessPrefs,
+} from './endless'
 export type { EndlessStream } from './endless'
 export { parseSeedEntry } from './seed-entry'
 export type { SeedEntryResult } from './seed-entry'

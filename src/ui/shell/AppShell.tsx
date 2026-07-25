@@ -5,6 +5,7 @@
 // theme token *values* live in Settings (006).
 import { useCallback, useEffect, useReducer, useState } from 'react'
 import type { BoardParams } from '@/core'
+import { nextSeed } from '@/game/board-source'
 import { type SaveStore, getSaveStore } from '@/platform'
 import { GameplayScreen } from '@/ui/gameplay/GameplayScreen'
 import { HomeScreen } from './HomeScreen'
@@ -107,8 +108,10 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
     launchGameplay(boardRequest(resume.seed, resume.size, resume.difficulty), true)
   }, [resume, launchGameplay])
 
+  // "Next board" advances the deterministic Endless stream (004); the same seed
+  // always yields the same next board, so a stream is reproducible/shareable.
   const nextBoard = useCallback(
-    (cur: BoardParams): BoardParams => ({ ...cur, seed: freshSeed() }),
+    (cur: BoardParams): BoardParams => ({ ...cur, seed: nextSeed(cur.seed) }),
     [],
   )
 

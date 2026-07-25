@@ -57,21 +57,23 @@ export function hitTest(
   return present.has(k) ? k : null
 }
 
-/** Compute a layout that fits `present` centred in a `width`×`height` viewport. */
+/**
+ * Compute a layout that fits `present` centred in a `width`×`height` viewport.
+ * `extra` holds additional (possibly fractional) axial points that must also
+ * stay on-canvas — the margin line totals, which sit outside the board.
+ */
 export function fitLayout(
   present: Iterable<string>,
   width: number,
   height: number,
   padding = 24,
+  extra: Iterable<Axial> = [],
 ): HexLayout {
   let minX = Infinity
   let maxX = -Infinity
   let minY = Infinity
   let maxY = -Infinity
-  for (const k of present) {
-    const i = k.indexOf(',')
-    const q = Number(k.slice(0, i))
-    const r = Number(k.slice(i + 1))
+  const include = (q: number, r: number): void => {
     const x = SQRT3 * (q + r / 2)
     const y = 1.5 * r
     if (x < minX) minX = x
@@ -79,6 +81,11 @@ export function fitLayout(
     if (y < minY) minY = y
     if (y > maxY) maxY = y
   }
+  for (const k of present) {
+    const i = k.indexOf(',')
+    include(Number(k.slice(0, i)), Number(k.slice(i + 1)))
+  }
+  for (const a of extra) include(a.q, a.r)
   if (!Number.isFinite(minX)) return { size: 1, originX: width / 2, originY: height / 2 }
 
   // Board extent in "unit" hex coords, plus one hex of margin on each axis.

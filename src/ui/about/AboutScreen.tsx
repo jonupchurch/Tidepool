@@ -16,7 +16,7 @@ export function AboutScreen({ onBack }: AboutScreenProps) {
         </header>
 
         <section className="rounded-2xl bg-foam p-6 text-center">
-          <p className="font-display text-3xl text-deep-pool">Tidepools</p>
+          <p className="font-display text-3xl text-deep-pool">Tidepool</p>
           <p className="mt-1 text-tide">Read the shoreline. Fill the pools.</p>
           <p className="mt-4 text-sm tabular-nums text-rock">Version {VERSION}</p>
         </section>

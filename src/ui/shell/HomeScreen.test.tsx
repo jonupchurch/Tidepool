@@ -97,7 +97,7 @@ describe('HomeScreen (US1)', () => {
         })}
       />,
     )
-    expect(screen.getByRole('heading', { name: /tidepools/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /tidepool/i })).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /^play$/i }))
     expect(onPlay.mock.calls[0][0]).toMatchObject({ size: 'Small', difficulty: 'Calm' })
   })

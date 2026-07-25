@@ -81,7 +81,7 @@ export function HomeScreen({
 
       <div className="flex w-full max-w-md flex-col items-center gap-6 px-6 py-10 text-center">
         <div>
-          <h1 className="font-display text-5xl text-deep-pool">Tidepools</h1>
+          <h1 className="font-display text-5xl text-deep-pool">Tidepool</h1>
           <p className="mt-2 text-tide">Read the shoreline. Fill the pools.</p>
         </div>
 

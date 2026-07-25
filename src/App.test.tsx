@@ -6,7 +6,7 @@ describe('App', () => {
     render(<App />)
     // Splash is the first impression; it dismisses to Home once ready
     // (the Home reveal is exercised end-to-end by the e2e suite).
-    expect(screen.getByRole('heading', { name: /tidepools/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /tidepool/i })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /crab/i })).toBeInTheDocument()
   })
 })

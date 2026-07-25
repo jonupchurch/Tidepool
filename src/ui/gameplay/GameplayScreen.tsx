@@ -89,8 +89,7 @@ export function GameplayScreen({
 
   const [loading, setLoading] = useState(true)
   const [label, setLabel] = useState('')
-  const [poolsFound, setPoolsFound] = useState(0)
-  const [totalPools, setTotalPools] = useState(0)
+  const [waterLeft, setWaterLeft] = useState(0)
   const [stonesLeft, setStonesLeft] = useState(0)
   const [complete, setComplete] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -117,7 +116,7 @@ export function GameplayScreen({
   const syncChrome = useCallback(() => {
     const s = sessionRef.current
     if (!s) return
-    setPoolsFound(s.revealed.size)
+    setWaterLeft(s.waterRemaining)
     setStonesLeft(s.stonesRemaining)
     setMistakeCount(s.mistakeCells().size)
     setCanUndo(s.canUndo())
@@ -280,7 +279,6 @@ export function GameplayScreen({
       } catch {
         // No 2D context (e.g. jsdom / very old browsers) — chrome still works.
         setLabel(`${board.params.seed} · ${board.params.size} · ${board.params.difficulty}`)
-        setTotalPools(session.pools.length)
         syncChrome()
         setLoading(false)
         return
@@ -318,7 +316,6 @@ export function GameplayScreen({
       }
 
       setLabel(`${board.params.seed} · ${board.params.size} · ${board.params.difficulty}`)
-      setTotalPools(session.pools.length)
       hoveredRef.current = null
       highlightRef.current = new Set()
       setComplete(false)
@@ -411,7 +408,7 @@ export function GameplayScreen({
     <div className="flex flex-col h-full w-full bg-sand">
       <TopBar
         label={label}
-        poolsRemaining={totalPools - poolsFound}
+        waterRemaining={waterLeft}
         stonesRemaining={stonesLeft}
         mistakeCount={mistakeCount}
         canUndo={canUndo}

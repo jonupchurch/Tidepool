@@ -1,3 +1,7 @@
 // ui — React screens/chrome (Home, Gameplay shell, Settings, Journal, ...)
 // styled with Tailwind design tokens.
-export {}
+export { GameplayScreen } from './gameplay/GameplayScreen'
+export type { GameplayScreenProps } from './gameplay/GameplayScreen'
+export { TopBar } from './gameplay/TopBar'
+export { CompletePanel } from './gameplay/CompletePanel'
+export { PoolToast } from './gameplay/PoolToast'

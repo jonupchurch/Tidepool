@@ -2,10 +2,11 @@ import { render, screen } from '@testing-library/react'
 import App from '@/App'
 
 describe('App', () => {
-  it('boots to the Home shell', () => {
+  it('boots to the splash (wordmark + crab)', () => {
     render(<App />)
-    // Home is the default screen: the wordmark + primary Play action render.
+    // Splash is the first impression; it dismisses to Home once ready
+    // (the Home reveal is exercised end-to-end by the e2e suite).
     expect(screen.getByRole('heading', { name: /tidepools/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument()
+    expect(screen.getByRole('img', { name: /crab/i })).toBeInTheDocument()
   })
 })

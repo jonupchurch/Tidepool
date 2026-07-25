@@ -8,6 +8,7 @@ import type { BoardParams } from '@/core'
 import { type SaveStore, getSaveStore } from '@/platform'
 import { GameplayScreen } from '@/ui/gameplay/GameplayScreen'
 import { HomeScreen } from './HomeScreen'
+import { SplashScreen } from './SplashScreen'
 import { boardRequest, freshSeed } from './board-request'
 import { current, initialNav, navReducer } from './nav'
 import {
@@ -30,17 +31,18 @@ const DEFAULT_STATS: HomeStats = {
 export interface AppShellProps {
   /** Test seam — defaults to the process-wide SaveStore. */
   store?: SaveStore
-  /** Test seam — the screen to start on (default Home; Splash arrives in US3). */
+  /** Test seam — the screen to start on (default Splash → dismisses to Home). */
   initialScreen?: Screen
 }
 
-export function AppShell({ store = getSaveStore(), initialScreen = 'Home' }: AppShellProps = {}) {
+export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: AppShellProps = {}) {
   const [nav, dispatch] = useReducer(navReducer, initialScreen, initialNav)
   const [prefs, setPrefs] = useState<ShellPrefs>({ theme: 'Day', muted: false })
   const [lastPlay, setLastPlay] = useState<LastPlay>({ size: 'Small', difficulty: 'Calm' })
   const [resume, setResume] = useState<ResumeSnapshot | null>(null)
   const [stats, setStats] = useState<HomeStats>(DEFAULT_STATS)
   const [paused, setPaused] = useState(false)
+  const [booted, setBooted] = useState(false)
   const [launchKey, setLaunchKey] = useState(0)
 
   const entry = current(nav)
@@ -51,11 +53,12 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Home' }: App
     document.documentElement.setAttribute('data-theme', prefs.theme === 'Night' ? 'night' : 'day')
   }, [prefs.theme])
 
-  // Boot: load persisted prefs + last-used play request.
+  // Boot: load persisted prefs + last-used play request, then release the splash.
   useEffect(() => {
     void (async () => {
       setPrefs(await loadShellPrefs(store))
       setLastPlay(await getLastPlay(store))
+      setBooted(true)
     })()
   }, [store])
 
@@ -144,7 +147,12 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Home' }: App
       case 'Tutorial':
         return <Placeholder title="How to play" blurb="A gentle walkthrough is coming." onBack={goHome} />
       case 'Splash':
-        return <Placeholder title="Tidepools" blurb="Low tide is coming in…" onBack={goHome} />
+        return (
+          <SplashScreen
+            ready={booted}
+            onDone={() => dispatch({ type: 'reset', entry: { screen: 'Home' } })}
+          />
+        )
     }
   }
 

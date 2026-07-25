@@ -4,6 +4,29 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — Self-hosted fonts (009 US4)
+
+### Fixed
+
+- **The app no longer needs the network to look like itself.** Bricolage and
+  Nunito loaded from the Google Fonts CDN, so a downloaded or Steam build fell
+  back to system fonts the moment it was offline — and the whole game is typeset
+  in those two. Both are now bundled (`src/assets/fonts/`, `@font-face` in
+  `index.css`), and `index.html` makes no external requests at all.
+
+### Added
+
+- **A guard against reintroducing it** (`src/offline-assets.test.ts`): asserts
+  the page and stylesheet reference nothing remote, that every font the CSS asks
+  for exists on disk, and that the OFL licence texts ship alongside. Pasting a
+  CDN `<link>` back in now fails the suite instead of only showing up on a
+  player's offline machine.
+
+Both families are variable fonts, so one file per subset spans every weight the
+design uses — 182 KB for all four, latin + latin-ext only. Verified against the
+production build with every non-local request aborted: zero external requests,
+both families loaded, headings in Bricolage and body in Nunito.
+
 ## 2026-07-25 — 1.0.1: the mistake sound
 
 ### Added

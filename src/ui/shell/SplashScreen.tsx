@@ -41,7 +41,7 @@ export function SplashScreen({ onDone, ready = true, minDurationMs = 1100 }: Spl
       className="grid h-full w-full place-items-center bg-sand text-ink"
     >
       <div className="flex flex-col items-center gap-6 px-6 text-center">
-        <img src="/crab.png" alt="A friendly shore crab" className="h-24 w-24 object-contain" />
+        <img src="/img/crab.png" alt="A friendly shore crab" className="h-24 w-24 object-contain" />
         <div>
           <h1 className="font-display text-5xl text-deep-pool">Tidepools</h1>
           <p className="mt-1 text-tide">A deduction game at low tide</p>

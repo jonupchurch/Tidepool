@@ -4,6 +4,40 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — Creature art: all 12 portraits, discovered by convention
+
+### Added
+
+- **All 12 creature portraits.** The catalog's art is complete.
+- **Art is found by convention** — `public/img/<id>.png`, matching how the audio
+  scaffold discovers `<id>.mp3`. Nothing in `creatures.json` declares art, so a
+  new portrait needs no catalog edit; a file that isn't there yet fails to load
+  and falls back to the styled placeholder, so partial art is never a broken
+  image (FR-008).
+- **`npm run check:art`** — which creatures have a portrait, which are still
+  placeholders, and which exceed the desktop-build budget. Reads PNG dimensions
+  from the IHDR chunk, so it needs no image library.
+- **Build-time portrait optimization.** Portraits are exported at full
+  resolution (~1.5–2 MB) but render at 64px in the journal and 96px on the
+  splash. A Vite plugin rewrites only the copies emitted into `dist/`, scaling
+  the longest edge to 512px and recompressing — **20.9 MB → 1.4 MB**, verified
+  against the production build with no visible difference. Source art is left
+  exactly as exported. `sharp` loads lazily and a failure only warns: an
+  optimization must never hard-fail a build.
+
+### Notes
+
+- `hermitcrab.png` was renamed to `hermit.png`. Art matches on creature **id**,
+  and ids are baked into saved data (journal keys, curated `earnedCreatureId`),
+  so the file moves rather than the id.
+- **Rarity labels don't match observed frequency.** Sampling 288 generated
+  boards: Nautilus ("Legendary", 15+ cells) appears on **74.7%** of boards
+  because nearly every board has one sprawling pool, while Sea Urchin ("Rare",
+  exactly 9) appears on **9.7%** — the true rarest in the game. The reward
+  mapping is just `minSize` thresholds in `creatures.json`, so retuning is
+  cheap, but it would reshuffle which creature existing saves earned. Deferred,
+  not forgotten.
+
 ## 2026-07-25 — Correct cells lock; back to the map on completion
 
 ### Added

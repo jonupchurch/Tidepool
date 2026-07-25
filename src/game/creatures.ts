@@ -16,10 +16,16 @@ export interface CreatureDef {
   description: string
   /** smallest pool size that yields this creature */
   minSize: number
-  /** whether finished art exists (others render as styled placeholders for now) */
-  hasArt: boolean
-  /** servable art URL when `hasArt` (public/ asset); absent otherwise */
-  art?: string
+}
+
+/**
+ * Where a creature's portrait lives, by convention: `public/img/<id>.png`.
+ * Nothing in the catalog declares art — drop a file in and it appears; until
+ * then the card falls back to a styled placeholder (FR-008), so a missing
+ * portrait is never a broken image.
+ */
+export function creatureArtUrl(id: string): string {
+  return `/img/${id}.png`
 }
 
 /** Ordered by minSize ascending — bigger pools yield rarer creatures. */

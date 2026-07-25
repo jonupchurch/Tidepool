@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "validate:curated": "vite-node scripts/validate-curated.ts"
+    "validate:curated": "vite-node scripts/validate-curated.ts",
+    "check:art": "vite-node scripts/check-art.ts"
   },
   "dependencies": {
     "idb-keyval": "^6.3.0",
@@ -31,6 +32,7 @@
     "@vitejs/plugin-react": "^6.0.4",
     "fake-indexeddb": "^6.2.5",
     "jsdom": "^29.1.1",
+    "sharp": "^0.35.3",
     "tailwindcss": "^4.3.3",
     "typescript": "^7.0.2",
     "vite": "^8.1.5",

@@ -2,7 +2,8 @@
 // placeholder when art is missing, FR-008) + name + rarity + warm description +
 // gentle discovery detail. Unfound → a faint silhouette labelled "not yet found."
 // Theme tokens only (no hardcoded hex).
-import type { CreatureView } from '@/game'
+import { useState } from 'react'
+import { type CreatureView, creatureArtUrl } from '@/game'
 
 const RARITY_CLASS: Record<string, string> = {
   Common: 'text-rock',
@@ -33,7 +34,7 @@ export function CreatureCard({ card }: { card: CreatureView }) {
 
   return (
     <div className="flex flex-col items-center rounded-2xl border border-driftwood bg-foam p-4 text-center shadow-sm">
-      <CreatureArt name={def.name} art={def.art} />
+      <CreatureArt name={def.name} id={def.id} />
       <h3 className="mt-2 font-display text-deep-pool">{def.name}</h3>
       <p className={`text-xs uppercase tracking-wide ${RARITY_CLASS[def.rarity] ?? 'text-rock'}`}>
         {def.rarity}
@@ -47,12 +48,30 @@ export function CreatureCard({ card }: { card: CreatureView }) {
   )
 }
 
-/** Real art when present; otherwise a warm styled placeholder (never a broken img). */
-function CreatureArt({ name, art }: { name: string; art?: string }) {
-  if (art) return <img src={art} alt={name} className="h-16 w-16 object-contain" />
+/**
+ * Real art when the conventional file exists, otherwise a warm styled
+ * placeholder (never a broken img, FR-008). Art is discovered by convention —
+ * `public/img/<id>.png` — so a new portrait needs no catalog edit; if the file
+ * isn't there yet, the load fails and we fall back.
+ */
+function CreatureArt({ name, id }: { name: string; id: string }) {
+  const [failed, setFailed] = useState(false)
+  if (failed) {
+    return (
+      <div
+        className="grid h-16 w-16 place-items-center rounded-full bg-tide-fill text-3xl"
+        aria-hidden
+      >
+        🐚
+      </div>
+    )
+  }
   return (
-    <div className="grid h-16 w-16 place-items-center rounded-full bg-tide-fill text-3xl" aria-hidden>
-      🐚
-    </div>
+    <img
+      src={creatureArtUrl(id)}
+      alt={name}
+      onError={() => setFailed(true)}
+      className="h-16 w-16 object-contain"
+    />
   )
 }

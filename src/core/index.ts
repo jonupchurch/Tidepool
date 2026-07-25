@@ -20,7 +20,19 @@ export type {
   Technique,
 } from './board'
 export { DIFFICULTY_TIERS, SIZE_TIERS } from './board'
-export type { Axial } from './hex'
+export type { Axial, Line } from './hex'
+
+// Hex geometry (public — consumed by render layout, pool enumeration, clue
+// highlighting; downstream features reuse this rather than re-deriving geometry)
+export {
+  DIRECTIONS,
+  key,
+  lineIndex,
+  linesOf,
+  neighbors,
+  parseKey,
+  presentNeighbors,
+} from './hex'
 
 // Generation
 export { generateBoard } from './generate'

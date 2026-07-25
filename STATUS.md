@@ -4,7 +4,7 @@ _Snapshot; updated each work session. Last updated: 2026-07-24._
 
 ## Current phase
 
-**Implementing (001 + 008 complete).** Engine (`src/core/`) and the persistence/platform seam (`src/platform/`) are both built, tested, and verified — **159 tests green**. All 9 features are specced + planned + tasked. Next in the build order: **002 gameplay board.**
+**Implementing (001 + 008 + 002 complete).** Engine (`src/core/`), the persistence seam (`src/platform/`), and the gameplay board (`src/game/` + `src/render/` + `src/ui/gameplay/`) are built, tested, and verified — **218 unit tests + 2 e2e green**. The app now mounts a fully playable board. Next in the build order: **003 app shell** (Home/routing around the game).
 
 ## Done
 
@@ -20,13 +20,14 @@ _Snapshot; updated each work session. Last updated: 2026-07-24._
 - **Specced + planned all 9 features (001–009)** via Spec-Kit (engine got specify→clarify→plan; the rest specify→plan). Feature map + build order in `PLAN.md`.
 - **001 Engine implemented + verified** — `src/core/`: RNG → hex geometry → board/clues → technique solver + uniqueness oracle → difficulty rater → clue reducer → generation pipeline → serialization + public API. 106 unit/contract tests green. All 36 tasks done.
 - **008 Persistence & platform seam implemented + verified** — `src/platform/`: `SaveStore` interface + typed accessors, versioned schemas, web (localStorage + IndexedDB) + in-memory backends, migration, export/import, backend selection. 53 tests green incl. the SC-002 no-leak scan. All 31 tasks done.
+- **002 Gameplay board implemented + verified** — `src/game/` (PlaySession, pools, creatures, highlight, off-thread loader), `src/render/` (Canvas renderer + layout/hit-test), `src/ui/gameplay/` (screen + chrome). Marks, pool reward, board completion, undo/redo, autosave/restore, next-board, comfort aids. 79 tests + a chromium golden-path e2e. All 37 tasks done. Exposed engine hex adjacency from `core/index.ts`.
 - **All 9 features tasked** — full `tasks.md` for 001–009 (313 tasks total).
 
 ## Next — implementation (build order)
 
-- **002 Gameplay board** — the play session over the engine (marks, undo/redo, pool/board completion), Canvas 2D renderer, off-thread generation. Consumes the 008 `SaveStore` for autosave/resume. Tasks ready in `specs/002-*/tasks.md`.
-- Then: 003/004 shell + modes → 005/006 journal + settings → 007 tutorial → art/audio → 009 Tauri/Steam.
-- **When starting 002:** expose the engine's hex neighbour/pool helpers from `core/index.ts` (flagged during tasking — gameplay needs adjacency for pool enumeration).
+- **003 App Shell** — Home/Splash/Pause + routing around the game; resume-in-progress entry; consumes 008 (shell prefs) + 002 (launch/resume). Then 004 board modes.
+- Then: 005/006 journal + settings → 007 tutorial → art/audio → 009 Tauri/Steam.
+- **Deferred seams to revisit:** GameplayScreen's "Next board" uses a placeholder seed-bump (wire to 004 board source); control/hover/nudge defaults use local values (wire to 006 settings when built).
 - Self-host fonts (Bricolage + Nunito) before the Tauri build (currently Google Fonts).
 
 ## Blockers

@@ -4,6 +4,28 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — 1.0.1: the mistake sound
+
+### Added
+
+- **`mistake.mp3`** — the third and final sound. Two-sound coverage (water, rock)
+  was a deliberate stop; this one earns its place because it's the only cue that
+  reaches the player without making them look away from where they just clicked.
+  The remaining four ids stay wired and silent by decision, not by omission.
+
+### Fixed
+
+- The clip arrived named `error.mp3`, which is not an event id — it would have
+  been bundled and never played. `npm run check:audio` flagged it; renamed to
+  match the id rather than renaming the id, since `mistake` is the name the
+  trigger, the tests, and the rules text all use.
+
+### Changed
+
+- **Version 1.0.1**, in `about.ts` and `package.json`. The About screen now shows
+  the full semver, so the two agree exactly instead of on major.minor — a prefix
+  comparison would have quietly accepted 1.1 against 1.10.
+
 ## 2026-07-25 — About screen
 
 ### Added

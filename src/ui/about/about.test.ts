@@ -12,14 +12,14 @@ describe('about constants', () => {
   })
 
   it('states a version', () => {
-    expect(VERSION).toMatch(/^\d+\.\d+$/)
+    expect(VERSION).toMatch(/^\d+\.\d+\.\d+$/)
   })
 
-  // Two places record a version; they must not drift. package.json carries the
-  // full semver, the screen shows major.minor.
+  // Two places record a version; they must not drift. Both carry the full
+  // semver, so this is an exact match rather than a prefix comparison — the
+  // latter would quietly accept 1.1 against 1.10.
   it('agrees with package.json', () => {
-    const [major, minor] = pkg.version.split('.')
-    expect(`${major}.${minor}`).toBe(VERSION)
+    expect(pkg.version).toBe(VERSION)
   })
 
   // A copyright year that follows the clock would change the build from one day

@@ -14,6 +14,9 @@ export interface AudioEngine {
   setVolume(volume: number): void
 }
 
+/** How long after a play request a just-decoded clip may still fire (ms). */
+const LATE_MS = 500
+
 /** The master gain a mute/volume resolves to. */
 export function effectiveGain(muted: boolean, volume: number): number {
   if (muted) return 0
@@ -34,6 +37,8 @@ class WebAudioEngine implements AudioEngine {
   private muted = false
   private volume = 0.8
   private preloaded = false
+  /** In flight while the clips decode; awaited by a play that arrives early. */
+  private preloading: Promise<void> | null = null
 
   private ensureContext(): AudioContext | null {
     if (this.ctx) return this.ctx
@@ -44,7 +49,8 @@ class WebAudioEngine implements AudioEngine {
       this.master = this.ctx.createGain()
       this.master.gain.value = effectiveGain(this.muted, this.volume)
       this.master.connect(this.ctx.destination)
-      void this.preload()
+      this.preloading = this.preload()
+      void this.preloading
     } catch {
       this.ctx = null
       this.master = null
@@ -83,9 +89,29 @@ class WebAudioEngine implements AudioEngine {
     const ctx = this.ensureContext()
     if (!ctx || !this.master) return
     const buf = this.buffers.get(id)
-    if (!buf) return // absent / still decoding → silence
+    if (buf) {
+      this.start(buf)
+      return
+    }
+    // The clips only begin decoding when the context is created, which happens
+    // on the first gesture — the same gesture that asks for the first sound. So
+    // the very first mark of a session would otherwise be silently swallowed.
+    // Wait for the decode and play it then, unless too much time has passed for
+    // the sound to still belong to what the player just did.
+    if (this.preloading && !this.buffers.has(id)) {
+      const asked = Date.now()
+      void this.preloading.then(() => {
+        if (this.muted || Date.now() - asked > LATE_MS) return
+        const ready = this.buffers.get(id)
+        if (ready) this.start(ready)
+      })
+    }
+  }
+
+  private start(buf: AudioBuffer): void {
+    if (!this.ctx || !this.master) return
     try {
-      const src = ctx.createBufferSource()
+      const src = this.ctx.createBufferSource()
       src.buffer = buf
       src.connect(this.master)
       src.start()

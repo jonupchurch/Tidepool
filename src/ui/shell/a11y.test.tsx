@@ -24,7 +24,6 @@ const pauseProps = (): PauseOverlayProps => ({
   onResume: vi.fn(),
   onNewBoard: vi.fn(),
   onRestart: vi.fn(),
-  onSettings: vi.fn(),
   onHome: vi.fn(),
 })
 
@@ -49,7 +48,7 @@ describe('shell accessibility', () => {
     renderShell(<PauseOverlay {...pauseProps()} />)
     expect(screen.getByRole('dialog')).toHaveAttribute('aria-modal', 'true')
     const labels = screen.getAllByRole('button').map((b) => b.textContent)
-    expect(labels).toEqual(['Resume', 'New board', 'Restart this board', 'Settings', 'Home'])
+    expect(labels).toEqual(['Resume', 'New board', 'Restart this board', 'Home'])
   })
 
   it('Splash honors prefers-reduced-motion', () => {

@@ -26,8 +26,9 @@ import {
 } from '@/render'
 import { DEFAULTS, getSaveStore, loadRecord, saveRecord } from '@/platform'
 import { getAudioEngine } from '@/audio'
+import { useEffectiveSettings } from '@/ui/settings/useSettings'
 import { CompletePanel } from './CompletePanel'
-import { HowToPlay } from './HowToPlay'
+import { HowToPlay, HowToPlayTab } from './HowToPlay'
 import { PoolToast } from './PoolToast'
 import { TopBar } from './TopBar'
 
@@ -36,14 +37,6 @@ const DEFAULT_PARAMS: BoardParams = {
   size: 'Small',
   difficulty: 'Calm',
   clues: { connectivity: true, lineTotals: true },
-}
-
-interface Settings {
-  swap: boolean
-  reducedMotion: boolean
-  colorblind: boolean
-  hover: boolean
-  nudge: boolean
 }
 
 export interface GameplayScreenProps {
@@ -94,13 +87,10 @@ export function GameplayScreen({
   const guidesRef = useRef<Set<string>>(new Set())
   /** Line-label ids struck off as satisfied (right-click). View-only, not saved. */
   const doneLinesRef = useRef<Set<string>>(new Set())
-  const settingsRef = useRef<Settings>({
-    swap: false,
-    reducedMotion: false,
-    colorblind: false,
-    hover: true,
-    nudge: false,
-  })
+  // The live settings, mirrored into a ref because the canvas event handlers
+  // and the render loop read them outside React's render pass.
+  const live = useEffectiveSettings()
+  const settingsRef = useRef(live)
   const nextSeedRef = useRef(1)
 
   const [loading, setLoading] = useState(true)
@@ -128,11 +118,20 @@ export function GameplayScreen({
       revealed: s.revealed,
       mistakes: s.mistakeCells(),
       pools: s.pools,
-      colorblind: settingsRef.current.colorblind,
+      colorblind: settingsRef.current.visuals.colorblind,
       guides: guidesRef.current,
       doneLines: doneLinesRef.current,
     })
   }, [])
+
+  // Settings apply live: mirror them into the ref the canvas reads, push the
+  // audio ones at the engine, and repaint (colourblind marks change the board).
+  useEffect(() => {
+    settingsRef.current = live
+    audioRef.current.setMuted(live.sound.muted)
+    audioRef.current.setVolume(live.sound.volume * live.sound.sfx)
+    redraw()
+  }, [live, redraw])
 
   const syncChrome = useCallback(() => {
     const s = sessionRef.current
@@ -181,7 +180,7 @@ export function GameplayScreen({
           setToast(`${name} joins your journal`)
           window.setTimeout(() => setToast(null), 2200)
         }
-        animate(makeTimeline(500, settingsRef.current.reducedMotion), () => redraw())
+        animate(makeTimeline(500, settingsRef.current.visuals.reducedMotion), () => redraw())
       }
       redraw()
       syncChrome()
@@ -241,7 +240,11 @@ export function GameplayScreen({
       else if (delta.correct === false) audioRef.current.play('mistake')
       // Gentle nudge on a wrong mark (a faint ripple of doubt) — the persistent
       // coral tint in the renderer keeps it flagged until corrected.
-      if (delta.correct === false && !settingsRef.current.reducedMotion) {
+      if (
+        delta.correct === false &&
+        settingsRef.current.comfort.mistakeNudge &&
+        !settingsRef.current.visuals.reducedMotion
+      ) {
         setRipple({ x: px, y: py, k: Date.now() })
         window.setTimeout(() => setRipple(null), 550)
       }
@@ -276,9 +279,24 @@ export function GameplayScreen({
         redraw()
         return
       }
-      const swap = settingsRef.current.swap
-      const kind: MarkKind =
-        e.button === 0 ? (swap ? 'rock' : 'water') : swap ? 'water' : 'rock'
+      const { swapMarkButtons: swap, tapToCycle } = settingsRef.current.controls
+      // Tap-to-cycle (trackpads, touch): one button walks the cell through
+      // water → stone → clear. `applyMark` clears when asked for the mark a
+      // cell already holds, so the cycle needs no new session API.
+      const cur = sessionRef.current?.markAt(cellKey)
+      const kind: MarkKind = tapToCycle
+        ? cur === 'water'
+          ? 'rock'
+          : cur === 'rock'
+            ? 'rock'
+            : 'water'
+        : e.button === 0
+          ? swap
+            ? 'rock'
+            : 'water'
+          : swap
+            ? 'water'
+            : 'rock'
       const c = hexToPixel(r.layout, parseKey(cellKey))
       mark(cellKey, kind, c.x, c.y)
     },
@@ -296,7 +314,7 @@ export function GameplayScreen({
       if (cellKey === hoveredRef.current) return
       hoveredRef.current = cellKey
       highlightRef.current =
-        settingsRef.current.hover && cellKey ? new Set(cellInforms(s.board, cellKey)) : new Set()
+        settingsRef.current.comfort.hoverHighlight && cellKey ? new Set(cellInforms(s.board, cellKey)) : new Set()
       redraw()
     },
     [redraw],
@@ -425,16 +443,8 @@ export function GameplayScreen({
       if (w.__TIDEPOOLS__) w.__TIDEPOOLS__.ready = false
     }
     void (async () => {
-      const s = await loadRecord(storeRef.current, 'settings')
-      settingsRef.current = {
-        swap: s.controls.swapMarkButtons,
-        reducedMotion: s.visuals.reducedMotion,
-        colorblind: s.visuals.colorblind,
-        hover: true,
-        nudge: false,
-      }
-      audioRef.current.setMuted(s.sound.muted)
-      audioRef.current.setVolume(s.sound.volume)
+      // Settings arrive through the live store (see the effect above), not a
+      // one-shot read here — otherwise a change made mid-board wouldn't apply.
       const onboarding = await loadRecord(storeRef.current, 'onboarding')
       if (disposed) return
       setShowHelp(!onboarding.helpDismissed)
@@ -479,12 +489,12 @@ export function GameplayScreen({
     return () => window.removeEventListener('keydown', onKey)
   }, [applyDelta])
 
-  /** Dismiss the how-to rail for good (it's a reference, not a tutorial). */
-  const dismissHelp = useCallback(() => {
-    setShowHelp(false)
+  /** Show or hide the how-to rail, remembering the choice. */
+  const setHelpVisible = useCallback((visible: boolean) => {
+    setShowHelp(visible)
     void (async () => {
       const rec = await loadRecord(storeRef.current, 'onboarding')
-      await saveRecord(storeRef.current, 'onboarding', { ...rec, helpDismissed: true })
+      await saveRecord(storeRef.current, 'onboarding', { ...rec, helpDismissed: !visible })
     })()
   }, [])
 
@@ -517,7 +527,12 @@ export function GameplayScreen({
         onPause={onPause ?? (() => onHome?.())}
       />
       <div className="flex flex-1 min-h-0">
-        {showHelp && !complete && <HowToPlay onClose={dismissHelp} />}
+        {!complete &&
+          (showHelp ? (
+            <HowToPlay onClose={() => setHelpVisible(false)} />
+          ) : (
+            <HowToPlayTab onOpen={() => setHelpVisible(true)} />
+          ))}
         <div ref={containerRef} className="relative flex-1 min-h-0">
         <canvas
           ref={canvasRef}

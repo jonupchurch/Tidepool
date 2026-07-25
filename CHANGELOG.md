@@ -4,6 +4,69 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — How to play, live settings + Night Tide, first sounds
+
+### Added
+
+- **How to play screen** (007), replacing the placeholder. The rules live in one
+  place (`how-to-play-content`) and render twice — quietly in the rail beside the
+  board, and as the menu screen — so the two can't drift apart. *Scope: this is
+  the agreed descope of 007 — the rules as a reference screen, not the
+  interactive step-by-step tutorial the spec describes.*
+- **A way back to the dismissed rail.** Closing it was a one-way door with
+  nothing left on screen to restore it; a small low-contrast "?" now takes its
+  place, and the show/hide choice persists either way.
+- **Night Tide, designed** (006 US2) — replaces the provisional dark tokens with
+  a real palette: deep teal-navy ground, water that keeps its glow, coral held
+  back as a signal colour. `useTheme` resolves Day / Night / Auto and keeps
+  following the OS under Auto. A high-contrast axis layers on either theme.
+- **Live settings** — a pure model (`game/settings.ts`) that resolves any
+  persisted shape into a complete `Settings` (missing fields default, numbers
+  clamp, unknown values are rejected), plus a reactive store that notifies
+  synchronously so a change applies everywhere at once.
+- **The first two sounds**: `water.mp3` (drip) and `rock.mp3` (stone drop), plus
+  `npm run check:audio` — which events have a clip, and any file whose name isn't
+  an event id and so can never play.
+
+### Fixed
+
+- **The first sound of every session was silently swallowed.** Clips only begin
+  decoding when the audio context is created — on the very gesture that asks for
+  the first sound — and `play` returned silently when the buffer wasn't ready. A
+  play arriving mid-decode now fires once the buffer lands, unless the moment has
+  passed (500ms). Measured in a real browser: two correct marks produced one
+  sound before, two after.
+- **Theme and mute were stored twice** (`shellPrefs` *and* the settings record)
+  and could disagree. The settings record is now the single source of truth.
+- **Gameplay read settings once at mount**, so a change mid-board never applied.
+  It now reads the live store.
+
+### Changed
+
+- **There is no Settings screen.** Per decision, Home's mute + theme toggles are
+  the whole surface and everything else takes its default. Removed with it: the
+  Settings route, its Home entry, and the Pause overlay's Settings action — so
+  US1 and US4 of spec 006 (grouped options; save export/import + reset) are not
+  built. The model keeps the comfort/accessibility fields because gameplay reads
+  them and they're where a future surface would plug in.
+- **The OS `prefers-reduced-motion` is now honoured automatically**
+  (`useEffectiveSettings`), so accessibility didn't leave with the screen. The
+  setting can still force it on; the system preference alone is enough.
+- Cell-size scaling (FR-004) is deliberately **not** offered: the board fits
+  itself to the viewport, so scaling up needs pan/scroll to be usable. The field
+  exists in the model, waiting on that.
+
+### Verified
+
+- **521 unit + 23 e2e** green; typecheck and build pass. New e2e covers the rail
+  hiding, coming back, and the choice surviving a reload, plus How to play from
+  Home. New unit tests cover settings resolution/merge, the store's live
+  notification and persistence, theme resolution under Auto with no OS signal,
+  and the first-sound regression.
+- Note: **Vite doesn't reliably pick up files replaced in `public/` after it
+  starts** — three portraits appeared missing in the browser while `check:art`
+  read them fine from disk. Restart the dev server; that mismatch is the tell.
+
 ## 2026-07-25 — Creature art: all 12 portraits, discovered by convention
 
 ### Added

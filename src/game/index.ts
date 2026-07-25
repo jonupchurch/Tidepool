@@ -4,6 +4,16 @@ export { PlaySession } from './session'
 export type { Mark, MarkKind, MarkDelta } from './session'
 export { waterPools } from './pools'
 export type { Pool } from './pools'
+export type { Settings, ThemeChoice } from './settings'
+export { DEFAULT_SETTINGS, THEME_CHOICES, resolveSettings, toSettingsRecord } from './settings'
+export {
+  getSettings,
+  hydrateSettings,
+  replaceSettings,
+  resetSettingsStore,
+  setSetting,
+  subscribeSettings,
+} from './settings-store'
 export {
   CREATURES,
   RARITIES,

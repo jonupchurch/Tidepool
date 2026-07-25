@@ -1,5 +1,5 @@
 // PauseOverlay.tsx — the soft Pause scrim over a frozen board. "Pausing is just
-// stepping away": a calm dialog with Resume, New board, Restart, Settings, Home
+// stepping away": a calm dialog with Resume, New board, Restart, Home
 // and a reassurance line. The scrim covers the canvas, freezing input. Fade is
 // gated by prefers-reduced-motion (Tailwind motion-reduce variant).
 import { useEffect, useState } from 'react'
@@ -8,7 +8,6 @@ export interface PauseOverlayProps {
   onResume: () => void
   onNewBoard: () => void
   onRestart: () => void
-  onSettings: () => void
   onHome: () => void
 }
 
@@ -16,7 +15,6 @@ const ACTIONS: readonly { label: string; key: keyof PauseOverlayProps; primary?:
   { label: 'Resume', key: 'onResume', primary: true },
   { label: 'New board', key: 'onNewBoard' },
   { label: 'Restart this board', key: 'onRestart' },
-  { label: 'Settings', key: 'onSettings' },
   { label: 'Home', key: 'onHome' },
 ]
 

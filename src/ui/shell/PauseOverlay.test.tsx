@@ -8,19 +8,17 @@ function props(over: Partial<PauseOverlayProps> = {}): PauseOverlayProps {
     onResume: vi.fn(),
     onNewBoard: vi.fn(),
     onRestart: vi.fn(),
-    onSettings: vi.fn(),
     onHome: vi.fn(),
     ...over,
   }
 }
 
 describe('PauseOverlay (US4)', () => {
-  it('shows the five actions and the "board is saved" reassurance', () => {
+  it('shows the four actions and the "board is saved" reassurance', () => {
     renderShell(<PauseOverlay {...props()} />)
     expect(screen.getByRole('button', { name: /^resume$/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /new board/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /restart this board/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /^settings$/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^home$/i })).toBeInTheDocument()
     expect(screen.getByText(/your board is saved/i)).toBeInTheDocument()
   })
@@ -39,17 +37,19 @@ describe('PauseOverlay (US4)', () => {
     expect(onHome).toHaveBeenCalledTimes(1)
   })
 
-  it('routes New board, Restart, and Settings', () => {
+  it('routes New board and Restart', () => {
     const onNewBoard = vi.fn()
     const onRestart = vi.fn()
-    const onSettings = vi.fn()
-    renderShell(<PauseOverlay {...props({ onNewBoard, onRestart, onSettings })} />)
+    renderShell(<PauseOverlay {...props({ onNewBoard, onRestart })} />)
     fireEvent.click(screen.getByRole('button', { name: /new board/i }))
     fireEvent.click(screen.getByRole('button', { name: /restart this board/i }))
-    fireEvent.click(screen.getByRole('button', { name: /^settings$/i }))
     expect(onNewBoard).toHaveBeenCalledTimes(1)
     expect(onRestart).toHaveBeenCalledTimes(1)
-    expect(onSettings).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers no Settings action — there is no Settings screen', () => {
+    renderShell(<PauseOverlay {...props()} />)
+    expect(screen.queryByRole('button', { name: /^settings$/i })).not.toBeInTheDocument()
   })
 
   it('exposes a modal dialog for focus/scrim semantics', () => {

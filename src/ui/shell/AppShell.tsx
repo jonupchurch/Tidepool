@@ -16,10 +16,14 @@ import {
   nextSeed,
   toBoardParams,
 } from '@/game/board-source'
+import { hydrateSettings, setSetting } from '@/game'
 import { type SaveStore, getSaveStore } from '@/platform'
 import { CuratedScreen } from '@/ui/curated/CuratedScreen'
 import { GameplayScreen } from '@/ui/gameplay/GameplayScreen'
 import { JournalScreen } from '@/ui/journal/JournalScreen'
+import { useSettings } from '@/ui/settings/useSettings'
+import { resolveTheme, useTheme } from '@/ui/theme/useTheme'
+import { HowToPlayScreen } from '@/ui/tutorial/HowToPlayScreen'
 import { HomeScreen } from './HomeScreen'
 import { PauseOverlay } from './PauseOverlay'
 import { SplashScreen } from './SplashScreen'
@@ -29,8 +33,6 @@ import {
   getHomeStats,
   getLastPlay,
   getResumeSnapshot,
-  loadShellPrefs,
-  saveShellPrefs,
   setLastPlay as persistLastPlay,
 } from './shell-store'
 import type { HomeStats, LastPlay, ResumeSnapshot, Screen, ShellPrefs } from './types'
@@ -53,7 +55,23 @@ export interface AppShellProps {
 
 export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: AppShellProps = {}) {
   const [nav, dispatch] = useReducer(navReducer, initialScreen, initialNav)
-  const [prefs, setPrefs] = useState<ShellPrefs>({ theme: 'Day', muted: false })
+  // Theme + mute are settings (006 owns them), not a second shell-local copy —
+  // the two used to be stored twice and could disagree. Home's quick toggles
+  // and the Settings screen now write to the same place.
+  const settings = useSettings()
+  const prefs: ShellPrefs = {
+    theme: resolveTheme(settings.visuals.theme) === 'night' ? 'Night' : 'Day',
+    muted: settings.sound.muted,
+  }
+  useTheme(settings.visuals.theme)
+  // High contrast is a second axis on top of the theme — the token sheet keys
+  // off both, so either theme can be firmed up without a separate palette.
+  useEffect(() => {
+    document.documentElement.setAttribute(
+      'data-high-contrast',
+      settings.visuals.highContrast ? 'on' : 'off',
+    )
+  }, [settings.visuals.highContrast])
   const [lastPlay, setLastPlay] = useState<LastPlay>({ size: 'Small', difficulty: 'Calm' })
   const [resume, setResume] = useState<ResumeSnapshot | null>(null)
   const [stats, setStats] = useState<HomeStats>(DEFAULT_STATS)
@@ -65,15 +83,11 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
   const entry = current(nav)
   const screen = entry.screen
 
-  // Apply the theme app-wide. Token values are owned by Settings (006).
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', prefs.theme === 'Night' ? 'night' : 'day')
-  }, [prefs.theme])
-
-  // Boot: load persisted prefs + last-used play request, then release the splash.
+  // Boot: hydrate settings (theme applies as soon as they land) + the last-used
+  // play request, then release the splash.
   useEffect(() => {
     void (async () => {
-      setPrefs(await loadShellPrefs(store))
+      await hydrateSettings(store)
       setLastPlay(await getLastPlay(store))
       setBooted(true)
     })()
@@ -103,13 +117,13 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
     dispatch({ type: 'navigate', entry: { screen: 'Home' } })
   }, [])
 
-  const changePrefs = useCallback(
-    (next: ShellPrefs) => {
-      setPrefs(next)
-      void saveShellPrefs(store, next)
-    },
-    [store],
-  )
+  // Home's quick toggles write to the same settings the Settings screen does.
+  // The quick toggle is a two-way switch, so it commits an explicit Day/Night —
+  // 'Auto' stays reachable from Settings, where it can be explained.
+  const changePrefs = useCallback((next: ShellPrefs) => {
+    setSetting('visuals', 'theme', next.theme === 'Night' ? 'Night' : 'Day')
+    setSetting('sound', 'muted', next.muted)
+  }, [])
 
   const launchGameplay = useCallback(
     (params: BoardParams, doResume: boolean, curatedId?: string) => {
@@ -193,10 +207,6 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
     if (currentParams) launchGameplay(currentParams, false)
     else onNewBoard()
   }, [currentParams, launchGameplay, onNewBoard])
-  const onPauseSettings = useCallback(() => {
-    setPaused(false)
-    navigate('Settings')
-  }, [navigate])
 
   function renderScreen() {
     switch (screen) {
@@ -240,10 +250,13 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
         )
       case 'Journal':
         return <JournalScreen store={store} onBack={goHome} />
-      case 'Settings':
-        return <Placeholder title="Settings" blurb="Fine-tune your tide pools soon." onBack={goHome} />
       case 'Tutorial':
-        return <Placeholder title="How to play" blurb="A gentle walkthrough is coming." onBack={goHome} />
+        return (
+          <HowToPlayScreen
+            onBack={goHome}
+            onPlay={() => onPlay(boardRequest(freshSeed(), lastPlay.size, lastPlay.difficulty))}
+          />
+        )
       case 'Splash':
         return (
           <SplashScreen
@@ -265,28 +278,9 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
           onResume={() => setPaused(false)}
           onNewBoard={onNewBoard}
           onRestart={onRestart}
-          onSettings={onPauseSettings}
           onHome={goHome}
         />
       )}
     </main>
-  )
-}
-
-function Placeholder({ title, blurb, onBack }: { title: string; blurb: string; onBack: () => void }) {
-  return (
-    <div className="h-full w-full grid place-items-center bg-sand text-ink">
-      <div className="max-w-sm px-6 text-center">
-        <h1 className="mb-2 font-display text-3xl text-deep-pool">{title}</h1>
-        <p className="mb-6 text-tide">{blurb}</p>
-        <button
-          type="button"
-          onClick={onBack}
-          className="rounded-full bg-tide px-5 py-2 font-display text-foam hover:bg-deep-pool"
-        >
-          Back to shore
-        </button>
-      </div>
-    </div>
   )
 }

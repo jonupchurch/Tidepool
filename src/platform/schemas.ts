@@ -4,8 +4,11 @@
 // `SaveBlob` / `Migration` types live here too. No storage/OS access.
 import type { BoardParams } from '@/core'
 
-/** App version stamped into export blobs (kept in sync with package.json). */
-export const APP_VERSION = '0.0.0'
+/** App version stamped into export blobs. Informational only — compatibility is
+ *  decided by BLOB_SCHEMA_VERSION below, so this is here to tell a human which
+ *  build wrote a save. Kept in step with the other version sites by a test in
+ *  `ui/about/about.test.ts`. */
+export const APP_VERSION = '1.0.1'
 
 /** Storage-layout version used in the key prefix `tp:v{N}:{namespace}`. */
 export const STORE_VERSION = 1

@@ -20,6 +20,7 @@
     "check:audio": "vite-node scripts/check-audio.ts"
   },
   "dependencies": {
+    "@tauri-apps/api": "^2.11.1",
     "idb-keyval": "^6.3.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"

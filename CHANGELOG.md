@@ -4,7 +4,17 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
-## 2026-07-25 — Correct cells lock
+## 2026-07-25 — Correct cells lock; back to the map on completion
+
+### Added
+
+- **"Curated shores" on the completion panel** — finishing a curated board offers
+  a step back to the coastline alongside Next board / Journal / Home, instead of
+  routing through Home. The shell supplies the action only for boards launched
+  from the ladder; an Endless board has no map to return to and the button stays
+  absent (both covered by e2e).
+
+### Changed
 
 ### Changed
 
@@ -16,7 +26,7 @@ versioned release notes once Steam builds start.
 
 ### Verified
 
-- **489 unit + 19 e2e** green; typecheck passes. A new e2e settles one water and
+- **489 unit + 21 e2e** green; typecheck passes. A new e2e settles one water and
   one rock cell, clicks each again with both buttons, and asserts nothing moved
   and no mistake was counted. Two existing tests set their state up by flipping a
   correct mark (breaking a completed pool; un-completing a solved board) — both

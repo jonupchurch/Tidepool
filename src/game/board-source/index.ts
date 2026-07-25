@@ -3,7 +3,14 @@
 // Determinism comes entirely from the engine (001); progress/prefs persist
 // through the SaveStore seam (008). No DOM, no ambient randomness.
 export type { BoardRequest } from './request'
-export { DEFAULT_CLUES, toBoardParams, launchBoard } from './request'
+export {
+  DEFAULT_CLUES,
+  isBoardRequest,
+  launchBoard,
+  toBoardParams,
+  toDifficultyTier,
+  toSizeTier,
+} from './request'
 export { nextSeed, createEndlessStream, loadEndlessPrefs, saveEndlessPrefs } from './endless'
 export type { EndlessStream } from './endless'
 export { parseSeedEntry } from './seed-entry'

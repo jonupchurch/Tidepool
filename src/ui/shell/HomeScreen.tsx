@@ -28,6 +28,7 @@ export interface HomeScreenProps {
 const SECONDARY: readonly { label: string; screen: Screen }[] = [
   { label: 'Shore journal', screen: 'Journal' },
   { label: 'How to play', screen: 'Tutorial' },
+  { label: 'About', screen: 'About' },
 ]
 
 export function HomeScreen({

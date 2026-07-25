@@ -18,6 +18,7 @@ import {
 } from '@/game/board-source'
 import { hydrateSettings, setSetting } from '@/game'
 import { type SaveStore, getSaveStore } from '@/platform'
+import { AboutScreen } from '@/ui/about/AboutScreen'
 import { CuratedScreen } from '@/ui/curated/CuratedScreen'
 import { GameplayScreen } from '@/ui/gameplay/GameplayScreen'
 import { JournalScreen } from '@/ui/journal/JournalScreen'
@@ -257,6 +258,8 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
             onPlay={() => onPlay(boardRequest(freshSeed(), lastPlay.size, lastPlay.difficulty))}
           />
         )
+      case 'About':
+        return <AboutScreen onBack={goHome} />
       case 'Splash':
         return (
           <SplashScreen

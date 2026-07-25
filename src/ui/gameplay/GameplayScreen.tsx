@@ -16,7 +16,14 @@ import {
   recordBoardSolved,
   recordDiscovery,
 } from '@/game'
-import { type BoardRenderer, animate, createBoardRenderer, hexToPixel, makeTimeline } from '@/render'
+import {
+  type BoardRenderer,
+  animate,
+  createBoardRenderer,
+  hexToPixel,
+  makeTimeline,
+  whenSpritesReady,
+} from '@/render'
 import { getSaveStore, loadRecord, saveRecord } from '@/platform'
 import { CompletePanel } from './CompletePanel'
 import { PoolToast } from './PoolToast'
@@ -87,6 +94,7 @@ export function GameplayScreen({
   const [toast, setToast] = useState<string | null>(null)
   const [canUndo, setCanUndo] = useState(false)
   const [canRedo, setCanRedo] = useState(false)
+  const [mistakeCount, setMistakeCount] = useState(0)
   const [ripple, setRipple] = useState<{ x: number; y: number; k: number } | null>(null)
 
   const redraw = useCallback(() => {
@@ -109,6 +117,7 @@ export function GameplayScreen({
     if (!s) return
     setPoolsFound(s.revealed.size)
     setStonesLeft(s.stonesRemaining)
+    setMistakeCount(s.mistakeCells().size)
     setCanUndo(s.canUndo())
     setCanRedo(s.canRedo())
     setComplete(s.isComplete)
@@ -305,6 +314,9 @@ export function GameplayScreen({
       syncChrome()
       redraw()
       setLoading(false)
+      // Sprites (waves/boulder) may still be decoding on first paint — redraw
+      // once they're ready so the motifs appear without needing a click.
+      void whenSpritesReady().then(() => redraw())
       if (!resume) save()
     },
     [redraw, syncChrome, save],
@@ -383,6 +395,7 @@ export function GameplayScreen({
         label={label}
         poolsRemaining={totalPools - poolsFound}
         stonesRemaining={stonesLeft}
+        mistakeCount={mistakeCount}
         canUndo={canUndo}
         canRedo={canRedo}
         onUndo={doUndo}

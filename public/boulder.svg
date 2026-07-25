@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-label="boulder">
+  <path d="M18 74 q -8 -22 10 -34 q 10 -7 24 -6 q 18 1 28 16 q 8 12 2 22 q -4 8 -20 8 z" fill="#847c6f"/>
+  <path d="M18 74 q -8 -22 10 -34 q 10 -7 24 -6 q 6 0.3 11 2 q -20 2 -30 16 q -8 11 -5 22 z" fill="#9a9284" opacity="0.55"/>
+  <path d="M52 40 l 8 17 l -12 8" fill="none" stroke="#5d564c" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>
+  <path d="M30 66 q 8 -12 20 -14" fill="none" stroke="#5d564c" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
+</svg>

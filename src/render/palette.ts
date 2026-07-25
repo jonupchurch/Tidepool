@@ -8,6 +8,7 @@ export interface Palette {
   foam: string
   tide: string
   tideFill: string
+  water: string
   deepPool: string
   seaGlass: string
   coral: string
@@ -21,6 +22,7 @@ const FALLBACK: Palette = {
   foam: '#f6f4ec',
   tide: '#6fa8a0',
   tideFill: '#a6cfc8',
+  water: '#cfe6f5',
   deepPool: '#274a54',
   seaGlass: '#8fbdb2',
   coral: '#de8368',
@@ -34,6 +36,7 @@ const TOKENS: Record<keyof Palette, string> = {
   foam: '--color-foam',
   tide: '--color-tide',
   tideFill: '--color-tide-fill',
+  water: '--color-water',
   deepPool: '--color-deep-pool',
   seaGlass: '--color-sea-glass',
   coral: '--color-coral',

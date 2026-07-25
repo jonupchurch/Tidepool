@@ -1,8 +1,11 @@
-// TopBar — board label/seed, remaining pools + stones, pause + undo/redo (FR-009).
+// TopBar — board label/seed, remaining pools + stones, a gentle mistake flag,
+// pause + undo/redo (FR-009).
 interface TopBarProps {
   label: string
   poolsRemaining: number
   stonesRemaining: number
+  /** Cells currently marked against the solution — surfaced as a soft flag. */
+  mistakeCount: number
   canUndo: boolean
   canRedo: boolean
   onUndo: () => void
@@ -14,6 +17,7 @@ export function TopBar({
   label,
   poolsRemaining,
   stonesRemaining,
+  mistakeCount,
   canUndo,
   canRedo,
   onUndo,
@@ -38,6 +42,14 @@ export function TopBar({
         <span className="text-rock" title="Stones left to place">
           🪨 {stonesRemaining} {stonesRemaining === 1 ? 'stone' : 'stones'} left
         </span>
+        {mistakeCount > 0 && (
+          <span
+            className="rounded-full bg-coral/15 px-2 py-0.5 text-coral"
+            title="A tile is marked against the solution — take another look"
+          >
+            ⚠ {mistakeCount} to fix
+          </span>
+        )}
       </div>
       <div className="flex gap-1">
         <button

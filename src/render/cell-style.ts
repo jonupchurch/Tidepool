@@ -15,7 +15,7 @@ export interface CellStyle {
 export function cellStyle(visual: CellVisual, colorblind: boolean): CellStyle {
   switch (visual) {
     case 'water':
-      return { fill: 'tideFill', outline: 'tide', glyph: colorblind ? '≈' : '' }
+      return { fill: 'water', outline: 'tide', glyph: colorblind ? '≈' : '' }
     case 'rock':
       return { fill: 'rock', outline: 'deepPool', glyph: colorblind ? '▲' : '' }
     case 'clue':

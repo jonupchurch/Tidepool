@@ -9,6 +9,7 @@ import type { Mark, Pool } from '@/game'
 import { cellStyle } from './cell-style'
 import { type HexLayout, fitLayout, hexToPixel, hitTest } from './layout'
 import { type Palette, readPalette } from './palette'
+import { BOULDER, WAVES, spriteReady } from './sprites'
 
 export interface RenderInput {
   markOf: (cellKey: string) => Mark
@@ -112,6 +113,17 @@ class CanvasBoardRenderer implements BoardRenderer {
       ctx.fillStyle = palette[style.fill]
       ctx.fill()
 
+      // Tile motif: waves on a water cell, a boulder on a stone. Clipped to the
+      // hex so the art never spills past the cell. Given clue cells keep numbers.
+      let spriteDrawn = false
+      if (visual === 'water' && spriteReady(WAVES)) {
+        this.drawSprite(WAVES, x, y, size)
+        spriteDrawn = true
+      } else if (visual === 'rock' && spriteReady(BOULDER)) {
+        this.drawSprite(BOULDER, x, y, size)
+        spriteDrawn = true
+      }
+
       if (input.highlighted.has(k)) {
         ctx.strokeStyle = palette.seaGlass
         ctx.lineWidth = Math.max(2, size * 0.14)
@@ -124,22 +136,26 @@ class CanvasBoardRenderer implements BoardRenderer {
       }
       ctx.stroke()
 
-      // Gentle-flag a wrong mark: a faint coral "ripple of doubt" tint that
-      // stays until the player corrects it (never a hard error).
+      // Flag a wrong mark clearly: a coral tint plus a bold coral ring — an
+      // unmistakable "check this cell" that still stays gentle (no hard fail).
       if (input.mistakes.has(k)) {
         ctx.save()
-        ctx.globalAlpha = 0.3
+        ctx.globalAlpha = 0.32
         ctx.fillStyle = palette.coral
         hexPath(ctx, x, y, size * 0.94)
         ctx.fill()
         ctx.restore()
+        ctx.strokeStyle = palette.coral
+        ctx.lineWidth = Math.max(2.5, size * 0.16)
+        hexPath(ctx, x, y, size * 0.86)
+        ctx.stroke()
       }
 
       if (cell.given && cell.clue) {
         ctx.fillStyle = palette.deepPool
         ctx.font = `700 ${size * 0.9}px ${DISPLAY_FONT}`
         ctx.fillText(clueText(cell.clue), x, y + size * 0.06)
-      } else if (style.glyph) {
+      } else if (style.glyph && !spriteDrawn) {
         ctx.fillStyle = palette.ink
         ctx.font = `${size * 0.7}px sans-serif`
         ctx.fillText(style.glyph, x, y + size * 0.04)
@@ -148,6 +164,17 @@ class CanvasBoardRenderer implements BoardRenderer {
 
     this.drawLineTotals()
     this.drawCreatures(input)
+  }
+
+  /** Draw a tile sprite centred in a cell, clipped to the hex outline. */
+  private drawSprite(img: HTMLImageElement, x: number, y: number, hexSize: number): void {
+    const { ctx } = this
+    const s = hexSize * 1.62
+    ctx.save()
+    hexPath(ctx, x, y, hexSize * 0.94)
+    ctx.clip()
+    ctx.drawImage(img, x - s / 2, y - s / 2, s, s)
+    ctx.restore()
   }
 
   private boardCenter(): { x: number; y: number } {

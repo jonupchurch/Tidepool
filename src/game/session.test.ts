@@ -205,6 +205,29 @@ describe('progress counters + gentle-flag (UX feedback)', () => {
     expect(s.stonesRemaining).toBe(0)
   })
 
+  it('counts remaining water in cells, not pools, and reaches zero on solve', () => {
+    const s = makeSession()
+    expect(s.waterRemaining).toBe(s.totalWater)
+    expect(s.totalWater).toBe(waterCells(s.board).length)
+    // The HUD counter must track cells: a board whose water sits in few, large
+    // pools would otherwise read "1 pool left" with most of the board unmarked.
+    expect(s.totalWater).toBeGreaterThan(s.pools.length)
+    const w = waterCells(s.board)[0]
+    s.applyMark(w, 'water')
+    expect(s.waterRemaining).toBe(s.totalWater - 1)
+    s.applyMark(w, 'water') // toggle back off — the count comes back with it
+    expect(s.waterRemaining).toBe(s.totalWater)
+    solveSession(s)
+    expect(s.waterRemaining).toBe(0)
+  })
+
+  it('a wrong water mark does not count toward water filled', () => {
+    const s = makeSession()
+    const rock = firstHiddenRock(s.board)
+    s.applyMark(rock, 'water') // wrong: a rock cell marked water
+    expect(s.waterRemaining).toBe(s.totalWater)
+  })
+
   it('a wrong mark does not count toward stones placed', () => {
     const s = makeSession()
     const rock = firstHiddenRock(s.board)

@@ -78,6 +78,8 @@ export function GameplayScreen({
   const audioRef = useRef(getAudioEngine())
   const hoveredRef = useRef<string | null>(null)
   const highlightRef = useRef<Set<string>>(new Set())
+  /** Line-label ids the player has toggled a row guide on. View-only, not saved. */
+  const guidesRef = useRef<Set<string>>(new Set())
   const settingsRef = useRef<Settings>({
     swap: false,
     reducedMotion: false,
@@ -89,8 +91,7 @@ export function GameplayScreen({
 
   const [loading, setLoading] = useState(true)
   const [label, setLabel] = useState('')
-  const [poolsFound, setPoolsFound] = useState(0)
-  const [totalPools, setTotalPools] = useState(0)
+  const [waterLeft, setWaterLeft] = useState(0)
   const [stonesLeft, setStonesLeft] = useState(0)
   const [complete, setComplete] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -111,13 +112,14 @@ export function GameplayScreen({
       mistakes: s.mistakeCells(),
       pools: s.pools,
       colorblind: settingsRef.current.colorblind,
+      guides: guidesRef.current,
     })
   }, [])
 
   const syncChrome = useCallback(() => {
     const s = sessionRef.current
     if (!s) return
-    setPoolsFound(s.revealed.size)
+    setWaterLeft(s.waterRemaining)
     setStonesLeft(s.stonesRemaining)
     setMistakeCount(s.mistakeCells().size)
     setCanUndo(s.canUndo())
@@ -224,6 +226,15 @@ export function GameplayScreen({
       const rect = canvas.getBoundingClientRect()
       const x = e.clientX - rect.left
       const y = e.clientY - rect.top
+      // A line total is a toggle for that row's reading guide, not a board mark.
+      const label = r.lineLabelAt(x, y)
+      if (label) {
+        const guides = guidesRef.current
+        if (guides.has(label.id)) guides.delete(label.id)
+        else guides.add(label.id)
+        redraw()
+        return
+      }
       const cellKey = r.cellAt(x, y)
       if (!cellKey) return
       const swap = settingsRef.current.swap
@@ -232,7 +243,7 @@ export function GameplayScreen({
       const c = hexToPixel(r.layout, parseKey(cellKey))
       mark(cellKey, kind, c.x, c.y)
     },
-    [mark],
+    [mark, redraw],
   )
 
   const onPointerMove = useCallback(
@@ -280,7 +291,6 @@ export function GameplayScreen({
       } catch {
         // No 2D context (e.g. jsdom / very old browsers) — chrome still works.
         setLabel(`${board.params.seed} · ${board.params.size} · ${board.params.difficulty}`)
-        setTotalPools(session.pools.length)
         syncChrome()
         setLoading(false)
         return
@@ -304,6 +314,8 @@ export function GameplayScreen({
           lastSave: Promise.resolve(),
           centres,
           solution,
+          lineLabels: renderer.lineLabels.map((l) => ({ id: l.id, x: l.x, y: l.y, total: l.total })),
+          guides: () => [...guidesRef.current].sort(),
           progress: () => {
             let correct = 0
             let total = 0
@@ -318,9 +330,9 @@ export function GameplayScreen({
       }
 
       setLabel(`${board.params.seed} · ${board.params.size} · ${board.params.difficulty}`)
-      setTotalPools(session.pools.length)
       hoveredRef.current = null
       highlightRef.current = new Set()
+      guidesRef.current = new Set()
       setComplete(false)
       syncChrome()
       redraw()
@@ -411,7 +423,7 @@ export function GameplayScreen({
     <div className="flex flex-col h-full w-full bg-sand">
       <TopBar
         label={label}
-        poolsRemaining={totalPools - poolsFound}
+        waterRemaining={waterLeft}
         stonesRemaining={stonesLeft}
         mistakeCount={mistakeCount}
         canUndo={canUndo}

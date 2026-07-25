@@ -35,6 +35,8 @@ export class PlaySession {
   readonly pools: Pool[]
   /** Total non-given rock ("stone") cells the player must place to finish. */
   readonly totalStones: number
+  /** Total water cells the player must fill to finish. */
+  readonly totalWater: number
   private marks = new Map<string, MarkKind>()
   private history: Move[] = []
   private ptr = 0
@@ -45,11 +47,15 @@ export class PlaySession {
     this.board = board
     this.pools = waterPools(board)
     let stones = 0
+    let water = 0
     for (const k of board.present) {
       const cell = board.cells.get(k)
-      if (cell && !cell.given && cell.state === 'rock') stones++
+      if (!cell) continue
+      if (cell.state === 'water') water++
+      else if (!cell.given) stones++
     }
     this.totalStones = stones
+    this.totalWater = water
     this.recompute()
   }
 
@@ -71,9 +77,22 @@ export class PlaySession {
   get revealed(): ReadonlySet<string> {
     return this.revealedSet
   }
-  /** Pools not yet fully resolved (the "remaining pools" counter). */
+  /** Pools not yet fully resolved (drives creature reveals, not the HUD). */
   get poolsRemaining(): number {
     return this.pools.length - this.revealedSet.size
+  }
+  /**
+   * Water cells not yet correctly filled (the HUD's "water left" counter).
+   * Counted in cells so it reads in the same unit as `stonesRemaining` — pools
+   * are few and lopsided, so a pool count is not a progress signal.
+   */
+  get waterRemaining(): number {
+    let filled = 0
+    for (const [k, m] of this.marks) {
+      const cell = this.board.cells.get(k)
+      if (cell && cell.state === 'water' && m === 'water') filled++
+    }
+    return this.totalWater - filled
   }
   /** Non-given rock cells not yet correctly marked (the "remaining stones" counter). */
   get stonesRemaining(): number {

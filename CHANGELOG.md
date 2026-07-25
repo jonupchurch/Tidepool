@@ -4,6 +4,49 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — HUD counter in cells + unambiguous row totals
+
+A playtest follow-up: the water counter was reporting a unit nobody was
+reading it in, and the margin line totals didn't say which row they belonged to.
+
+### Fixed
+
+- **"1 pool left" with half the board unmarked** — the TopBar's water counter
+  reported connected *pools* remaining while the stone counter reported *cells*.
+  Pool sizes are lopsided (one Large board runs `[57,13,5,5,4,3,1]`), so finishing
+  the small pools parked the readout at "1 pool left" with ~50 water cells still
+  to mark. Now counts water cells (`waterRemaining`), mirroring `stonesRemaining`.
+  Pool completion still drives creature reveals and the journal — it's just no
+  longer the progress readout. This supersedes the 2026-07-24 note that the
+  counters were "correct": each was self-consistent, but the mixed units made the
+  pair unreadable.
+- **Line totals ambiguous / overlapping** — totals were placed by pushing radially
+  outward from the board centre, a direction unrelated to the row's own axis, so
+  they drifted off their line and stacked at the corners. Each total is now
+  anchored in the empty hex slot its row continues into, one step back along that
+  row's own axis; collisions slide further out along the same axis, never
+  sideways, so position alone identifies the row (`render/line-labels.ts`).
+- **Labels rendering off-canvas** — they sit outside the board, which `fitLayout`
+  reserved no room for. It now accepts extra points to fit; anchors resolve in
+  axial space (scale-free) so they exist before a hex size does.
+
+### Added
+
+- **Click a total → a row guide** — clicking a line total draws a thin stroke down
+  that row and tints the number; clicking again clears it. Guides accumulate,
+  are view-only (never persisted), and reset with a new board.
+
+### Verified
+
+- 15 new unit tests (counter units, label collinearity/spacing/on-canvas fit,
+  hit-testing, guide geometry) — full suite **425 unit + 14 e2e** green; typecheck
+  passes. A new e2e drives real clicks through toggle-on → off → accumulate and
+  asserts a label click never marks the board. Placement + guides confirmed by
+  screenshot on a Large · Tricky board.
+- Note for future work: **Calm boards carry no line clues at all** (the reducer
+  strips them, since forced-count alone solves those boards). Line-total work must
+  be exercised on Tricky/Deep.
+
 ## 2026-07-24 — Audio scaffold: drop-in SFX
 
 Sound plumbing wired to every game event; silent until sound files are added.

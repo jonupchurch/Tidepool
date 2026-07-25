@@ -2,7 +2,8 @@
 // pause + undo/redo (FR-009).
 interface TopBarProps {
   label: string
-  poolsRemaining: number
+  /** Water cells left to fill — in cells, so it reads in the same unit as stones. */
+  waterRemaining: number
   stonesRemaining: number
   /** Cells currently marked against the solution — surfaced as a soft flag. */
   mistakeCount: number
@@ -15,7 +16,7 @@ interface TopBarProps {
 
 export function TopBar({
   label,
-  poolsRemaining,
+  waterRemaining,
   stonesRemaining,
   mistakeCount,
   canUndo,
@@ -36,8 +37,8 @@ export function TopBar({
       </button>
       <div className="font-display text-deep-pool truncate">{label}</div>
       <div className="ml-auto flex items-center gap-3 text-sm tabular-nums" aria-live="polite">
-        <span className="text-tide" title="Water pools left to fill">
-          🌊 {poolsRemaining} {poolsRemaining === 1 ? 'pool' : 'pools'} left
+        <span className="text-tide" title="Water cells left to fill">
+          🌊 {waterRemaining} water left
         </span>
         <span className="text-rock" title="Stones left to place">
           🪨 {stonesRemaining} {stonesRemaining === 1 ? 'stone' : 'stones'} left

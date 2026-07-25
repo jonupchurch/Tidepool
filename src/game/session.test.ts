@@ -237,6 +237,37 @@ describe('progress counters + gentle-flag (UX feedback)', () => {
     expect(s.stonesRemaining).toBe(s.totalStones - 1)
   })
 
+  it('tallies errors as they happen and never counts back down', () => {
+    const s = makeSession()
+    const rock = firstHiddenRock(s.board)
+    expect(s.errorsMade).toBe(0)
+
+    s.applyMark(rock, 'water') // wrong
+    expect(s.errorsMade).toBe(1)
+    s.applyMark(rock, 'water') // clearing it is not a new error
+    expect(s.errorsMade).toBe(1)
+    s.applyMark(rock, 'rock') // correcting it is not either
+    expect(s.errorsMade).toBe(1)
+    // The outstanding-mistake flag clears, but the tally is a running record.
+    expect(s.mistakeCells().size).toBe(0)
+    expect(s.errorsMade).toBe(1)
+
+    const water = waterCells(s.board)[0]
+    s.applyMark(water, 'rock') // a second, different wrong mark
+    expect(s.errorsMade).toBe(2)
+  })
+
+  it('does not re-count an error when undo/redo replays it', () => {
+    const s = makeSession()
+    const rock = firstHiddenRock(s.board)
+    s.applyMark(rock, 'water')
+    expect(s.errorsMade).toBe(1)
+    s.undo()
+    expect(s.errorsMade).toBe(1)
+    s.redo()
+    expect(s.errorsMade).toBe(1)
+  })
+
   it('flags cells marked against the solution and clears them on correction', () => {
     const s = makeSession()
     const rock = firstHiddenRock(s.board)

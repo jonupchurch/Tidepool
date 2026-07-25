@@ -15,6 +15,7 @@ import {
   labelAt,
   lineAnchors,
   lineLabels,
+  tickSegment,
 } from './line-labels'
 import { type Palette, readPalette } from './palette'
 import { BOULDER, WAVES, spriteReady } from './sprites'
@@ -30,6 +31,8 @@ export interface RenderInput {
   colorblind: boolean
   /** Line-label ids whose row guide the player has toggled on. */
   guides: ReadonlySet<string>
+  /** Line-label ids the player has struck off as satisfied (drawn greyed). */
+  doneLines: ReadonlySet<string>
 }
 
 export interface BoardRenderer {
@@ -91,14 +94,14 @@ class CanvasBoardRenderer implements BoardRenderer {
     this.labels = lineLabels(board, this._layout)
   }
 
-  /** Fit the board *and* its margin labels inside the viewport. */
+  /** Fit the board *and* its margin labels — dashes included — in the viewport. */
   private fit(width: number, height: number): HexLayout {
     return fitLayout(
       this.board.present,
       width,
       height,
       24,
-      this.anchors.map((a) => a.coord),
+      this.anchors.flatMap((a) => [a.coord, a.tip]),
     )
   }
 
@@ -125,7 +128,9 @@ class CanvasBoardRenderer implements BoardRenderer {
   }
 
   lineLabelAt(x: number, y: number): LineLabel | null {
-    return labelAt(this.labels, x, y, this._layout.size * 0.7)
+    // Kept under the label's clearance from the board so the target sits wholly
+    // in the margin; GameplayScreen also tests cells first.
+    return labelAt(this.labels, x, y, this._layout.size * 0.55)
   }
 
   draw(input: RenderInput): void {
@@ -200,7 +205,7 @@ class CanvasBoardRenderer implements BoardRenderer {
     }
 
     this.drawGuides(input.guides)
-    this.drawLineTotals(input.guides)
+    this.drawLineTotals(input.guides, input.doneLines)
     this.drawCreatures(input)
   }
 
@@ -216,16 +221,37 @@ class CanvasBoardRenderer implements BoardRenderer {
   }
 
   /**
-   * Line totals, each anchored on its own row's axis (see line-labels.ts). A
-   * toggled row's total is tinted to match its guide.
+   * Line totals, each anchored on its own row's axis (see line-labels.ts), with
+   * a short dash pointing down the row so its direction reads without toggling
+   * the guide. Struck-off totals grey out; a toggled row's total takes the
+   * guide tint.
    */
-  private drawLineTotals(guides: ReadonlySet<string>): void {
+  private drawLineTotals(guides: ReadonlySet<string>, done: ReadonlySet<string>): void {
     const { ctx, palette } = this
     const size = this._layout.size
     ctx.font = `700 ${size * 0.72}px ${DISPLAY_FONT}`
     for (const l of this.labels) {
-      ctx.fillStyle = guides.has(l.id) ? palette.tide : palette.deepPool
+      const struck = done.has(l.id)
+      const colour = struck ? palette.rock : guides.has(l.id) ? palette.tide : palette.deepPool
+
+      // Direction dash — same colour as its number, a touch lighter in weight.
+      const t = tickSegment(l, this._layout)
+      ctx.save()
+      ctx.globalAlpha = struck ? 0.4 : 0.65
+      ctx.strokeStyle = colour
+      ctx.lineWidth = Math.max(1, size * 0.05)
+      ctx.lineCap = 'round'
+      ctx.beginPath()
+      ctx.moveTo(t.x1, t.y1)
+      ctx.lineTo(t.x2, t.y2)
+      ctx.stroke()
+      ctx.restore()
+
+      ctx.save()
+      if (struck) ctx.globalAlpha = 0.55
+      ctx.fillStyle = colour
       ctx.fillText(`${l.total}`, l.x, l.y)
+      ctx.restore()
     }
   }
 

@@ -32,6 +32,8 @@ export interface LineAnchor {
   total: number
   /** anchor coord, fractional: a point just off the end of the row */
   coord: Axial
+  /** far tip of the direction dash — the outermost ink this label puts down */
+  tip: Axial
   /** the row's member cell keys, ordered from the label end outward */
   cells: string[]
 }
@@ -42,13 +44,16 @@ export interface LineLabel extends LineAnchor {
   y: number
 }
 
-/** How far outside the board (in hex steps) a label sits before de-overlapping. */
-const BASE_GAP = 1
-/** Extra distance tried, per attempt, when a slot is already taken. */
-const NUDGE_STEP = 0.62
-const MAX_NUDGE = 4
+/** How far outside the board (in hex steps) a label sits — snug to the edge. */
+const BASE_GAP = 0.85
+/** Extra distance tried, per attempt, once BOTH ends of a row are taken. */
+const NUDGE_STEP = 0.55
+const MAX_NUDGE = 3
 /** Closest two label centres may sit, in hex-step units (scale-free). */
-const MIN_GAP = 1.55
+const MIN_GAP = 1.5
+/** Direction-dash span, as distances from the label centre in hex-steps. */
+const TICK_NEAR = 0.32
+const TICK_FAR = 0.86
 
 const SQRT3 = Math.sqrt(3)
 
@@ -75,25 +80,48 @@ export function lineAnchors(board: Board): LineAnchor[] {
     const line = byId.get(id)
     if (!line || line.cells.length === 0) continue
 
-    const step = AXIS_STEP[lc.axis]
-    // 'start' labels sit before the first cell; 'end' labels after the last —
-    // in both cases outside the board, on the row's own line.
-    const fromStart = lc.from === 'start'
-    const cells = fromStart ? line.cells : [...line.cells].reverse()
-    const edge = parseKey(cells[0])
-    const sign = fromStart ? -1 : 1
+    /** One end of this row, `d` hex-steps outside it, with its dash tip. */
+    const at = (fromStart: boolean, d: number): { coord: Axial; tip: Axial; cells: string[] } => {
+      const step = AXIS_STEP[lc.axis]
+      const cells = fromStart ? line.cells : [...line.cells].reverse()
+      const edge = parseKey(cells[0])
+      const sign = fromStart ? -1 : 1
+      const out = (k: number): Axial => ({
+        q: edge.q + sign * step.q * k,
+        r: edge.r + sign * step.r * k,
+      })
+      return { coord: out(d), tip: out(d + TICK_FAR), cells }
+    }
+    const free = (u: { x: number; y: number }): boolean =>
+      !placedUnits.some((p) => Math.hypot(p.x - u.x, p.y - u.y) < MIN_GAP)
 
-    let coord: Axial = edge
-    let u = unit(edge)
-    for (let n = 0; n <= MAX_NUDGE; n++) {
-      const d = BASE_GAP + n * NUDGE_STEP
-      coord = { q: edge.q + sign * step.q * d, r: edge.r + sign * step.r * d }
-      u = unit(coord)
-      const clash = placedUnits.some((p) => Math.hypot(p.x - u.x, p.y - u.y) < MIN_GAP)
-      if (!clash) break
+    // A row total is equally true at either end, so a crowded label moves to the
+    // OPPOSITE END of its own row before it ever pushes further out — that keeps
+    // labels snug to the board instead of stacking up in the margin.
+    const preferred = lc.from === 'start'
+    let chosen = at(preferred, BASE_GAP)
+    let u = unit(chosen.coord)
+    outer: for (let n = 0; n <= MAX_NUDGE; n++) {
+      for (const fromStart of [preferred, !preferred]) {
+        const cand = at(fromStart, BASE_GAP + n * NUDGE_STEP)
+        const cu = unit(cand.coord)
+        if (free(cu)) {
+          chosen = cand
+          u = cu
+          break outer
+        }
+      }
     }
 
-    placed.push({ id, axis: lc.axis, index: lc.index, total: lc.total, coord, cells })
+    placed.push({
+      id,
+      axis: lc.axis,
+      index: lc.index,
+      total: lc.total,
+      coord: chosen.coord,
+      tip: chosen.tip,
+      cells: chosen.cells,
+    })
     placedUnits.push(u)
   }
 
@@ -152,6 +180,35 @@ export function guideSegment(
     r: tail.r + dir * step.r * overhang,
   })
   return { x1: a.x, y1: a.y, x2: b.x, y2: b.y }
+}
+
+/**
+ * A short dash beside the label, lying along its row's axis — so the row's
+ * direction reads at a glance without toggling the guide. Drawn on the OUTER
+ * side of the number (away from the board): the number sits snug against the
+ * board edge, leaving no room inside for a dash, and a dash must never stray
+ * over a hex. `near`/`far` are distances from the label centre in hex-steps.
+ */
+export function tickSegment(
+  label: LineLabel,
+  layout: HexLayout,
+  near = TICK_NEAR,
+  far = TICK_FAR,
+): { x1: number; y1: number; x2: number; y2: number } {
+  const head = hexToPixel(layout, parseKey(label.cells[0]))
+  // Away from the board, along the row.
+  const dx = label.x - head.x
+  const dy = label.y - head.y
+  const mag = Math.hypot(dx, dy) || 1
+  // One hex step in pixels — keeps the dash the same size however far the
+  // label was nudged out.
+  const stepPx = SQRT3 * layout.size
+  return {
+    x1: label.x + (dx / mag) * stepPx * near,
+    y1: label.y + (dy / mag) * stepPx * near,
+    x2: label.x + (dx / mag) * stepPx * far,
+    y2: label.y + (dy / mag) * stepPx * far,
+  }
 }
 
 /** +1 if `tail` lies forward of `head` along `step`, -1 otherwise. */

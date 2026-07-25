@@ -4,6 +4,51 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — Row-total affordances, HUD counters, solved-board cleanup
+
+Second playtest pass on the same session: make the margin totals self-explaining
+and give the HUD the counters that were missing.
+
+### Added
+
+- **Direction dash on every row total** — a short stroke along that row's axis,
+  so its direction reads at a glance without toggling the guide. Drawn on the
+  *outer* side of the number (totals now sit snug to the board, and a dash must
+  never stray over a hex — both enforced by test).
+- **Right-click a total to strike it off** — greys it out as "satisfied";
+  right-click again restores it. Independent of the guide toggle and of the
+  swap-buttons setting. View-only, like guides: not persisted, resets per board.
+- **Pools counter is back**, as its own counter — unambiguous now that water is
+  counted in cells beside it.
+- **Running error tally** (`session.errorsMade`) in the counter row, counted as
+  wrong marks are placed. Distinct from the existing "⚠ N to fix" chip, which is
+  the *outstanding* set and clears on correction; the tally never counts down.
+  Undo/redo replays don't re-count it. In-memory only — not in the save record.
+
+### Changed
+
+- **Clue tiles get a darker outline** (`deepPool`, matching their numeral —
+  `rock` on `driftwood` was near invisible).
+- **Crowded totals move to the opposite end of their own row** rather than being
+  pushed further out. A row total is equally true at either end, so this spreads
+  labels across both margins instead of stacking them in one — and they stay
+  snug (>80% sit right on the edge even with every line clued).
+- **Cells are hit-tested before labels**, and the label target is kept inside its
+  clearance from the board, so a snug label can't steal a mark from the edge hex.
+
+### Fixed
+
+- **Solving a board no longer leaves it resumable.** Completion now clears the
+  in-progress record instead of saving it, so Home offers no "continue" for a
+  finished board — and reopening the app can't land back on the completion panel.
+
+### Verified
+
+- **433 unit + 16 e2e** green; typecheck passes. New e2e cover right-click
+  strike-off (independent of the guide toggle, never marks the board) and
+  solve → Home → reload offering no resume. Confirmed by screenshot on a
+  Large · Tricky board.
+
 ## 2026-07-25 — HUD counter in cells + unambiguous row totals
 
 A playtest follow-up: the water counter was reporting a unit nobody was

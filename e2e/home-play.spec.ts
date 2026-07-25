@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 // SC-001 — from a cold open, the player reaches a playable board in ≤2 clicks.
 test('cold open → Home → Play reaches a board in one click', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: /tidepools/i })).toBeVisible()
+  await expect(page.getByRole('heading', { name: /tidepool/i })).toBeVisible()
 
   // One click: Play.
   await page.getByRole('button', { name: /^play$/i }).click()

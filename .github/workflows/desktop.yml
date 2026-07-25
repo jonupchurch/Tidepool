@@ -71,11 +71,11 @@ jobs:
         run: |
           mkdir -p out
           if [ "${{ matrix.label }}" = "windows" ]; then
-            cp src-tauri/target/release/tidepools.exe out/
+            cp src-tauri/target/release/tidepool.exe out/
             cp src-tauri/target/release/bundle/nsis/*.exe out/ || true
             cp src-tauri/target/release/bundle/msi/*.msi out/ || true
           else
-            cp src-tauri/target/release/tidepools out/
+            cp src-tauri/target/release/tidepool out/
             cp src-tauri/target/release/bundle/appimage/*.AppImage out/ || true
             cp src-tauri/target/release/bundle/deb/*.deb out/ || true
           fi
@@ -83,6 +83,6 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: tidepools-${{ matrix.label }}
+          name: tidepool-${{ matrix.label }}
           path: out/
           if-no-files-found: error

@@ -14,7 +14,7 @@ describe('SplashScreen (US3)', () => {
 
   it('shows the wordmark, crab, a themed loader, and a rotating tip', () => {
     renderShell(<SplashScreen onDone={vi.fn()} minDurationMs={1000} />)
-    expect(screen.getByRole('heading', { name: /tidepools/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /tidepool/i })).toBeInTheDocument()
     expect(screen.getByRole('img', { name: /crab/i })).toBeInTheDocument()
     expect(screen.getByRole('status')).toBeInTheDocument()
     // The first tip is shown.

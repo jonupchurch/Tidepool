@@ -19,15 +19,15 @@ Artifacts land in `src-tauri/target/release/`:
 
 | Path | What it's for |
 |------|---------------|
-| `tidepools.exe` | The bare executable — **this is what Steam ships**. Steam distributes files directly and runs the binary; it does not want an installer. |
-| `bundle/nsis/Tidepools_<version>_x64-setup.exe` | Installer for distributing outside Steam (itch.io, a direct download). |
-| `bundle/msi/Tidepools_<version>_x64_en-US.msi` | MSI, for anyone deploying via policy. Rarely needed. |
+| `tidepool.exe` | The bare executable — **this is what Steam ships**. Steam distributes files directly and runs the binary; it does not want an installer. |
+| `bundle/nsis/Tidepool_<version>_x64-setup.exe` | Installer for distributing outside Steam (itch.io, a direct download). |
+| `bundle/msi/Tidepool_<version>_x64_en-US.msi` | MSI, for anyone deploying via policy. Rarely needed. |
 
 ## Linux / Steam Deck
 
 Built in CI, not locally — see [`.github/workflows/desktop.yml`](../.github/workflows/desktop.yml).
 Trigger it from the Actions tab, with `gh workflow run desktop.yml`, or by pushing
-a `v*` tag. Artifacts: the bare `tidepools` binary (what Steam ships), an
+a `v*` tag. Artifacts: the bare `tidepool` binary (what Steam ships), an
 AppImage, and a `.deb`.
 
 The runner is pinned to **ubuntu-22.04**, not `ubuntu-latest`. The Steam Deck's
@@ -72,13 +72,13 @@ disagrees with the About screen.
 
 ## Saves
 
-One file: **`%APPDATA%\com.gravytraining.tidepools\save.json`** on Windows (the
+One file: **`%APPDATA%\com.gravytraining.tidepool\save.json`** on Windows (the
 app data dir for the configured `identifier`). Verified on a real machine, not
 read off documentation — the app exposes a `save_location` command so the path
 can always be confirmed rather than assumed.
 
 For **Steam Auto-Cloud** that maps to root path `%WinAppDataRoaming%`, subdirectory
-`com.gravytraining.tidepools`, pattern `save.json`.
+`com.gravytraining.tidepool`, pattern `save.json`.
 
 Why one file rather than one per key: Auto-Cloud syncs file *patterns*, and a
 save has to move between machines as a consistent unit. Split across files, a
@@ -94,7 +94,7 @@ unit-testable without a webview; [`save.rs`](src/save.rs) just moves bytes.
 
 ## Notes
 
-- **`identifier`** (`com.gravytraining.tidepools`) determines where the OS puts
+- **`identifier`** (`com.gravytraining.tidepool`) determines where the OS puts
   the app's data. Changing it after release orphans every player's save.
 - The **release profile** is tuned for size (`opt-level = "s"`, LTO, stripped) —
   ~4.8 MB. Nothing performance-sensitive runs in Rust; the game lives in the

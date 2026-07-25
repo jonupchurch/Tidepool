@@ -60,6 +60,6 @@ describe('version parity across the desktop build', () => {
     // with every other unconfigured Tauri app on a player's machine.
     const conf = JSON.parse(read('src-tauri/tauri.conf.json')) as { identifier: string }
     expect(conf.identifier).not.toBe('com.tauri.dev')
-    expect(conf.identifier).toBe('com.gravytraining.tidepools')
+    expect(conf.identifier).toBe('com.gravytraining.tidepool')
   })
 })

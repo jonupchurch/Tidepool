@@ -4,6 +4,32 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — The game is "Tidepool", singular
+
+### Changed
+
+- **One name everywhere.** The repo and folder were already singular while every
+  player-facing string said "Tidepools"; the store art settled it. Renamed the
+  window title, wordmark, About screen, bundle `productName`, crate, and npm
+  package. The binary is now `tidepool.exe`.
+- **Bundle identifier → `com.gravytraining.tidepool`.** This one had a deadline
+  attached: the identifier decides where the OS stores saves, so changing it
+  after release would orphan every player's progress. With zero players, now was
+  the only free moment to fix it.
+
+### Deliberately not renamed
+
+The `__TIDEPOOLS__` dev hook (13 e2e files) and the IndexedDB store name in the
+web backend. Both are internal identifiers no player ever sees, and the storage
+one would drop any in-progress board on rename — churn and risk for a cosmetic
+win.
+
+### Added
+
+- **`store/`** for Steam art, kept out of `src/assets/` so it can't be bundled
+  into the binary, with the full asset-size table and the three things that get
+  store art rejected.
+
 ## 2026-07-25 — Native saves on desktop (009 US2)
 
 ### Added

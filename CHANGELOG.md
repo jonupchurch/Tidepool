@@ -4,6 +4,24 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — Correct cells lock
+
+### Changed
+
+- **A correctly marked cell can no longer be changed by clicking** — neither
+  cleared nor overwritten — so settled work can't be knocked out by a stray
+  click (`PlaySession.isLocked`). Given clue cells count as locked too. Wrong
+  marks stay fully editable; correcting one settles it. Undo/redo still reach
+  everything: the lock is about clicks, not about rewriting history.
+
+### Verified
+
+- **489 unit + 19 e2e** green; typecheck passes. A new e2e settles one water and
+  one rock cell, clicks each again with both buttons, and asserts nothing moved
+  and no mistake was counted. Two existing tests set their state up by flipping a
+  correct mark (breaking a completed pool; un-completing a solved board) — both
+  now express the same invariant a way the rules still allow.
+
 ## 2026-07-25 — Curated shores: a 36-board ladder on a hex map
 
 The curated set becomes the game's authored progression: six groups of six,

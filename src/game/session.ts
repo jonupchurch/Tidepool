@@ -78,6 +78,17 @@ export class PlaySession {
     return this.board.cells.get(key)?.given ?? false
   }
 
+  /**
+   * Whether a cell is settled and no longer clickable: its mark matches the
+   * solution. Given clue cells are fixed by definition, so they count too.
+   */
+  isLocked(key: string): boolean {
+    const cell = this.board.cells.get(key)
+    if (!cell) return false
+    if (cell.given) return true
+    return this.marks.get(key) === cell.state
+  }
+
   get isComplete(): boolean {
     return this.complete
   }
@@ -142,6 +153,10 @@ export class PlaySession {
   applyMark(key: string, kind: MarkKind): MarkDelta {
     const cell = this.board.cells.get(key)
     if (!cell || cell.given) return this.noop()
+    // A cell you've settled correctly is locked: further clicks do nothing, so
+    // finished work can't be knocked out by a stray click. Wrong marks stay
+    // editable (that's how you fix them), and undo still reaches everything.
+    if (this.isLocked(key)) return this.noop()
     const prev = this.marks.get(key) ?? 'unknown'
     const next: Mark = prev === kind ? 'unknown' : kind
     if (prev === next) return this.noop()

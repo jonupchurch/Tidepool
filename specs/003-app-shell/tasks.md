@@ -32,9 +32,9 @@ description: "Task list for the App Shell feature"
 
 **Purpose**: Module skeleton + guardrails
 
-- [ ] T001 Create the `src/ui/shell/` file skeleton with typed stubs + exports (`AppShell.tsx`, `nav.ts`, `types.ts`, `shell-store.ts`, `HomeScreen.tsx`, `SplashScreen.tsx`, `PauseOverlay.tsx`, `ResumeCard.tsx`, `index.ts`) per plan.md
-- [ ] T002 [P] Add a React Testing Library render helper + shell test fixtures (fake `SaveStore`, sample `ResumeSnapshot`, sample `ShellPrefs`) in `src/ui/shell/test-helpers.tsx`
-- [ ] T003 [P] Add a design-token guard test asserting no hardcoded hex colors appear in `src/ui/shell/*.tsx` (Tailwind theme tokens only — `bg-sand`, `text-deep-pool`, `font-display`) in `src/ui/shell/tokens.guard.test.ts`
+- [x] T001 Create the `src/ui/shell/` file skeleton with typed stubs + exports (`AppShell.tsx`, `nav.ts`, `types.ts`, `shell-store.ts`, `HomeScreen.tsx`, `SplashScreen.tsx`, `PauseOverlay.tsx`, `ResumeCard.tsx`, `index.ts`) per plan.md
+- [x] T002 [P] Add a React Testing Library render helper + shell test fixtures (fake `SaveStore`, sample `ResumeSnapshot`, sample `ShellPrefs`) in `src/ui/shell/test-helpers.tsx`
+- [x] T003 [P] Add a design-token guard test asserting no hardcoded hex colors appear in `src/ui/shell/*.tsx` (Tailwind theme tokens only — `bg-sand`, `text-deep-pool`, `font-display`) in `src/ui/shell/tokens.guard.test.ts`
 
 ---
 
@@ -44,13 +44,13 @@ description: "Task list for the App Shell feature"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete.
 
-- [ ] T004 Define shell types — `Screen` union (Home / Gameplay / Curated / Journal / Settings / Tutorial / Splash), `ShellPrefs` (theme, mute), `ResumeSnapshot` (progress, seed, size, difficulty) — in `src/ui/shell/types.ts`
-- [ ] T005 [P] Implement the pure navigation reducer — `navReducer(state, action)` for navigate/back over a bounded history, guarding against duplicate/stuck transitions on rapid double-activation — in `src/ui/shell/nav.ts` (depends on T004)
-- [ ] T006 [P] Unit tests for the nav reducer: navigate to each screen, back restores prior context, rapid double-activation yields no duplicate/stuck state, in `src/ui/shell/nav.test.ts` (depends on T005)
-- [ ] T007 [P] Implement the shell persistence adapter over `SaveStore` (008) — `loadShellPrefs`/`saveShellPrefs` + `getResumeSnapshot()`; consume `SaveStore`, never `localStorage` directly — in `src/ui/shell/shell-store.ts` (depends on T004)
-- [ ] T008 [P] Unit tests for the shell-store adapter against a fake `SaveStore`: prefs round-trip, resume snapshot present vs absent on cold start, in `src/ui/shell/shell-store.test.ts` (depends on T007)
-- [ ] T009 Implement the `AppShell` container — host nav state via the reducer, swap the active screen, and apply the persisted theme via a `data-theme` attribute on boot — in `src/ui/shell/AppShell.tsx` (depends on T005, T007)
-- [ ] T010 Mount `AppShell` as the app root, replacing the scaffold, in `src/App.tsx` (depends on T009)
+- [x] T004 Define shell types — `Screen` union (Home / Gameplay / Curated / Journal / Settings / Tutorial / Splash), `ShellPrefs` (theme, mute), `ResumeSnapshot` (progress, seed, size, difficulty) — in `src/ui/shell/types.ts`
+- [x] T005 [P] Implement the pure navigation reducer — `navReducer(state, action)` for navigate/back over a bounded history, guarding against duplicate/stuck transitions on rapid double-activation — in `src/ui/shell/nav.ts` (depends on T004)
+- [x] T006 [P] Unit tests for the nav reducer: navigate to each screen, back restores prior context, rapid double-activation yields no duplicate/stuck state, in `src/ui/shell/nav.test.ts` (depends on T005)
+- [x] T007 [P] Implement the shell persistence adapter over `SaveStore` (008) — `loadShellPrefs`/`saveShellPrefs` + `getResumeSnapshot()`; consume `SaveStore`, never `localStorage` directly — in `src/ui/shell/shell-store.ts` (depends on T004)
+- [x] T008 [P] Unit tests for the shell-store adapter against a fake `SaveStore`: prefs round-trip, resume snapshot present vs absent on cold start, in `src/ui/shell/shell-store.test.ts` (depends on T007)
+- [x] T009 Implement the `AppShell` container — host nav state via the reducer, swap the active screen, and apply the persisted theme via a `data-theme` attribute on boot — in `src/ui/shell/AppShell.tsx` (depends on T005, T007)
+- [x] T010 Mount `AppShell` as the app root, replacing the scaffold, in `src/App.tsx` (depends on T009)
 
 **Checkpoint**: navigation reducer, prefs/resume seam, and the screen-swapping shell are green — individual screens can now be built.
 
@@ -62,12 +62,12 @@ description: "Task list for the App Shell feature"
 
 **Independent Test**: Open the app, land on Home, click Play, arrive in Gameplay with the expected size/difficulty.
 
-- [ ] T011 [P] [US1] Component tests (write first, expect fail): Home renders Play + all secondary entries (Curated, Endless picker, Seed entry, Journal, Settings, How-to-play) and each is reachable; Play navigates to Gameplay requesting the last-used size/difficulty (defaults when none) — in `src/ui/shell/HomeScreen.test.tsx`
-- [ ] T012 [US1] Implement `HomeScreen` — warm shoreline layout with a primary Play button + the secondary entry controls, using Tailwind theme tokens per the `resources/` style guide — in `src/ui/shell/HomeScreen.tsx`
-- [ ] T013 [US1] Implement the Play action — resolve last-used size/difficulty from `shell-store` (default when none), hand off to board-modes (004) and open Gameplay (002) via the shell launch callback, then navigate to Gameplay — in `src/ui/shell/HomeScreen.tsx` (depends on T007, T012)
-- [ ] T014 [US1] Register Home as the shell's default screen and wire the Gameplay launch/navigation handoff in `AppShell` — in `src/ui/shell/AppShell.tsx` (depends on T009, T012)
-- [ ] T015 [US1] Make T011 pass; add the cold-start test — Home renders warm defaults with zero saved data (no crash, no empty grey void, SC-005) — in `src/ui/shell/HomeScreen.test.tsx` (depends on T012, T013)
-- [ ] T016 [US1] E2E: cold open → Home → click Play reaches a board in ≤2 clicks (SC-001), in `e2e/home-play.spec.ts` (depends on T014)
+- [x] T011 [P] [US1] Component tests (write first, expect fail): Home renders Play + all secondary entries (Curated, Endless picker, Seed entry, Journal, Settings, How-to-play) and each is reachable; Play navigates to Gameplay requesting the last-used size/difficulty (defaults when none) — in `src/ui/shell/HomeScreen.test.tsx`
+- [x] T012 [US1] Implement `HomeScreen` — warm shoreline layout with a primary Play button + the secondary entry controls, using Tailwind theme tokens per the `resources/` style guide — in `src/ui/shell/HomeScreen.tsx`
+- [x] T013 [US1] Implement the Play action — resolve last-used size/difficulty from `shell-store` (default when none), hand off to board-modes (004) and open Gameplay (002) via the shell launch callback, then navigate to Gameplay — in `src/ui/shell/HomeScreen.tsx` (depends on T007, T012)
+- [x] T014 [US1] Register Home as the shell's default screen and wire the Gameplay launch/navigation handoff in `AppShell` — in `src/ui/shell/AppShell.tsx` (depends on T009, T012)
+- [x] T015 [US1] Make T011 pass; add the cold-start test — Home renders warm defaults with zero saved data (no crash, no empty grey void, SC-005) — in `src/ui/shell/HomeScreen.test.tsx` (depends on T012, T013)
+- [x] T016 [US1] E2E: cold open → Home → click Play reaches a board in ≤2 clicks (SC-001), in `e2e/home-play.spec.ts` (depends on T014)
 
 **Checkpoint**: MVP — the player lands on Home and reaches a playable board. Stop and validate here.
 
@@ -79,11 +79,11 @@ description: "Task list for the App Shell feature"
 
 **Independent Test**: Leave a board mid-solve, return to Home, use the resume card, land on the exact saved board.
 
-- [ ] T017 [P] [US2] Component tests (write first, expect fail): `ResumeCard` renders progress + seed and its activation restores the saved board; the card is absent when no in-progress board exists — in `src/ui/shell/ResumeCard.test.tsx`
-- [ ] T018 [US2] Implement `ResumeCard` — mini board preview, progress, and seed from `getResumeSnapshot()`, using theme tokens — in `src/ui/shell/ResumeCard.tsx` (depends on T007)
-- [ ] T019 [US2] Render the resume card on Home iff an in-progress snapshot exists, wiring its activation to launch Gameplay restoring that exact saved state — in `src/ui/shell/HomeScreen.tsx` (depends on T012, T018)
-- [ ] T020 [US2] Make T017 pass; add Home's light-stats block (boards solved, most-recent creature) sourced from persistence/journal (008 / 005) with a warm zero-state (FR-004) — in `src/ui/shell/HomeScreen.tsx` (depends on T019)
-- [ ] T021 [US2] E2E: leave a board mid-solve → return to Home → resume card restores the exact saved board (the launch → navigate → resume path, SC-002) — in `e2e/resume.spec.ts` (depends on T019)
+- [x] T017 [P] [US2] Component tests (write first, expect fail): `ResumeCard` renders progress + seed and its activation restores the saved board; the card is absent when no in-progress board exists — in `src/ui/shell/ResumeCard.test.tsx`
+- [x] T018 [US2] Implement `ResumeCard` — mini board preview, progress, and seed from `getResumeSnapshot()`, using theme tokens — in `src/ui/shell/ResumeCard.tsx` (depends on T007)
+- [x] T019 [US2] Render the resume card on Home iff an in-progress snapshot exists, wiring its activation to launch Gameplay restoring that exact saved state — in `src/ui/shell/HomeScreen.tsx` (depends on T012, T018)
+- [x] T020 [US2] Make T017 pass; add Home's light-stats block (boards solved, most-recent creature) sourced from persistence/journal (008 / 005) with a warm zero-state (FR-004) — in `src/ui/shell/HomeScreen.tsx` (depends on T019)
+- [x] T021 [US2] E2E: leave a board mid-solve → return to Home → resume card restores the exact saved board (the launch → navigate → resume path, SC-002) — in `e2e/resume.spec.ts` (depends on T019)
 
 **Checkpoint**: resume + stats appear iff there is data to show, and resume restores the exact board.
 
@@ -95,11 +95,11 @@ description: "Task list for the App Shell feature"
 
 **Independent Test**: Trigger the splash; confirm wordmark, loader animation, and a rotating tip appear; it dismisses when ready.
 
-- [ ] T022 [P] [US3] Component tests (write first, expect fail): Splash shows the wordmark, crab, a themed loader, and a rotating tip that cycles; it fires `onReady`/dismisses when the target is ready — in `src/ui/shell/SplashScreen.test.tsx`
-- [ ] T023 [P] [US3] Add the rotating flavor-tips constant + interval cycling (cleared on unmount) in `src/ui/shell/tips.ts`
-- [ ] T024 [US3] Implement `SplashScreen` — wordmark + crab asset + themed loader + rotating tip, reduced-motion gated, no progress percentage — in `src/ui/shell/SplashScreen.tsx` (depends on T023)
-- [ ] T025 [US3] Wire Splash into `AppShell` as the initial view, dismissing to Home/Gameplay when ready — in `src/ui/shell/AppShell.tsx` (depends on T009, T024)
-- [ ] T026 [US3] Make T022 pass; add the reduced-motion assertion (splash animation minimized, FR-009) — in `src/ui/shell/SplashScreen.test.tsx` (depends on T024)
+- [x] T022 [P] [US3] Component tests (write first, expect fail): Splash shows the wordmark, crab, a themed loader, and a rotating tip that cycles; it fires `onReady`/dismisses when the target is ready — in `src/ui/shell/SplashScreen.test.tsx`
+- [x] T023 [P] [US3] Add the rotating flavor-tips constant + interval cycling (cleared on unmount) in `src/ui/shell/tips.ts`
+- [x] T024 [US3] Implement `SplashScreen` — wordmark + crab asset + themed loader + rotating tip, reduced-motion gated, no progress percentage — in `src/ui/shell/SplashScreen.tsx` (depends on T023)
+- [x] T025 [US3] Wire Splash into `AppShell` as the initial view, dismissing to Home/Gameplay when ready — in `src/ui/shell/AppShell.tsx` (depends on T009, T024)
+- [x] T026 [US3] Make T022 pass; add the reduced-motion assertion (splash animation minimized, FR-009) — in `src/ui/shell/SplashScreen.test.tsx` (depends on T024)
 
 **Checkpoint**: the splash covers load gracefully and never blocks longer than needed.
 
@@ -111,11 +111,11 @@ description: "Task list for the App Shell feature"
 
 **Independent Test**: Open Pause from Gameplay; confirm the five actions + reassurance; Resume returns to the exact board.
 
-- [ ] T027 [P] [US4] Component tests (write first, expect fail): `PauseOverlay` shows Resume, New board, Restart this board, Settings, Home + the "Your board is saved." line; Resume fires resume-to-board, Home navigates Home leaving the board saved — in `src/ui/shell/PauseOverlay.test.tsx`
-- [ ] T028 [US4] Implement `PauseOverlay` — a scrim over the frozen board with the five actions + reassurance line, theme tokens, reduced-motion gated — in `src/ui/shell/PauseOverlay.tsx`
-- [ ] T029 [US4] Wire Pause open/close into the shell — open from the Gameplay top-bar trigger, freeze the board under the scrim, and route each action (Resume / New board / Restart / Settings / Home) — in `src/ui/shell/AppShell.tsx` (depends on T009, T028)
-- [ ] T030 [US4] Make T027 pass; add the close/reopen safe-state test (Pause open → reopen returns to Home or the saved board, progress intact — SC-003) — in `src/ui/shell/PauseOverlay.test.tsx` (depends on T028, T029)
-- [ ] T031 [US4] E2E: open Pause from Gameplay → Resume returns to the exact board; Home leaves the board saved — in `e2e/pause.spec.ts` (depends on T029)
+- [x] T027 [P] [US4] Component tests (write first, expect fail): `PauseOverlay` shows Resume, New board, Restart this board, Settings, Home + the "Your board is saved." line; Resume fires resume-to-board, Home navigates Home leaving the board saved — in `src/ui/shell/PauseOverlay.test.tsx`
+- [x] T028 [US4] Implement `PauseOverlay` — a scrim over the frozen board with the five actions + reassurance line, theme tokens, reduced-motion gated — in `src/ui/shell/PauseOverlay.tsx`
+- [x] T029 [US4] Wire Pause open/close into the shell — open from the Gameplay top-bar trigger, freeze the board under the scrim, and route each action (Resume / New board / Restart / Settings / Home) — in `src/ui/shell/AppShell.tsx` (depends on T009, T028)
+- [x] T030 [US4] Make T027 pass; add the close/reopen safe-state test (Pause open → reopen returns to Home or the saved board, progress intact — SC-003) — in `src/ui/shell/PauseOverlay.test.tsx` (depends on T028, T029)
+- [x] T031 [US4] E2E: open Pause from Gameplay → Resume returns to the exact board; Home leaves the board saved — in `e2e/pause.spec.ts` (depends on T029)
 
 **Checkpoint**: pausing feels safe — Resume always returns the exact board, Home never loses it.
 
@@ -127,10 +127,10 @@ description: "Task list for the App Shell feature"
 
 **Independent Test**: Toggle mute and theme from Home; navigate across screens and back; state persists.
 
-- [ ] T032 [P] [US5] Component tests (write first, expect fail): the mute + Day/Night toggles on Home flip state and persist via `shell-store`; toggling Night sets `data-theme` app-wide — in `src/ui/shell/toggles.test.tsx`
-- [ ] T033 [US5] Implement the mute + Day/Night theme toggles on Home, persisting via `saveShellPrefs` and applying the theme through `AppShell`'s `data-theme` (token values owned by Settings/006, FR-008) — in `src/ui/shell/HomeScreen.tsx` (depends on T007, T009)
-- [ ] T034 [US5] Implement calm screen transitions in `AppShell` (CSS opacity/cross-fade) gated by `prefers-reduced-motion`, ensuring back-navigation preserves prior context (FR-007) — in `src/ui/shell/AppShell.tsx` (depends on T009)
-- [ ] T035 [US5] Make T032 pass; add E2E — toggle Night on Home persists across reload (SC-004) — in `e2e/theme-persist.spec.ts` (depends on T033)
+- [x] T032 [P] [US5] Component tests (write first, expect fail): the mute + Day/Night toggles on Home flip state and persist via `shell-store`; toggling Night sets `data-theme` app-wide — in `src/ui/shell/toggles.test.tsx`
+- [x] T033 [US5] Implement the mute + Day/Night theme toggles on Home, persisting via `saveShellPrefs` and applying the theme through `AppShell`'s `data-theme` (token values owned by Settings/006, FR-008) — in `src/ui/shell/HomeScreen.tsx` (depends on T007, T009)
+- [x] T034 [US5] Implement calm screen transitions in `AppShell` (CSS opacity/cross-fade) gated by `prefers-reduced-motion`, ensuring back-navigation preserves prior context (FR-007) — in `src/ui/shell/AppShell.tsx` (depends on T009)
+- [x] T035 [US5] Make T032 pass; add E2E — toggle Night on Home persists across reload (SC-004) — in `e2e/theme-persist.spec.ts` (depends on T033)
 
 **Checkpoint**: toggles persist across restarts and every transition is calm + reduced-motion-aware.
 
@@ -138,8 +138,8 @@ description: "Task list for the App Shell feature"
 
 ## Phase 8: Polish & Cross-Cutting
 
-- [ ] T036 [P] Accessibility + reduced-motion sweep across all shell surfaces — keyboard reachability of Home's entries, focus order on Pause/Splash, `prefers-reduced-motion` honored on splash + transitions (FR-009) — in `src/ui/shell/a11y.test.tsx`
-- [ ] T037 `npm run typecheck` + `npm run build` + full `npm run test` + `npm run test:e2e` green; confirm the token guard (T003) covers every shell component and Home/Splash/Pause match the `resources/` style guide; add the shell's `CHANGELOG.md` entry
+- [x] T036 [P] Accessibility + reduced-motion sweep across all shell surfaces — keyboard reachability of Home's entries, focus order on Pause/Splash, `prefers-reduced-motion` honored on splash + transitions (FR-009) — in `src/ui/shell/a11y.test.tsx`
+- [x] T037 `npm run typecheck` + `npm run build` + full `npm run test` + `npm run test:e2e` green; confirm the token guard (T003) covers every shell component and Home/Splash/Pause match the `resources/` style guide; add the shell's `CHANGELOG.md` entry
 
 ---
 

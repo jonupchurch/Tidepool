@@ -4,96 +4,83 @@
     "name": "Limpet",
     "rarity": "Common",
     "description": "A humble cone clamped tight to its favourite rock.",
-    "minSize": 1,
-    "hasArt": false
+    "minSize": 1
   },
   {
     "id": "periwinkle",
     "name": "Periwinkle",
     "rarity": "Common",
     "description": "A tiny spiral snail grazing along the tideline.",
-    "minSize": 2,
-    "hasArt": false
+    "minSize": 2
   },
   {
     "id": "barnacle",
     "name": "Barnacle",
     "rarity": "Common",
     "description": "Feathery legs comb the water each time the tide returns.",
-    "minSize": 3,
-    "hasArt": false
+    "minSize": 3
   },
   {
     "id": "anemone",
     "name": "Anemone",
     "rarity": "Common",
     "description": "A soft crown of tentacles swaying in the shallows.",
-    "minSize": 4,
-    "hasArt": false
+    "minSize": 4
   },
   {
     "id": "mussel",
     "name": "Mussel",
     "rarity": "Uncommon",
     "description": "Anchored by silken threads against the surge.",
-    "minSize": 5,
-    "hasArt": false
+    "minSize": 5
   },
   {
     "id": "crab",
     "name": "Shore Crab",
     "rarity": "Uncommon",
     "description": "Sidles between the stones, claws raised in greeting.",
-    "minSize": 6,
-    "hasArt": true,
-    "art": "/crab.png"
+    "minSize": 6
   },
   {
     "id": "seastar",
     "name": "Sea Star",
     "rarity": "Uncommon",
     "description": "Five slow arms map the reef, one cautious step at a time.",
-    "minSize": 7,
-    "hasArt": false
+    "minSize": 7
   },
   {
     "id": "hermit",
     "name": "Hermit Crab",
     "rarity": "Rare",
     "description": "Wears a borrowed shell and trades up as it grows.",
-    "minSize": 8,
-    "hasArt": false
+    "minSize": 8
   },
   {
     "id": "urchin",
     "name": "Sea Urchin",
     "rarity": "Rare",
     "description": "A patient pincushion of spines rolling through the kelp.",
-    "minSize": 9,
-    "hasArt": false
+    "minSize": 9
   },
   {
     "id": "octopus",
     "name": "Little Octopus",
     "rarity": "Rare",
     "description": "Curious and clever, it slips into the deepest pools.",
-    "minSize": 10,
-    "hasArt": false
+    "minSize": 10
   },
   {
     "id": "moonjelly",
     "name": "Moon Jelly",
     "rarity": "Legendary",
     "description": "A pale lantern drifting where the tide runs deep.",
-    "minSize": 12,
-    "hasArt": false
+    "minSize": 12
   },
   {
     "id": "nautilus",
     "name": "Nautilus",
     "rarity": "Legendary",
     "description": "An ancient spiral visitor from beyond the shelf.",
-    "minSize": 15,
-    "hasArt": false
+    "minSize": 15
   }
 ]

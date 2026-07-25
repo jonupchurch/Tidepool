@@ -1,6 +1,13 @@
 // Creature catalog + reward resolver (T007): the single shared source of
 // creature identity + pool-size → creature mapping.
-import { CREATURES, RARITIES, creatureDef, creatureForPool, creatureUnlock } from './creatures'
+import {
+  CREATURES,
+  RARITIES,
+  creatureArtUrl,
+  creatureDef,
+  creatureForPool,
+  creatureUnlock,
+} from './creatures'
 
 describe('creature catalog', () => {
   it('has around a dozen creatures, each with the required fields', () => {
@@ -11,9 +18,9 @@ describe('creature catalog', () => {
       expect(c.description).toBeTruthy()
       expect(RARITIES).toContain(c.rarity)
       expect(typeof c.minSize).toBe('number')
-      expect(typeof c.hasArt).toBe('boolean')
-      // art path present iff hasArt (missing art degrades to a placeholder — FR-008)
-      expect(Boolean(c.art)).toBe(c.hasArt)
+      // Art is a convention, not catalog data: public/img/<id>.png. A missing
+      // file degrades to a placeholder in the card (FR-008).
+      expect(creatureArtUrl(c.id)).toBe(`/img/${c.id}.png`)
     }
   })
 

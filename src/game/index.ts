@@ -4,7 +4,14 @@ export { PlaySession } from './session'
 export type { Mark, MarkKind, MarkDelta } from './session'
 export { waterPools } from './pools'
 export type { Pool } from './pools'
-export { CREATURES, RARITIES, creatureDef, creatureForPool, creatureUnlock } from './creatures'
+export {
+  CREATURES,
+  RARITIES,
+  creatureArtUrl,
+  creatureDef,
+  creatureForPool,
+  creatureUnlock,
+} from './creatures'
 export type { CreatureDef, Rarity } from './creatures'
 export {
   applyDiscovery,

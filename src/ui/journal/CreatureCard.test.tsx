@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { type CreatureView, creatureDef } from '@/game'
 import { CreatureCard } from './CreatureCard'
@@ -17,16 +17,20 @@ describe('CreatureCard (US1)', () => {
     expect(screen.getByText(/uncommon/i)).toBeInTheDocument()
     expect(screen.getByText(/sidles between the stones/i)).toBeInTheDocument()
     expect(screen.getByText(/first at TIDE-0007/i)).toBeInTheDocument()
-    // crab has real art → a real <img>, not the placeholder
+    // Art is found by convention — public/img/<id>.png — with no catalog entry.
     const img = screen.getByRole('img', { name: /shore crab/i }) as HTMLImageElement
-    expect(img.getAttribute('src')).toBe('/crab.png')
+    expect(img.getAttribute('src')).toBe('/img/crab.png')
   })
 
-  it('found but art-less → a styled placeholder, never a broken card (FR-008)', () => {
+  it('falls back to a styled placeholder when the art file is missing (FR-008)', () => {
     render(<CreatureCard card={view('limpet', true)} />)
-    expect(screen.getByText('Limpet')).toBeInTheDocument()
-    // no <img> is rendered for an art-less creature
+    const img = screen.getByRole('img', { name: /limpet/i })
+    expect(img.getAttribute('src')).toBe('/img/limpet.png')
+
+    // The file isn't there yet: the failed load degrades, never a broken image.
+    fireEvent.error(img)
     expect(screen.queryByRole('img')).not.toBeInTheDocument()
+    expect(screen.getByText('Limpet')).toBeInTheDocument()
   })
 
   it('unfound → a silhouette labelled "not yet found" (accessible)', () => {

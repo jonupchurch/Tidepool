@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "validate:curated": "vite-node scripts/validate-curated.ts"
+    "validate:curated": "vite-node scripts/validate-curated.ts",
+    "check:art": "vite-node scripts/check-art.ts"
   },
   "dependencies": {
     "idb-keyval": "^6.3.0",

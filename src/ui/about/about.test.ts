@@ -1,5 +1,9 @@
+import { readFileSync } from 'node:fs'
+import { resolve } from 'node:path'
 import pkg from '../../../package.json'
 import { COPYRIGHT_YEAR, CREDIT, STUDIO, VERSION } from './about'
+
+const read = (p: string) => readFileSync(resolve(process.cwd(), p), 'utf8')
 
 describe('about constants', () => {
   it('reads as the credit line the game ships with', () => {
@@ -26,5 +30,29 @@ describe('about constants', () => {
   // to the next. It's a constant on purpose.
   it('pins the copyright year rather than reading the clock', () => {
     expect(COPYRIGHT_YEAR).toBe(2026)
+  })
+})
+
+// Four files now state a version, and three of them are invisible while you
+// play: an installer that says 0.1.0 while the About screen says 1.0.1 is the
+// kind of thing that ships unnoticed and then confuses a bug report.
+describe('version parity across the desktop build', () => {
+  it('the Tauri bundle version matches', () => {
+    const conf = JSON.parse(read('src-tauri/tauri.conf.json')) as { version: string }
+    expect(conf.version).toBe(VERSION)
+  })
+
+  it('the Rust crate version matches', () => {
+    // First `version = "..."` in the file is the [package] one.
+    const found = read('src-tauri/Cargo.toml').match(/^version\s*=\s*"([^"]+)"/m)
+    expect(found?.[1]).toBe(VERSION)
+  })
+
+  it('the desktop bundle identifier is not the Tauri placeholder', () => {
+    // `com.tauri.dev` is what `tauri init` writes; shipping it would collide
+    // with every other unconfigured Tauri app on a player's machine.
+    const conf = JSON.parse(read('src-tauri/tauri.conf.json')) as { identifier: string }
+    expect(conf.identifier).not.toBe('com.tauri.dev')
+    expect(conf.identifier).toBe('com.gravytraining.tidepools')
   })
 })

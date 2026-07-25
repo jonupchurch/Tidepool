@@ -16,6 +16,7 @@
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
     "make:icons": "vite-node scripts/make-icons.ts",
+    "check:achievements": "vite-node scripts/check-achievements.ts",
     "check:art": "vite-node scripts/check-art.ts",
     "check:audio": "vite-node scripts/check-audio.ts"
   },

@@ -23,6 +23,8 @@ export {
   creatureUnlock,
 } from './creatures'
 export type { CreatureDef, Rarity } from './creatures'
+export { ACHIEVEMENTS, achievement, evaluateAchievements, newlyEarned } from './achievements'
+export type { Achievement, AchievementState } from './achievements'
 export {
   applyDiscovery,
   buildJournalView,

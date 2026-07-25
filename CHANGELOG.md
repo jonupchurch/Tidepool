@@ -16,8 +16,6 @@ versioned release notes once Steam builds start.
 
 ### Changed
 
-### Changed
-
 - **A correctly marked cell can no longer be changed by clicking** — neither
   cleared nor overwritten — so settled work can't be knocked out by a stray
   click (`PlaySession.isLocked`). Given clue cells count as locked too. Wrong

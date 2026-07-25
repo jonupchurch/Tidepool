@@ -30,10 +30,22 @@ const SECONDARY: readonly { label: string; screen: Screen }[] = [
   { label: 'How to play', screen: 'Tutorial' },
 ]
 
-export function HomeScreen({ lastPlay, resume, stats, onPlay, onResume, onNavigate }: HomeScreenProps) {
+export function HomeScreen({
+  prefs,
+  onPrefsChange,
+  lastPlay,
+  resume,
+  stats,
+  onPlay,
+  onResume,
+  onNavigate,
+}: HomeScreenProps) {
   const [size, setSize] = useState<SizeTier>(lastPlay.size)
   const [difficulty, setDifficulty] = useState<DifficultyTier>(lastPlay.difficulty)
   const [seed, setSeed] = useState('')
+
+  const toggleMute = () => onPrefsChange({ ...prefs, muted: !prefs.muted })
+  const toggleTheme = () => onPrefsChange({ ...prefs, theme: prefs.theme === 'Night' ? 'Day' : 'Night' })
 
   // Reflect the persisted last-used selection whenever it (re)loads.
   useEffect(() => {
@@ -48,7 +60,29 @@ export function HomeScreen({ lastPlay, resume, stats, onPlay, onResume, onNaviga
   }
 
   return (
-    <div className="grid h-full w-full place-items-center overflow-y-auto bg-sand text-ink">
+    <div className="relative grid h-full w-full place-items-center overflow-y-auto bg-sand text-ink">
+      {/* Global toggles (US5) — mute + Day/Night Tide. */}
+      <div className="absolute right-4 top-4 flex gap-2">
+        <button
+          type="button"
+          aria-label={prefs.muted ? 'Unmute' : 'Mute'}
+          aria-pressed={prefs.muted}
+          onClick={toggleMute}
+          className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
+        >
+          {prefs.muted ? '🔇' : '🔊'}
+        </button>
+        <button
+          type="button"
+          aria-label="Night Tide"
+          aria-pressed={prefs.theme === 'Night'}
+          onClick={toggleTheme}
+          className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
+        >
+          {prefs.theme === 'Night' ? '🌙' : '☀️'}
+        </button>
+      </div>
+
       <div className="flex w-full max-w-md flex-col items-center gap-6 px-6 py-10 text-center">
         <div>
           <h1 className="font-display text-5xl text-deep-pool">Tidepools</h1>

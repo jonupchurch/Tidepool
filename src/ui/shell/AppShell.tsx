@@ -174,7 +174,10 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
 
   return (
     <main className="relative h-screen w-screen overflow-hidden bg-sand text-ink">
-      {renderScreen()}
+      {/* Calm cross-fade on screen change; instant under reduced-motion. */}
+      <div key={screen} className="h-full w-full motion-safe:animate-[tp-fade_240ms_ease-out]">
+        {renderScreen()}
+      </div>
       {paused && screen === 'Gameplay' && (
         <PauseOverlay
           onResume={() => setPaused(false)}

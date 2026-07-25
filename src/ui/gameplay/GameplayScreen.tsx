@@ -80,6 +80,7 @@ export function GameplayScreen({
   const [label, setLabel] = useState('')
   const [poolsFound, setPoolsFound] = useState(0)
   const [totalPools, setTotalPools] = useState(0)
+  const [stonesLeft, setStonesLeft] = useState(0)
   const [complete, setComplete] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [canUndo, setCanUndo] = useState(false)
@@ -95,6 +96,7 @@ export function GameplayScreen({
       hovered: hoveredRef.current,
       highlighted: highlightRef.current,
       revealed: s.revealed,
+      mistakes: s.mistakeCells(),
       pools: s.pools,
       colorblind: settingsRef.current.colorblind,
     })
@@ -104,6 +106,7 @@ export function GameplayScreen({
     const s = sessionRef.current
     if (!s) return
     setPoolsFound(s.revealed.size)
+    setStonesLeft(s.stonesRemaining)
     setCanUndo(s.canUndo())
     setCanRedo(s.canRedo())
     setComplete(s.isComplete)
@@ -154,7 +157,9 @@ export function GameplayScreen({
       if (!s) return
       const delta = s.applyMark(cellKey, kind)
       if (!delta.changed) return
-      if (delta.correct === false && settingsRef.current.nudge && !settingsRef.current.reducedMotion) {
+      // Gentle nudge on a wrong mark (a faint ripple of doubt) — the persistent
+      // coral tint in the renderer keeps it flagged until corrected.
+      if (delta.correct === false && !settingsRef.current.reducedMotion) {
         setRipple({ x: px, y: py, k: Date.now() })
         window.setTimeout(() => setRipple(null), 550)
       }
@@ -348,8 +353,8 @@ export function GameplayScreen({
     <div className="flex flex-col h-full w-full bg-sand">
       <TopBar
         label={label}
-        poolsFound={poolsFound}
-        totalPools={totalPools}
+        poolsRemaining={totalPools - poolsFound}
+        stonesRemaining={stonesLeft}
         canUndo={canUndo}
         canRedo={canRedo}
         onUndo={doUndo}

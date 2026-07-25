@@ -15,6 +15,8 @@ export interface RenderInput {
   hovered: string | null
   highlighted: ReadonlySet<string>
   revealed: ReadonlySet<string>
+  /** Cells currently marked against the solution — softly flagged (gentle nudge). */
+  mistakes: ReadonlySet<string>
   pools: Pool[]
   colorblind: boolean
 }
@@ -25,6 +27,11 @@ export interface BoardRenderer {
   cellAt(x: number, y: number): string | null
   readonly layout: HexLayout
 }
+
+// Canvas `ctx.font` does NOT resolve CSS custom properties — `var(--font-display)`
+// silently invalidates the declaration, leaving the default 10px font. Use a
+// concrete family stack so clue numerals render at the intended size.
+const DISPLAY_FONT = '"Bricolage Grotesque", "Nunito", system-ui, sans-serif'
 
 function clueText(clue: AdjacencyClue): string {
   if (clue.connectivity === 'connected') return `{${clue.count}}`
@@ -117,10 +124,21 @@ class CanvasBoardRenderer implements BoardRenderer {
       }
       ctx.stroke()
 
+      // Gentle-flag a wrong mark: a faint coral "ripple of doubt" tint that
+      // stays until the player corrects it (never a hard error).
+      if (input.mistakes.has(k)) {
+        ctx.save()
+        ctx.globalAlpha = 0.3
+        ctx.fillStyle = palette.coral
+        hexPath(ctx, x, y, size * 0.94)
+        ctx.fill()
+        ctx.restore()
+      }
+
       if (cell.given && cell.clue) {
         ctx.fillStyle = palette.deepPool
-        ctx.font = `600 ${size * 0.72}px var(--font-display), sans-serif`
-        ctx.fillText(clueText(cell.clue), x, y + size * 0.04)
+        ctx.font = `700 ${size * 0.9}px ${DISPLAY_FONT}`
+        ctx.fillText(clueText(cell.clue), x, y + size * 0.06)
       } else if (style.glyph) {
         ctx.fillStyle = palette.ink
         ctx.font = `${size * 0.7}px sans-serif`
@@ -147,7 +165,7 @@ class CanvasBoardRenderer implements BoardRenderer {
     const byId = new Map(this.lines.map((l) => [`${l.axis},${l.index}`, l]))
 
     ctx.fillStyle = palette.deepPool
-    ctx.font = `600 ${size * 0.6}px var(--font-display), sans-serif`
+    ctx.font = `700 ${size * 0.72}px ${DISPLAY_FONT}`
     for (const lc of this.board.lines) {
       const line = byId.get(`${lc.axis},${lc.index}`)
       if (!line) continue
@@ -184,7 +202,7 @@ class CanvasBoardRenderer implements BoardRenderer {
       ctx.fillStyle = palette.coral
       ctx.fill()
       ctx.fillStyle = palette.foam
-      ctx.font = `700 ${size * 0.7}px var(--font-display), sans-serif`
+      ctx.font = `700 ${size * 0.7}px ${DISPLAY_FONT}`
       ctx.fillText(pool.creatureId === 'crab' ? '🦀' : '✽', cx, cy + size * 0.04)
     }
   }

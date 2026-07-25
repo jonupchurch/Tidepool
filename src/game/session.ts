@@ -33,6 +33,8 @@ interface Move {
 export class PlaySession {
   readonly board: Board
   readonly pools: Pool[]
+  /** Total non-given rock ("stone") cells the player must place to finish. */
+  readonly totalStones: number
   private marks = new Map<string, MarkKind>()
   private history: Move[] = []
   private ptr = 0
@@ -42,6 +44,12 @@ export class PlaySession {
   constructor(board: Board) {
     this.board = board
     this.pools = waterPools(board)
+    let stones = 0
+    for (const k of board.present) {
+      const cell = board.cells.get(k)
+      if (cell && !cell.given && cell.state === 'rock') stones++
+    }
+    this.totalStones = stones
     this.recompute()
   }
 
@@ -62,6 +70,28 @@ export class PlaySession {
   }
   get revealed(): ReadonlySet<string> {
     return this.revealedSet
+  }
+  /** Pools not yet fully resolved (the "remaining pools" counter). */
+  get poolsRemaining(): number {
+    return this.pools.length - this.revealedSet.size
+  }
+  /** Non-given rock cells not yet correctly marked (the "remaining stones" counter). */
+  get stonesRemaining(): number {
+    let placed = 0
+    for (const [k, m] of this.marks) {
+      const cell = this.board.cells.get(k)
+      if (cell && !cell.given && cell.state === 'rock' && m === 'rock') placed++
+    }
+    return this.totalStones - placed
+  }
+  /** Non-given cells whose current mark contradicts the solution (gentle-flag). */
+  mistakeCells(): Set<string> {
+    const wrong = new Set<string>()
+    for (const [k, m] of this.marks) {
+      const cell = this.board.cells.get(k)
+      if (cell && !cell.given && m !== cell.state) wrong.add(k)
+    }
+    return wrong
   }
   canUndo(): boolean {
     return this.ptr > 0

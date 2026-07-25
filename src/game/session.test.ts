@@ -193,3 +193,39 @@ describe('edge cases (T035)', () => {
     expect(s.revealed.size).toBe(s.pools.length)
   })
 })
+
+describe('progress counters + gentle-flag (UX feedback)', () => {
+  it('counts remaining pools and stones, both reaching zero on solve', () => {
+    const s = makeSession()
+    expect(s.poolsRemaining).toBe(s.pools.length)
+    expect(s.stonesRemaining).toBe(s.totalStones)
+    expect(s.totalStones).toBeGreaterThan(0)
+    solveSession(s)
+    expect(s.poolsRemaining).toBe(0)
+    expect(s.stonesRemaining).toBe(0)
+  })
+
+  it('a wrong mark does not count toward stones placed', () => {
+    const s = makeSession()
+    const rock = firstHiddenRock(s.board)
+    s.applyMark(rock, 'water') // wrong
+    expect(s.stonesRemaining).toBe(s.totalStones)
+    s.applyMark(rock, 'rock') // corrected
+    expect(s.stonesRemaining).toBe(s.totalStones - 1)
+  })
+
+  it('flags cells marked against the solution and clears them on correction', () => {
+    const s = makeSession()
+    const rock = firstHiddenRock(s.board)
+    const water = waterCells(s.board)[0]
+    expect(s.mistakeCells().size).toBe(0)
+    s.applyMark(rock, 'water')
+    s.applyMark(water, 'rock')
+    const wrong = s.mistakeCells()
+    expect(wrong.has(rock)).toBe(true)
+    expect(wrong.has(water)).toBe(true)
+    s.applyMark(rock, 'rock')
+    s.applyMark(water, 'water')
+    expect(s.mistakeCells().size).toBe(0)
+  })
+})

@@ -38,15 +38,36 @@
   }
 }
 
-/* Night Tide — provisional token overrides so the theme toggle is visible.
-   Feature 006 (Settings) owns the final Night Tide palette. */
+/* Night Tide (feature 006) — a designed moonlit shore, not an inversion.
+   The ground is a deep teal-navy, water keeps its glow so pools still read as
+   water, stone stays warm against it, and coral is held back to a signal colour
+   so a mistake still reads instantly. Every token in @theme has a counterpart
+   here; the whole app re-themes from these alone. */
 :root[data-theme='night'] {
-  --color-sand: #16303a;
-  --color-driftwood: #21414c;
-  --color-foam: #1d3b45;
-  --color-water: #23566e;
-  --color-deep-pool: #cfe8e2;
-  --color-tide: #7fb8ae;
-  --color-rock: #8ea3a3;
-  --color-ink: #e8f1ee;
+  --color-sand: #10262f;      /* page ground — deepest */
+  --color-driftwood: #1d3b46; /* raised surface / clue tile */
+  --color-foam: #17323c;      /* cards + chrome, a step up from the ground */
+  --color-tide: #6fb2a8;      /* the accent, still teal but lifted for contrast */
+  --color-tide-fill: #2b5f66;
+  --color-water: #1f5a74;     /* marked water — glows against the ground */
+  --color-deep-pool: #d6ece6; /* primary text on dark */
+  --color-sea-glass: #58907f;
+  --color-coral: #f0937a;     /* mistakes/rewards — brightened to stay legible */
+  --color-rock: #93a7a8;      /* secondary text + stone */
+  --color-ink: #e8f1ee;       /* body text */
+}
+
+/* High contrast (006 US3) — deepen text and firm up edges in either theme,
+   for players who need more separation than the calm palette gives. */
+:root[data-high-contrast='on'] {
+  --color-ink: #0b1418;
+  --color-deep-pool: #10333d;
+  --color-rock: #5d5a52;
+}
+:root[data-high-contrast='on'][data-theme='night'] {
+  --color-ink: #ffffff;
+  --color-deep-pool: #ffffff;
+  --color-rock: #c8dcdc;
+  --color-sand: #060f14;
+  --color-foam: #10262f;
 }

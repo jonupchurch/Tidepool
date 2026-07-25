@@ -20,7 +20,7 @@ describe('navReducer', () => {
 
   it('navigates to each screen', () => {
     let s = initialNav('Home')
-    const screens: Screen[] = ['Gameplay', 'Curated', 'Journal', 'Settings', 'Tutorial']
+    const screens: Screen[] = ['Gameplay', 'Curated', 'Journal', 'Tutorial']
     for (const screen of screens) {
       s = navReducer(s, { type: 'navigate', entry: { screen } })
       expect(current(s).screen).toBe(screen)
@@ -29,7 +29,7 @@ describe('navReducer', () => {
 
   it('back restores the prior screen and its context', () => {
     let s = initialNav('Home')
-    s = navReducer(s, { type: 'navigate', entry: { screen: 'Settings' } })
+    s = navReducer(s, { type: 'navigate', entry: { screen: 'Tutorial' } })
     s = navReducer(s, { type: 'back' })
     expect(current(s).screen).toBe('Home')
   })
@@ -63,7 +63,7 @@ describe('navReducer', () => {
 
   it('reset collapses history to a single entry', () => {
     let s = initialNav('Home')
-    s = navReducer(s, { type: 'navigate', entry: { screen: 'Settings' } })
+    s = navReducer(s, { type: 'navigate', entry: { screen: 'Tutorial' } })
     s = navReducer(s, { type: 'reset', entry: { screen: 'Home' } })
     expect(s.stack).toHaveLength(1)
     expect(current(s).screen).toBe('Home')
@@ -71,7 +71,7 @@ describe('navReducer', () => {
 
   it('bounds history so rapid navigation cannot grow unbounded', () => {
     let s = initialNav('Home')
-    const order: Screen[] = ['Curated', 'Journal', 'Settings', 'Tutorial']
+    const order: Screen[] = ['Curated', 'Journal', 'Tutorial']
     for (let i = 0; i < 100; i++) {
       s = navReducer(s, { type: 'navigate', entry: { screen: order[i % order.length] } })
     }

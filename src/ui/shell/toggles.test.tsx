@@ -1,5 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
+import { resolveSettings } from '@/game'
 import { keyFor } from '@/platform'
 import { AppShell } from './AppShell'
 import { HomeScreen, type HomeScreenProps } from './HomeScreen'
@@ -50,7 +51,10 @@ describe('AppShell theme application (US5)', () => {
     fireEvent.click(screen.getByRole('button', { name: /night/i }))
     await waitFor(() => expect(document.documentElement).toHaveAttribute('data-theme', 'night'))
 
-    const saved = await store.get(keyFor('shellPrefs'))
-    expect(saved).toMatchObject({ theme: 'Night' })
+    // Theme lives in `settings` now (006 owns it). It used to be written to
+    // shellPrefs as well, which meant two copies that could disagree.
+    await waitFor(async () =>
+      expect(resolveSettings(await store.get(keyFor('settings'))).visuals.theme).toBe('Night'),
+    )
   })
 })

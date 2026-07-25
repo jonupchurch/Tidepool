@@ -21,7 +21,7 @@ describe('HomeScreen (US1)', () => {
   it('renders Play plus every secondary entry, all reachable', () => {
     renderShell(<HomeScreen {...props()} />)
     expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument()
-    for (const label of [/curated/i, /journal/i, /settings/i, /how to play/i]) {
+    for (const label of [/curated/i, /journal/i, /how to play/i]) {
       expect(screen.getByRole('button', { name: label })).toBeInTheDocument()
     }
     // Endless picker: size + difficulty options.
@@ -64,9 +64,8 @@ describe('HomeScreen (US1)', () => {
     renderShell(<HomeScreen {...props({ onNavigate })} />)
     fireEvent.click(screen.getByRole('button', { name: /curated/i }))
     fireEvent.click(screen.getByRole('button', { name: /journal/i }))
-    fireEvent.click(screen.getByRole('button', { name: /settings/i }))
     fireEvent.click(screen.getByRole('button', { name: /how to play/i }))
-    expect(onNavigate.mock.calls.map((c) => c[0])).toEqual(['Curated', 'Journal', 'Settings', 'Tutorial'])
+    expect(onNavigate.mock.calls.map((c) => c[0])).toEqual(['Curated', 'Journal', 'Tutorial'])
   })
 
   it('seed entry jumps to that exact board', () => {

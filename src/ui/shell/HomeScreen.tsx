@@ -27,7 +27,6 @@ export interface HomeScreenProps {
 
 const SECONDARY: readonly { label: string; screen: Screen }[] = [
   { label: 'Shore journal', screen: 'Journal' },
-  { label: 'Settings', screen: 'Settings' },
   { label: 'How to play', screen: 'Tutorial' },
 ]
 

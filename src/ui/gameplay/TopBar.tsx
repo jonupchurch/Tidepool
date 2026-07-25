@@ -32,7 +32,10 @@ export function TopBar({
   onPause,
 }: TopBarProps) {
   return (
-    <header className="flex items-center gap-4 px-4 py-2 bg-foam/85 backdrop-blur border-b border-driftwood">
+    // Fixed height + non-wrapping counters: the chrome must never reflow, or the
+    // board below it resizes mid-play (the mistake chip appearing was enough to
+    // shift every cell under the cursor).
+    <header className="flex h-12 shrink-0 items-center gap-4 overflow-hidden whitespace-nowrap border-b border-driftwood bg-foam/85 px-4 backdrop-blur">
       <button
         type="button"
         onClick={onPause}
@@ -42,7 +45,10 @@ export function TopBar({
         ☰
       </button>
       <div className="font-display text-deep-pool truncate">{label}</div>
-      <div className="ml-auto flex items-center gap-3 text-sm tabular-nums" aria-live="polite">
+      <div
+        className="ml-auto flex shrink-0 items-center gap-3 text-sm tabular-nums"
+        aria-live="polite"
+      >
         <span className="text-tide" title="Water cells left to fill">
           🌊 {waterRemaining} water left
         </span>

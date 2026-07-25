@@ -45,6 +45,9 @@ export interface HomeStats {
   totalCreatures: number
   /** A creature name to celebrate on Home, or null when none found yet. */
   featuredCreature: string | null
+  /** Curated shores solved, and how many the shipped pack holds. */
+  curatedSolved: number
+  curatedTotal: number
 }
 
 /** How Gameplay should open. `resume: true` restores the saved in-progress

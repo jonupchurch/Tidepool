@@ -49,7 +49,9 @@ export interface StatsRecord {
 /** Owned by feature 004 (Board modes / curated). */
 export interface CuratedProgressRecord {
   v: number
-  solved: Record<string, { earnedCreatureId: string }>
+  /** Per solved entry: the creature it earned, and the best (fewest) mistakes
+   *  of any run. Absent `errors` = solved before mistakes were tracked. */
+  solved: Record<string, { earnedCreatureId: string; errors?: number }>
 }
 
 /** Owned by feature 007 (Tutorial). */
@@ -57,6 +59,9 @@ export interface OnboardingRecord {
   v: number
   completed: boolean
   seen: boolean
+  /** The board's how-to-play rail has been dismissed. Optional so records
+   *  written before it existed still load (and still validate). */
+  helpDismissed?: boolean
 }
 
 /** Owned by feature 003 (App shell). */
@@ -128,7 +133,7 @@ export const DEFAULTS: { [N in Namespace]: () => SchemaMap[N] } = {
   journal: () => ({ v: 1, discoveries: {} }),
   stats: () => ({ v: 1, boardsSolved: 0, poolsFilled: 0, creaturesFound: 0 }),
   curatedProgress: () => ({ v: 1, solved: {} }),
-  onboarding: () => ({ v: 1, completed: false, seen: false }),
+  onboarding: () => ({ v: 1, completed: false, seen: false, helpDismissed: false }),
   shellPrefs: () => ({ v: 1, theme: 'Day', muted: false }),
 }
 

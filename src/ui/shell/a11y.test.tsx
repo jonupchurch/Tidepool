@@ -13,7 +13,7 @@ const homeProps = (over: Partial<HomeScreenProps> = {}): HomeScreenProps => ({
   onPrefsChange: vi.fn(),
   lastPlay: sampleLastPlay,
   resume: null,
-  stats: { boardsSolved: 0, creaturesFound: 0, totalCreatures: 6, featuredCreature: null },
+  stats: { boardsSolved: 0, creaturesFound: 0, totalCreatures: 6, featuredCreature: null, curatedSolved: 0, curatedTotal: 36 },
   onPlay: vi.fn(),
   onResume: vi.fn(),
   onNavigate: vi.fn(),

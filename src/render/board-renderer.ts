@@ -11,6 +11,7 @@ import { type HexLayout, fitLayout, hexToPixel, hitTest } from './layout'
 import {
   type LineAnchor,
   type LineLabel,
+  arrowHead,
   guideSegment,
   labelAt,
   lineAnchors,
@@ -234,17 +235,25 @@ class CanvasBoardRenderer implements BoardRenderer {
       const struck = done.has(l.id)
       const colour = struck ? palette.rock : guides.has(l.id) ? palette.tide : palette.deepPool
 
-      // Direction dash — same colour as its number, a touch lighter in weight.
+      // Direction dash + arrowhead — same colour as its number, lighter weight.
       const t = tickSegment(l, this._layout)
+      const a = arrowHead(l, this._layout)
       ctx.save()
       ctx.globalAlpha = struck ? 0.4 : 0.65
       ctx.strokeStyle = colour
+      ctx.fillStyle = colour
       ctx.lineWidth = Math.max(1, size * 0.05)
       ctx.lineCap = 'round'
       ctx.beginPath()
       ctx.moveTo(t.x1, t.y1)
       ctx.lineTo(t.x2, t.y2)
       ctx.stroke()
+      ctx.beginPath()
+      ctx.moveTo(a.tip.x, a.tip.y)
+      ctx.lineTo(a.left.x, a.left.y)
+      ctx.lineTo(a.right.x, a.right.y)
+      ctx.closePath()
+      ctx.fill()
       ctx.restore()
 
       ctx.save()

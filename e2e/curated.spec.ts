@@ -31,12 +31,17 @@ test('Curated: select → exact board → solve → completion persists', async 
   await page.goto('/')
   await page.getByRole('button', { name: /curated/i }).click()
 
-  // The ordered coastline renders.
-  await expect(page.getByText('First Cove')).toBeVisible()
-  await expect(page.getByText('Quiet Reef')).toBeVisible()
+  // The coastline renders as six groups of six. The group <section>s only
+  // wrap absolutely-positioned tiles, so they carry no box of their own —
+  // assert they're present, and assert visibility on the tiles themselves.
+  await expect(page.getByRole('region', { name: 'Shallows' })).toBeAttached()
+  await expect(page.getByRole('region', { name: 'The Trench' })).toBeAttached()
+  await expect(page.getByRole('region')).toHaveCount(6)
+  await expect(page.getByRole('button', { name: /First Cove/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /The Deep/i })).toBeVisible()
 
-  // Select the first entry → its exact seed loads.
-  await page.getByRole('button', { name: /^play$/i }).first().click()
+  // Select the first shore → its exact seed loads.
+  await page.getByRole('button', { name: /First Cove/i }).click()
   const hook = await readHook(page)
   expect(hook.seed).toBe('COVE-0001')
 
@@ -45,12 +50,12 @@ test('Curated: select → exact board → solve → completion persists', async 
   await expect(page.getByRole('heading', { name: /the tide's in/i })).toBeVisible()
   await page.getByRole('button', { name: /^home$/i }).click()
 
-  // The curated list now shows it solved (with the earned creature).
+  // The map now shows that shore solved (with the earned creature).
   await page.getByRole('button', { name: /curated/i }).click()
-  await expect(page.getByText(/solved/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: /First Cove.*solved/i })).toBeVisible()
 
   // Persists across a reload.
   await page.reload()
   await page.getByRole('button', { name: /curated/i }).click()
-  await expect(page.getByText(/solved/i)).toBeVisible()
+  await expect(page.getByRole('button', { name: /First Cove.*solved/i })).toBeVisible()
 })

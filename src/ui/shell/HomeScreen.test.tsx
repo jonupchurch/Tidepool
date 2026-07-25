@@ -9,7 +9,7 @@ function props(over: Partial<HomeScreenProps> = {}): HomeScreenProps {
     onPrefsChange: vi.fn(),
     lastPlay: sampleLastPlay, // Medium / Tricky
     resume: null,
-    stats: { boardsSolved: 0, creaturesFound: 0, totalCreatures: 6, featuredCreature: null },
+    stats: { boardsSolved: 0, creaturesFound: 0, totalCreatures: 6, featuredCreature: null, curatedSolved: 0, curatedTotal: 36 },
     onPlay: vi.fn(),
     onResume: vi.fn(),
     onNavigate: vi.fn(),
@@ -92,7 +92,7 @@ describe('HomeScreen (US1)', () => {
         {...props({
           lastPlay: { size: 'Small', difficulty: 'Calm' },
           resume: null,
-          stats: { boardsSolved: 0, creaturesFound: 0, totalCreatures: 6, featuredCreature: null },
+          stats: { boardsSolved: 0, creaturesFound: 0, totalCreatures: 6, featuredCreature: null, curatedSolved: 0, curatedTotal: 36 },
           onPlay,
         })}
       />,
@@ -121,7 +121,7 @@ describe('HomeScreen resume + stats (US2)', () => {
     renderShell(
       <HomeScreen
         {...props({
-          stats: { boardsSolved: 12, creaturesFound: 2, totalCreatures: 6, featuredCreature: 'Shore Crab' },
+          stats: { boardsSolved: 12, creaturesFound: 2, totalCreatures: 6, featuredCreature: 'Shore Crab', curatedSolved: 0, curatedTotal: 36 },
         })}
       />,
     )

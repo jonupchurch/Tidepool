@@ -7,6 +7,7 @@ import { fullyClued, layoutOf } from '@/core/test-helpers'
 import { fitLayout, hexToPixel } from './layout'
 import {
   AXIS_STEP,
+  arrowHead,
   guideSegment,
   labelAt,
   lineAnchors,
@@ -267,6 +268,44 @@ describe('tickSegment (direction dash)', () => {
       return Math.hypot(t.x2 - t.x1, t.y2 - t.y1)
     })
     for (const len of lengths) expect(len).toBeCloseTo(lengths[0], 6)
+  })
+})
+
+describe('arrowHead', () => {
+  it('points the way the row runs, and stays clear of every hex', () => {
+    const cellCentres = [...board.present].map((k) => hexToPixel(layout, parseKey(k)))
+    const apothem = (Math.sqrt(3) / 2) * layout.size
+    for (const l of labels) {
+      const a = arrowHead(l, layout)
+      const first = hexToPixel(layout, parseKey(l.cells[0]))
+      // Tip leads toward the board (the direction the guide will run).
+      const nose = {
+        x: a.tip.x - (a.left.x + a.right.x) / 2,
+        y: a.tip.y - (a.left.y + a.right.y) / 2,
+      }
+      const toBoard = { x: first.x - l.x, y: first.y - l.y }
+      expect(nose.x * toBoard.x + nose.y * toBoard.y).toBeGreaterThan(0)
+      // Aligned with the row, not skewed off it.
+      const offRow = offAxis(a.tip, l, toBoard)
+      expect(offRow).toBeLessThan(layout.size * 0.02)
+      for (const p of [a.tip, a.left, a.right]) {
+        for (const c of cellCentres) {
+          expect(Math.hypot(p.x - c.x, p.y - c.y), `${l.id} arrow overlaps a hex`).toBeGreaterThan(
+            apothem,
+          )
+        }
+      }
+    }
+  })
+
+  it('sits at the dash, on the far side of the number from the board', () => {
+    for (const l of labels) {
+      const a = arrowHead(l, layout)
+      const first = hexToPixel(layout, parseKey(l.cells[0]))
+      const away = { x: l.x - first.x, y: l.y - first.y }
+      const fromLabel = { x: a.tip.x - l.x, y: a.tip.y - l.y }
+      expect(fromLabel.x * away.x + fromLabel.y * away.y).toBeGreaterThan(0)
+    }
   })
 })
 

@@ -4,6 +4,44 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-24 — Shore Journal: creature collection (feature 005)
+
+The low-pressure meta-progression: a warm field-guide of tide-pool creatures that
+fills as you play. Resolves the mockups' creature/seed conflict with one shared
+catalog.
+
+### Added
+
+- **Shared creature catalog** (`src/content/creatures.json` + `src/game/creatures.ts`)
+  — the single source of creature identity (id, name, rarity, warm description,
+  art) *and* the pool-size → creature reward mapping used by Gameplay's pools, so
+  seed→creature and journal state can never disagree (FR-007). Grown to 12
+  creatures along a Common→Legendary curve; `creatureForPool`/`creatureDef`/
+  `CREATURES` preserved for existing consumers, `creatureUnlock` added.
+- **Journal model** (`src/game/journal.ts`, pure) — `buildJournalView`
+  (per-creature found/silhouette + "X of Y found"), `filterCards`
+  (All/Found/Missing), and the discovery branch (`applyDiscovery`: first find sets
+  first-found seed + count 1, a re-find increments and preserves the seed).
+- **Persistence + recorder** — `journal-store.ts` adapts the 008 `SaveStore` seam
+  (`journal` discoveries + `stats`); `recordDiscovery`/`recordBoardSolved`
+  accumulate gentle lifetime totals (boards solved, pools filled, creatures
+  found). Wired into Gameplay on forward pool completion (undo/redo can't inflate).
+- **Shore Journal screen** (`src/ui/journal/`) — responsive card grid (found →
+  art or a styled placeholder + name + rarity + description + discovery detail;
+  unfound → labelled silhouette, FR-008), "X of Y found" header, warm empty +
+  "shore's full" states, All/Found/Missing filter, and a display-only stats
+  footer. Replaces the app-shell Journal placeholder.
+
+### Verified
+
+- 35 new journal unit tests (catalog + unlock partition, read model, filters,
+  record branch, recorder through a store, card states, screen grid/filter/
+  footer/empty/full) — full unit suite **397 green** — plus 2 new e2e
+  (solve → Journal shows the creature found at this seed; discovery persists
+  across reload). typecheck + build + the curated oracle pass. Full e2e **13
+  green**. SC-001–SC-005 covered. Stat accrual (boards/pools) was wired at the
+  gameplay→discovery boundary so the footer reflects real play, not zeros.
+
 ## 2026-07-24 — Board modes: Endless, Curated & Seed entry (feature 004)
 
 Every way to start a board — all producing a seed handed to Gameplay. A thin,

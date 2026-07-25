@@ -5,8 +5,16 @@
 // theme token *values* live in Settings (006).
 import { useCallback, useEffect, useReducer, useState } from 'react'
 import type { BoardParams } from '@/core'
-import { nextSeed } from '@/game/board-source'
+import {
+  type BoardRequest,
+  type CuratedRow,
+  getCuratedRows,
+  markCuratedSolved,
+  nextSeed,
+  toBoardParams,
+} from '@/game/board-source'
 import { type SaveStore, getSaveStore } from '@/platform'
+import { CuratedScreen } from '@/ui/curated/CuratedScreen'
 import { GameplayScreen } from '@/ui/gameplay/GameplayScreen'
 import { HomeScreen } from './HomeScreen'
 import { PauseOverlay } from './PauseOverlay'
@@ -46,6 +54,7 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
   const [paused, setPaused] = useState(false)
   const [booted, setBooted] = useState(false)
   const [launchKey, setLaunchKey] = useState(0)
+  const [curatedRows, setCuratedRows] = useState<CuratedRow[]>([])
 
   const entry = current(nav)
   const screen = entry.screen
@@ -75,6 +84,13 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
     })()
   }, [screen, store, launchKey])
 
+  // Refresh the curated list whenever Curated becomes active (completion marks
+  // may have changed since it was last shown).
+  useEffect(() => {
+    if (screen !== 'Curated') return
+    void (async () => setCuratedRows(await getCuratedRows(store)))()
+  }, [screen, store, launchKey])
+
   const navigate = useCallback((to: Screen) => dispatch({ type: 'navigate', entry: { screen: to } }), [])
   const goHome = useCallback(() => {
     setPaused(false)
@@ -89,11 +105,17 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
     [store],
   )
 
-  const launchGameplay = useCallback((params: BoardParams, doResume: boolean) => {
-    setPaused(false)
-    setLaunchKey((k) => k + 1)
-    dispatch({ type: 'navigate', entry: { screen: 'Gameplay', launch: { params, resume: doResume } } })
-  }, [])
+  const launchGameplay = useCallback(
+    (params: BoardParams, doResume: boolean, curatedId?: string) => {
+      setPaused(false)
+      setLaunchKey((k) => k + 1)
+      dispatch({
+        type: 'navigate',
+        entry: { screen: 'Gameplay', launch: { params, resume: doResume, curatedId } },
+      })
+    },
+    [],
+  )
 
   const onPlay = useCallback(
     (params: BoardParams) => {
@@ -101,6 +123,21 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
       launchGameplay(params, false)
     },
     [store, launchGameplay],
+  )
+
+  // Curated: launch the entry's exact board, tagged so completion records it.
+  const onSelectCurated = useCallback(
+    (request: BoardRequest, curatedId: string) => launchGameplay(toBoardParams(request), false, curatedId),
+    [launchGameplay],
+  )
+
+  // Record curated completion (the largest-pool creature) against its entry.
+  const curatedId = entry.launch?.curatedId
+  const onSolved = useCallback(
+    (earnedCreatureId: string | null) => {
+      if (curatedId && earnedCreatureId) void markCuratedSolved(store, curatedId, earnedCreatureId)
+    },
+    [curatedId, store],
   )
 
   const onResume = useCallback(() => {
@@ -154,11 +191,12 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
             onHome={goHome}
             onJournal={() => navigate('Journal')}
             onPause={() => setPaused(true)}
+            onSolved={onSolved}
             nextParams={nextBoard}
           />
         )
       case 'Curated':
-        return <Placeholder title="Curated shores" blurb="Hand-designed levels are on the way." onBack={goHome} />
+        return <CuratedScreen rows={curatedRows} onSelect={onSelectCurated} onBack={goHome} />
       case 'Journal':
         return <Placeholder title="Shore journal" blurb="Your creatures will gather here." onBack={goHome} />
       case 'Settings':

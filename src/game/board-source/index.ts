@@ -23,8 +23,10 @@ export { parseSeedEntry } from './seed-entry'
 export type { SeedEntryResult } from './seed-entry'
 export {
   loadCuratedPack,
+  manifestRows,
   markCuratedSolved,
   getCuratedRows,
   resolveLocks,
+  OPEN_GATING,
 } from './curated'
 export type { CuratedEntry, CuratedManifest, CuratedRow, GatingConfig } from './curated'

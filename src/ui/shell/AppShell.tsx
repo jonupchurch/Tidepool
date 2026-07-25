@@ -221,6 +221,9 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
             resume={entry.launch?.resume ?? false}
             onHome={goHome}
             onJournal={() => navigate('Journal')}
+            // Offered only on the curated ladder — there's no map to go back to
+            // from an Endless board.
+            onCurated={curatedId ? () => navigate('Curated') : undefined}
             onPause={() => setPaused(true)}
             onSolved={onSolved}
             onNextBoard={onNextBoard}

@@ -69,6 +69,31 @@ test('three curated boards in a row each record their own completion', async ({ 
   expect(errors, `console errors: ${errors.join('\n')}`).toEqual([])
 })
 
+test('finishing a curated board offers a way back to the map', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: /curated/i }).click()
+  await page.getByRole('button', { name: /First Cove/i }).click()
+  await solveBoard(page)
+
+  // The completion panel offers the coastline alongside Next / Journal / Home.
+  const back = page.getByRole('button', { name: /^curated shores$/i })
+  await expect(back).toBeVisible()
+  await back.click()
+
+  // It lands on the map, with that shore now marked solved.
+  await expect(page.getByRole('region', { name: 'Shallows' })).toBeAttached()
+  await expect(page.getByRole('button', { name: /First Cove.*solved/i })).toBeVisible()
+})
+
+test('an Endless board offers no way back to the curated map', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: /^play$/i }).click()
+  await solveBoard(page)
+
+  await expect(page.getByRole('button', { name: /next board/i })).toBeVisible()
+  await expect(page.getByRole('button', { name: /^curated shores$/i })).toHaveCount(0)
+})
+
 test('a curated board records its mistakes, and a clean replay clears them', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('button', { name: /curated/i }).click()

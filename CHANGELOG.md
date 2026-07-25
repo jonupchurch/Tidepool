@@ -4,6 +4,40 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-24 — Gameplay & board (feature 002)
+
+The playable screen: render a board and deduce it. The full "one more pool" loop.
+
+### Added
+
+- **Play session** (`src/game/session.ts`) — pure `PlaySession` over an engine
+  board: marks (left=water / right=rock, cycle/clear, given-cell guard),
+  pool-completion reveal tracking (fires once, reverts on unmark, no duplicates),
+  board-completion detection, undo/redo history, and serialize/restore to the
+  008 InProgressBoard shape (only player state; board regenerates from the seed).
+- **Pools + creatures + highlight** (`src/game/`) — connected-water-pool
+  flood-fill via engine adjacency, deterministic pool-size → creature table
+  (shared with 005), and hover-informs computation.
+- **Off-thread generation** (`src/game/board-loader.ts` + `src/workers/`) — a Web
+  Worker runs the engine so the UI never janks (sync fallback for tests).
+- **Canvas renderer** (`src/render/`) — pointy-top hex layout + fit-to-viewport,
+  theme-palette drawing, colorblind-safe cell styles, `{}`/`--` clue framing,
+  line totals, hover highlight, pool creatures, and reduced-motion animations.
+- **Gameplay screen** (`src/ui/gameplay/`) — the React host wiring pointer
+  marks, hover highlight, pool-reward toast, the "The tide's in." completion
+  panel (Next/Journal/Home), undo/redo (buttons + Ctrl+Z/Ctrl+Shift+Z),
+  continuous autosave/restore through the 008 seam, next-board (004 seam
+  placeholder), and a reduced-motion-gated mis-mark nudge. Mounted as the app root.
+
+### Verified
+
+- 79 new tests (game logic, render geometry/a11y, interaction perf) — full unit
+  suite 218 green — plus a Playwright golden-path e2e in chromium: mark a board
+  to completion → creature reveal → completion panel, zero console errors.
+- SC-001 (pool reward once + reverts), SC-002 (complete iff all correct), SC-003
+  (exact restore), SC-004 (hit-test hot path), SC-005 (no stuck state — every
+  mark reversible) covered. typecheck + build pass (worker bundled).
+
 ## 2026-07-24 — Persistence & platform seam (feature 008)
 
 The single storage/OS seam (`src/platform/`) every stateful feature will use —

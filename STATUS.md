@@ -4,7 +4,7 @@ _Snapshot; updated each work session. Last updated: 2026-07-24._
 
 ## Current phase
 
-**Implementing (001 + 008 + 002 + 003 complete).** Engine (`src/core/`), the persistence seam (`src/platform/`), the gameplay board (`src/game/` + `src/render/` + `src/ui/gameplay/`), and the app shell (`src/ui/shell/` — Home/Splash/Pause + routing) are built, tested, and verified — **287 unit tests + 6 e2e green**. The app now boots to a warm Home, routes into the game, resumes in-progress boards, and pauses safely. Next in the build order: **004 board modes** (curated sets + endless progression behind Home's entries).
+**Implementing (001 + 008 + 002 + 003 + 004 complete).** Engine (`src/core/`), persistence seam (`src/platform/`), gameplay board (`src/game/` + `src/render/` + `src/ui/gameplay/`), app shell (`src/ui/shell/`), and board modes (`src/game/board-source/` + `src/content/curated.json` + `src/ui/curated/`) are built, tested, and verified — **353 unit tests + 11 e2e green**, plus a CI oracle gate over the curated pack. Endless is a deterministic stream, Curated is an oracle-blessed pack with persisted completion, and any seed jumps to its exact board. Next in the build order: **005 shore journal** + **006 settings/themes**.
 
 ## Done
 
@@ -22,13 +22,15 @@ _Snapshot; updated each work session. Last updated: 2026-07-24._
 - **008 Persistence & platform seam implemented + verified** — `src/platform/`: `SaveStore` interface + typed accessors, versioned schemas, web (localStorage + IndexedDB) + in-memory backends, migration, export/import, backend selection. 53 tests green incl. the SC-002 no-leak scan. All 31 tasks done.
 - **002 Gameplay board implemented + verified** — `src/game/` (PlaySession, pools, creatures, highlight, off-thread loader), `src/render/` (Canvas renderer + layout/hit-test), `src/ui/gameplay/` (screen + chrome). Marks, pool reward, board completion, undo/redo, autosave/restore, next-board, comfort aids. 79 tests + a chromium golden-path e2e. All 37 tasks done. Exposed engine hex adjacency from `core/index.ts`.
 - **003 App shell implemented + verified** — `src/ui/shell/`: `AppShell` nav host (pure bounded-history reducer, calm cross-fade, `data-theme`), Home (Play + Endless picker + seed entry + resume card + stats + mute/theme toggles), Splash (crab + loader + rotating tips), Pause overlay (Resume/New/Restart/Settings/Home), and the shell-store adapter over 008. 69 tests + 4 new e2e (cold-open Play, resume, pause, theme-persist). All 37 tasks done. Added `resume`/`onPause` seam props to GameplayScreen; provisional Night Tide tokens (006 owns final).
+- **004 Board modes implemented + verified** — `src/game/board-source/` (pure, purity-guarded): `BoardRequest` funnel, deterministic Endless stream (`nextSeed`), total `parseSeedEntry`, curated load/merge/gating. `src/content/curated.json` (8 oracle-blessed seeds) + `CuratedScreen`; CI oracle `scripts/validate-curated.ts` (`npm run validate:curated` + `.github/workflows/ci.yml`). Home reuses `SeedEntry`; shell "Next board" advances the stream; curated completion recorded via GameplayScreen's new `onSolved` seam. 55 tests + 6 e2e. All 37 tasks done (standalone EndlessPicker/ModeSelect consolidated into Home).
 - **All 9 features tasked** — full `tasks.md` for 001–009 (313 tasks total).
 
 ## Next — implementation (build order)
 
-- **004 Board Modes** — curated sets + endless progression behind Home's Play/Curated/Endless entries; replaces the shell's fresh-seed placeholder with real board-source behavior. Then 005/006 journal + settings.
-- Then: 005/006 journal + settings → 007 tutorial → art/audio → 009 Tauri/Steam.
-- **Deferred seams to revisit:** GameplayScreen's "Next board" + the shell's Play/New-board use a placeholder fresh-seed (wire to 004 board source); control/hover/nudge defaults use local values (wire to 006 settings); Night Tide uses provisional tokens (006 owns the final palette); crab.png is a 1.9 MB unoptimized splash asset (optimize before Tauri).
+- **005 Shore Journal** — creature catalog + persisted discovery records; the Journal screen + lifetime stats. Fills Home's Journal placeholder + resolves the mockups' creature/seed data conflict.
+- **006 Settings & Themes** — settings model + Settings screen + the real Day/Night Tide token system (replaces the provisional Night tokens; adds Auto/OS) + save export/import.
+- Then: 007 tutorial → art/audio → 009 Tauri/Steam.
+- **Deferred seams to revisit:** control/hover/nudge defaults use local values (wire to 006 settings); Night Tide uses provisional tokens (006 owns the final palette); curated gating ships OFF with no runtime toggle (wire one if a curved pack opts in); crab.png is a 1.9 MB unoptimized splash asset (optimize before Tauri).
 - Self-host fonts (Bricolage + Nunito) before the Tauri build (currently Google Fonts).
 
 ## Blockers

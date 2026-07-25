@@ -1,0 +1,69 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "first-cove",
+      "name": "First Cove",
+      "seed": "COVE-0001",
+      "size": "Small",
+      "difficulty": "Calm",
+      "order": 1
+    },
+    {
+      "id": "tide-pool",
+      "name": "Tide Pool",
+      "seed": "TIDE-0001",
+      "size": "Small",
+      "difficulty": "Calm",
+      "order": 2
+    },
+    {
+      "id": "quiet-reef",
+      "name": "Quiet Reef",
+      "seed": "REEF-0001",
+      "size": "Small",
+      "difficulty": "Tricky",
+      "order": 3
+    },
+    {
+      "id": "kelp-bed",
+      "name": "Kelp Bed",
+      "seed": "KELP-0001",
+      "size": "Medium",
+      "difficulty": "Calm",
+      "order": 4
+    },
+    {
+      "id": "coral-garden",
+      "name": "Coral Garden",
+      "seed": "CORAL-0001",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "order": 5
+    },
+    {
+      "id": "deep-channel",
+      "name": "Deep Channel",
+      "seed": "CHANNEL-0001",
+      "size": "Medium",
+      "difficulty": "Deep",
+      "order": 6
+    },
+    {
+      "id": "open-shoal",
+      "name": "Open Shoal",
+      "seed": "SHOAL-0001",
+      "size": "Large",
+      "difficulty": "Tricky",
+      "order": 7
+    },
+    {
+      "id": "the-trench",
+      "name": "The Trench",
+      "seed": "TRENCH-0001",
+      "size": "Large",
+      "difficulty": "Deep",
+      "order": 8
+    }
+  ]
+}

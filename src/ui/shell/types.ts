@@ -48,8 +48,10 @@ export interface HomeStats {
 }
 
 /** How Gameplay should open. `resume: true` restores the saved in-progress
- *  board; otherwise a fresh board is generated from `params`. */
+ *  board; otherwise a fresh board is generated from `params`. `curatedId` marks
+ *  a curated launch so completion records against that entry (004/US2). */
 export interface GameplayLaunch {
   params: BoardParams
   resume: boolean
+  curatedId?: string
 }

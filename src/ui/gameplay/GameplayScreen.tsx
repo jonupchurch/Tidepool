@@ -44,6 +44,9 @@ export interface GameplayScreenProps {
   onJournal?: () => void
   /** Open the shell Pause overlay (003 seam); falls back to onHome. */
   onPause?: () => void
+  /** Fires when the board is solved, with the earned (largest-pool) creature id
+   *  — the shell records curated completion (004 seam). */
+  onSolved?: (earnedCreatureId: string | null) => void
   /** Provide the next board's params (feature 004 seam); defaults to a new seed. */
   nextParams?: (current: BoardParams) => BoardParams
 }
@@ -54,6 +57,7 @@ export function GameplayScreen({
   onHome,
   onJournal,
   onPause,
+  onSolved,
   nextParams,
 }: GameplayScreenProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -133,8 +137,15 @@ export function GameplayScreen({
       redraw()
       syncChrome()
       save()
+      if (delta.complete) {
+        // The "prize" creature = the largest pool's creature (the curated seam).
+        const s = sessionRef.current
+        let largest: { cells: string[]; creatureId: string } | null = null
+        if (s) for (const p of s.pools) if (!largest || p.cells.length > largest.cells.length) largest = p
+        onSolved?.(largest ? largest.creatureId : null)
+      }
     },
-    [redraw, syncChrome, save],
+    [redraw, syncChrome, save, onSolved],
   )
 
   const mark = useCallback(

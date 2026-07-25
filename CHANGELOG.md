@@ -4,6 +4,41 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-24 — Board modes: Endless, Curated & Seed entry (feature 004)
+
+Every way to start a board — all producing a seed handed to Gameplay. A thin,
+pure `board-source` layer; determinism stays in the engine.
+
+### Added
+
+- **board-source layer** (`src/game/board-source/`, purity-guarded) — the
+  `BoardRequest {seed,size,difficulty}` funnel (`toBoardParams`/`launchBoard`),
+  the deterministic Endless stream (`nextSeed`/`createEndlessStream`,
+  reproducible from `{startSeed,index}`), the total `parseSeedEntry` (gentle on
+  bad input), and curated load/merge/gating.
+- **Endless** — the shell's "Next board" now advances the stream via `nextSeed`
+  (deterministic, shareable), and last size/difficulty persists (008).
+- **Curated shores** (`src/content/curated.json` + `CuratedScreen`) — a bundled,
+  oracle-blessed pack of 8 seeds along a Calm→Deep curve; ordered coastline with
+  name, difficulty, copyable seed, and completion (earned creature) that persists
+  via the 008 CuratedProgress namespace. Gentle optional gating (open by default).
+- **Seed entry** (`SeedEntry`) — type/paste a seed to jump to that exact board;
+  Home reuses it with inline gentle validation.
+- **CI oracle gate** (`scripts/validate-curated.ts` + `npm run validate:curated`
+  + `.github/workflows/ci.yml`) — every curated seed must be unique, guess-free,
+  and on-tier or the build fails (SC-002 made structural).
+- **GameplayScreen `onSolved` seam** — reports the largest-pool creature so the
+  shell records curated completion.
+
+### Verified
+
+- 55 board-source/screen tests (incl. per-seed curated determinism + endless
+  reproducibility) — full unit suite **353 green** — plus 6 new e2e (endless
+  retarget + deterministic Next, curated select→solve→persist, seed valid/
+  invalid). typecheck + build + the curated oracle pass. SC-001/002/003/004/005
+  covered. (Standalone `EndlessPicker`/`ModeSelect` were consolidated into Home,
+  which already hosts the mode controls, to avoid duplicate UX.)
+
 ## 2026-07-24 — App shell: Home, Splash & Pause (feature 003)
 
 The connective tissue: a calm Home that routes into the game, a warm Splash, a

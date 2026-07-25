@@ -5,6 +5,8 @@
 import { useEffect, useState } from 'react'
 import type { BoardParams, DifficultyTier, SizeTier } from '@/core'
 import { DIFFICULTY_TIERS, SIZE_TIERS } from '@/core'
+import { toBoardParams } from '@/game/board-source'
+import { SeedEntry } from '@/ui/modes/SeedEntry'
 import { ResumeCard } from './ResumeCard'
 import { boardRequest, freshSeed } from './board-request'
 import type { HomeStats, LastPlay, ResumeSnapshot, Screen, ShellPrefs } from './types'
@@ -42,7 +44,6 @@ export function HomeScreen({
 }: HomeScreenProps) {
   const [size, setSize] = useState<SizeTier>(lastPlay.size)
   const [difficulty, setDifficulty] = useState<DifficultyTier>(lastPlay.difficulty)
-  const [seed, setSeed] = useState('')
 
   const toggleMute = () => onPrefsChange({ ...prefs, muted: !prefs.muted })
   const toggleTheme = () => onPrefsChange({ ...prefs, theme: prefs.theme === 'Night' ? 'Day' : 'Night' })
@@ -54,10 +55,6 @@ export function HomeScreen({
   }, [lastPlay.size, lastPlay.difficulty])
 
   const play = () => onPlay(boardRequest(freshSeed(), size, difficulty))
-  const jump = () => {
-    const s = seed.trim()
-    if (s) onPlay(boardRequest(s, size, difficulty))
-  }
 
   return (
     <div className="relative grid h-full w-full place-items-center overflow-y-auto bg-sand text-ink">
@@ -122,32 +119,11 @@ export function HomeScreen({
           />
         </section>
 
-        {/* Enter a seed — jump to a friend's exact board. */}
-        <section className="w-full rounded-2xl bg-foam/70 p-4 text-left">
-          <label htmlFor="seed" className="font-display text-deep-pool">
-            Enter a seed
-          </label>
-          <p className="mb-2 text-xs text-tide">Jump to a friend’s exact board.</p>
-          <div className="flex gap-2">
-            <input
-              id="seed"
-              type="text"
-              value={seed}
-              onChange={(e) => setSeed(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && jump()}
-              placeholder="KELP-2231"
-              className="min-w-0 flex-1 rounded-lg border border-driftwood bg-sand px-3 py-2 text-ink placeholder:text-rock/60"
-            />
-            <button
-              type="button"
-              onClick={jump}
-              disabled={!seed.trim()}
-              className="rounded-lg bg-tide px-4 py-2 font-display text-foam hover:bg-deep-pool disabled:opacity-40"
-            >
-              Jump in
-            </button>
-          </div>
-        </section>
+        {/* Enter a seed — jump to a friend's exact board (004 seed-entry). */}
+        <SeedEntry
+          currentPrefs={{ size, difficulty }}
+          onSubmit={(request) => onPlay(toBoardParams(request))}
+        />
 
         {/* Light stats — warm even at zero (US2). */}
         <section aria-label="Your shore" className="w-full text-sm text-tide">

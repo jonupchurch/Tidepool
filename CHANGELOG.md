@@ -4,6 +4,31 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — A render error no longer means a white screen
+
+### Added
+
+- **An error boundary at the app root.** Any render error used to unmount the
+  whole tree, leaving a blank window with no way home and no clue whether the
+  player's progress survived. It now shows a calm screen that says plainly that
+  progress is safe (it's on disk, not in the component that died), a way back,
+  and the error text collapsed for a bug report.
+
+### The part worth explaining
+
+Recovery resets **in place** rather than reloading. That's for the failure that
+actually ruins a game: if the crash is *deterministic* — a saved board that
+throws every time it's restored — reloading falls into the same hole forever.
+Resetting in place keeps the boundary mounted, so it can notice that retrying
+already failed and offer a real way out: clearing the in-progress board, the one
+piece of saved state rebuilt into live objects on load and so the likeliest
+repeat offender. The journal, stats, curated progress and settings are untouched.
+
+That option stays hidden on a first failure — it discards a puzzle in progress,
+so it shouldn't be the first thing offered — and the reset happens even if the
+clearing itself throws, because being trapped on the crash screen by a broken
+escape hatch is the worst outcome available.
+
 ## 2026-07-25 — The board is sharp on scaled displays
 
 ### Fixed

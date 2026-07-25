@@ -68,11 +68,12 @@ describe('pool reward (US2, SC-001)', () => {
     for (const c of pool.cells) s.applyMark(c, 'water')
     expect(s.revealed.has(pool.id)).toBe(true)
 
-    const broken = s.applyMark(pool.cells[0], 'water') // toggles back to unknown
+    // Correct cells are locked to clicks, so undo is what can break a pool now.
+    const broken = s.undo()
     expect(broken.unrevealed).toEqual([pool.id])
     expect(s.revealed.has(pool.id)).toBe(false)
 
-    const recompleted = s.applyMark(pool.cells[0], 'water')
+    const recompleted = s.redo()
     expect(recompleted.revealed).toEqual([pool.id]) // fires again, exactly once
     expect(s.revealed.size).toBe(1)
   })
@@ -108,9 +109,18 @@ describe('board completion (US3, SC-002)', () => {
 
   it('is not complete with a single wrong mark', () => {
     const s = makeSession()
-    solveSession(s)
-    s.applyMark(waterCells(s.board)[0], 'rock') // flip a correct water to rock
+    const water = waterCells(s.board)[0]
+    // Settle every other cell correctly; this one gets the wrong mark. (A
+    // correct mark is locked, so the wrong one has to go down first.)
+    for (const [k, cell] of s.board.cells) {
+      if (cell.given || k === water) continue
+      s.applyMark(k, cell.state)
+    }
+    s.applyMark(water, 'rock')
     expect(s.isComplete).toBe(false)
+
+    s.applyMark(water, 'water') // corrected — the last cell settles the board
+    expect(s.isComplete).toBe(true)
   })
 })
 
@@ -175,9 +185,9 @@ describe('serialize / restore (US4, SC-003)', () => {
 })
 
 describe('edge cases (T035)', () => {
-  it('rapid repeated clicks on one cell toggle predictably', () => {
+  it('rapid repeated clicks on a WRONG mark toggle predictably', () => {
     const s = makeSession()
-    const c = firstNonGiven(s.board)
+    const c = firstHiddenRock(s.board) // marking it water is wrong → stays editable
     const seen: string[] = []
     for (let i = 0; i < 4; i++) {
       s.applyMark(c, 'water')
@@ -186,11 +196,80 @@ describe('edge cases (T035)', () => {
     expect(seen).toEqual(['water', 'unknown', 'water', 'unknown'])
   })
 
+  it('rapid repeated clicks on a CORRECT mark leave it settled', () => {
+    const s = makeSession()
+    const c = firstHiddenRock(s.board)
+    const seen: string[] = []
+    for (let i = 0; i < 4; i++) {
+      s.applyMark(c, 'rock')
+      seen.push(s.markAt(c))
+    }
+    expect(seen).toEqual(['rock', 'rock', 'rock', 'rock'])
+  })
+
   it('completing the board also settles all pools as revealed', () => {
     const s = makeSession()
     solveSession(s)
     expect(s.isComplete).toBe(true)
     expect(s.revealed.size).toBe(s.pools.length)
+  })
+})
+
+describe('locked cells (a settled square stays settled)', () => {
+  it('locks a cell once its mark matches the solution', () => {
+    const s = makeSession()
+    const rock = firstHiddenRock(s.board)
+    const water = waterCells(s.board)[0]
+    expect(s.isLocked(rock)).toBe(false)
+
+    s.applyMark(rock, 'rock')
+    expect(s.isLocked(rock)).toBe(true)
+    s.applyMark(water, 'water')
+    expect(s.isLocked(water)).toBe(true)
+  })
+
+  it('ignores every later click on a locked cell, of either kind', () => {
+    const s = makeSession()
+    const rock = firstHiddenRock(s.board)
+    s.applyMark(rock, 'rock')
+
+    expect(s.applyMark(rock, 'rock').changed).toBe(false) // no clearing it
+    expect(s.applyMark(rock, 'water').changed).toBe(false) // no overwriting it
+    expect(s.markAt(rock)).toBe('rock')
+  })
+
+  it('leaves wrong marks editable — that is how you fix them', () => {
+    const s = makeSession()
+    const rock = firstHiddenRock(s.board)
+    s.applyMark(rock, 'water') // wrong
+    expect(s.isLocked(rock)).toBe(false)
+    expect(s.applyMark(rock, 'rock').changed).toBe(true) // corrected...
+    expect(s.isLocked(rock)).toBe(true) // ...and now settled
+  })
+
+  it('treats given clue cells as locked', () => {
+    const s = makeSession()
+    const given = [...s.board.cells.keys()].find((k) => s.isGiven(k))!
+    expect(s.isLocked(given)).toBe(true)
+  })
+
+  it('still lets undo reach a locked cell — the lock is about clicks', () => {
+    const s = makeSession()
+    const rock = firstHiddenRock(s.board)
+    s.applyMark(rock, 'rock')
+    expect(s.isLocked(rock)).toBe(true)
+
+    s.undo()
+    expect(s.markAt(rock)).toBe('unknown')
+    expect(s.isLocked(rock)).toBe(false) // re-markable again
+    s.redo()
+    expect(s.isLocked(rock)).toBe(true)
+  })
+
+  it('locks every cell once the board is solved', () => {
+    const s = makeSession()
+    solveSession(s)
+    for (const k of s.board.present) expect(s.isLocked(k), k).toBe(true)
   })
 })
 
@@ -215,7 +294,7 @@ describe('progress counters + gentle-flag (UX feedback)', () => {
     const w = waterCells(s.board)[0]
     s.applyMark(w, 'water')
     expect(s.waterRemaining).toBe(s.totalWater - 1)
-    s.applyMark(w, 'water') // toggle back off — the count comes back with it
+    s.undo() // a correct mark is locked to clicks; undo takes the count back
     expect(s.waterRemaining).toBe(s.totalWater)
     solveSession(s)
     expect(s.waterRemaining).toBe(0)

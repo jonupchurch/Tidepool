@@ -16,6 +16,7 @@ import {
 import { type SaveStore, getSaveStore } from '@/platform'
 import { CuratedScreen } from '@/ui/curated/CuratedScreen'
 import { GameplayScreen } from '@/ui/gameplay/GameplayScreen'
+import { JournalScreen } from '@/ui/journal/JournalScreen'
 import { HomeScreen } from './HomeScreen'
 import { PauseOverlay } from './PauseOverlay'
 import { SplashScreen } from './SplashScreen'
@@ -198,7 +199,7 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
       case 'Curated':
         return <CuratedScreen rows={curatedRows} onSelect={onSelectCurated} onBack={goHome} />
       case 'Journal':
-        return <Placeholder title="Shore journal" blurb="Your creatures will gather here." onBack={goHome} />
+        return <JournalScreen store={store} onBack={goHome} />
       case 'Settings':
         return <Placeholder title="Settings" blurb="Fine-tune your tide pools soon." onBack={goHome} />
       case 'Tutorial':

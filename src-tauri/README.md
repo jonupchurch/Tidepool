@@ -23,6 +23,22 @@ Artifacts land in `src-tauri/target/release/`:
 | `bundle/nsis/Tidepools_<version>_x64-setup.exe` | Installer for distributing outside Steam (itch.io, a direct download). |
 | `bundle/msi/Tidepools_<version>_x64_en-US.msi` | MSI, for anyone deploying via policy. Rarely needed. |
 
+## Linux / Steam Deck
+
+Built in CI, not locally — see [`.github/workflows/desktop.yml`](../.github/workflows/desktop.yml).
+Trigger it from the Actions tab, with `gh workflow run desktop.yml`, or by pushing
+a `v*` tag. Artifacts: the bare `tidepools` binary (what Steam ships), an
+AppImage, and a `.deb`.
+
+The runner is pinned to **ubuntu-22.04**, not `ubuntu-latest`. The Steam Deck's
+runtime ships an older glibc than 24.04 builds against, and a binary linked
+against a newer glibc refuses to start rather than degrading — the symptom is a
+game that simply does nothing when launched.
+
+Linux uses webkit2gtk rather than WebView2, so it is a genuinely different
+browser engine from the Windows build. Canvas and layout behaviour should be
+checked there rather than assumed.
+
 ## Prerequisites
 
 - **Rust, MSVC toolchain** — `rustup default stable-x86_64-pc-windows-msvc`.

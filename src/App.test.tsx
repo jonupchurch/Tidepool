@@ -2,9 +2,10 @@ import { render, screen } from '@testing-library/react'
 import App from '@/App'
 
 describe('App', () => {
-  it('mounts the gameplay screen chrome', () => {
+  it('boots to the Home shell', () => {
     render(<App />)
-    // The gameplay TopBar renders immediately (board loads asynchronously).
-    expect(screen.getByRole('button', { name: /menu/i })).toBeInTheDocument()
+    // Home is the default screen: the wordmark + primary Play action render.
+    expect(screen.getByRole('heading', { name: /tidepools/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^play$/i })).toBeInTheDocument()
   })
 })

@@ -37,13 +37,25 @@ interface Settings {
 
 export interface GameplayScreenProps {
   params?: BoardParams
+  /** When false, always start a fresh board from `params` (Home's Play). When
+   *  true (default), restore the saved in-progress board on mount. */
+  resume?: boolean
   onHome?: () => void
   onJournal?: () => void
+  /** Open the shell Pause overlay (003 seam); falls back to onHome. */
+  onPause?: () => void
   /** Provide the next board's params (feature 004 seam); defaults to a new seed. */
   nextParams?: (current: BoardParams) => BoardParams
 }
 
-export function GameplayScreen({ params, onHome, onJournal, nextParams }: GameplayScreenProps) {
+export function GameplayScreen({
+  params,
+  resume = true,
+  onHome,
+  onJournal,
+  onPause,
+  nextParams,
+}: GameplayScreenProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const rendererRef = useRef<BoardRenderer | null>(null)
@@ -265,7 +277,7 @@ export function GameplayScreen({ params, onHome, onJournal, nextParams }: Gamepl
         hover: true,
         nudge: false,
       }
-      if (!disposed) await startBoard(params ?? DEFAULT_PARAMS, true)
+      if (!disposed) await startBoard(params ?? DEFAULT_PARAMS, resume)
     })()
     return () => {
       disposed = true
@@ -321,7 +333,7 @@ export function GameplayScreen({ params, onHome, onJournal, nextParams }: Gamepl
         canRedo={canRedo}
         onUndo={doUndo}
         onRedo={doRedo}
-        onPause={() => onHome?.()}
+        onPause={onPause ?? (() => onHome?.())}
       />
       <div ref={containerRef} className="relative flex-1 min-h-0">
         <canvas

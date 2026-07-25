@@ -25,6 +25,7 @@ import {
   whenSpritesReady,
 } from '@/render'
 import { getSaveStore, loadRecord, saveRecord } from '@/platform'
+import { getAudioEngine } from '@/audio'
 import { CompletePanel } from './CompletePanel'
 import { PoolToast } from './PoolToast'
 import { TopBar } from './TopBar'
@@ -74,6 +75,7 @@ export function GameplayScreen({
   const rendererRef = useRef<BoardRenderer | null>(null)
   const sessionRef = useRef<PlaySession | null>(null)
   const storeRef = useRef(getSaveStore())
+  const audioRef = useRef(getAudioEngine())
   const hoveredRef = useRef<string | null>(null)
   const highlightRef = useRef<Set<string>>(new Set())
   const settingsRef = useRef<Settings>({
@@ -170,6 +172,9 @@ export function GameplayScreen({
   const recordProgress = useCallback((delta: MarkDelta) => {
     const s = sessionRef.current
     if (!s || (delta.revealed.length === 0 && !delta.complete)) return
+    // Reward feedback: the solved-board swell takes precedence over a pool chime.
+    if (delta.complete) audioRef.current.play('boardComplete')
+    else if (delta.revealed.length > 0) audioRef.current.play('poolComplete')
     const seed = s.board.params.seed
     const p = (async () => {
       for (const id of delta.revealed) {
@@ -193,6 +198,10 @@ export function GameplayScreen({
       if (!s) return
       const delta = s.applyMark(cellKey, kind)
       if (!delta.changed) return
+      // Material feedback: the placed mark's sound, or a soft "oops" if it's
+      // against the solution (clearing a cell — correct === null — is silent).
+      if (delta.correct === true) audioRef.current.play(kind === 'water' ? 'water' : 'rock')
+      else if (delta.correct === false) audioRef.current.play('mistake')
       // Gentle nudge on a wrong mark (a faint ripple of doubt) — the persistent
       // coral tint in the renderer keeps it flagged until corrected.
       if (delta.correct === false && !settingsRef.current.reducedMotion) {
@@ -207,6 +216,8 @@ export function GameplayScreen({
 
   const onPointerDown = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
+      // First user gesture unlocks the audio context (browser autoplay policy).
+      audioRef.current.unlock()
       const r = rendererRef.current
       const canvas = canvasRef.current
       if (!r || !canvas) return
@@ -343,6 +354,8 @@ export function GameplayScreen({
         hover: true,
         nudge: false,
       }
+      audioRef.current.setMuted(s.sound.muted)
+      audioRef.current.setVolume(s.sound.volume)
       if (!disposed) await startBoard(params ?? DEFAULT_PARAMS, resume)
     })()
     return () => {
@@ -373,6 +386,7 @@ export function GameplayScreen({
         e.preventDefault()
         const s = sessionRef.current
         if (!s) return
+        if (e.shiftKey ? s.canRedo() : s.canUndo()) audioRef.current.play(e.shiftKey ? 'redo' : 'undo')
         applyDelta(e.shiftKey ? s.redo() : s.undo())
       }
     }
@@ -382,11 +396,15 @@ export function GameplayScreen({
 
   const doUndo = useCallback(() => {
     const s = sessionRef.current
-    if (s) applyDelta(s.undo())
+    if (!s) return
+    if (s.canUndo()) audioRef.current.play('undo')
+    applyDelta(s.undo())
   }, [applyDelta])
   const doRedo = useCallback(() => {
     const s = sessionRef.current
-    if (s) applyDelta(s.redo())
+    if (!s) return
+    if (s.canRedo()) audioRef.current.play('redo')
+    applyDelta(s.redo())
   }, [applyDelta])
 
   return (

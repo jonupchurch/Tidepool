@@ -4,6 +4,28 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-24 — Board visuals: water/stone motifs + clearer mistake feedback
+
+A playtest follow-up: legible tile art and an unmistakable error indicator.
+
+### Added / Changed
+
+- **Tile motifs** — water cells now sit on a pale-blue fill (`--color-water`)
+  with a waves motif; stone cells show a boulder (`public/waves.svg` +
+  `public/boulder.svg`, drawn on the Canvas via `render/sprites.ts`, clipped to
+  the hex). Given clue cells keep their numerals.
+- **Visible mistake flag** — a wrong mark now gets a bold coral ring on the board
+  (not just the old faint tint) plus a "⚠ N to fix" chip in the TopBar, so a cell
+  marked against the solution is obvious.
+
+### Verified
+
+- The pools/stones counters were reported as "not updating"; an e2e probe
+  confirmed they are correct (pools → 0 once all water is marked, stones → 0 once
+  all rocks are; a wrong mark moves neither — by design). The real gap was the
+  near-invisible mistake feedback, now fixed. Full suite **398 unit + 13 e2e**
+  green; typecheck + build pass; visuals confirmed via screenshot.
+
 ## 2026-07-24 — Shore Journal: creature collection (feature 005)
 
 The low-pressure meta-progression: a warm field-guide of tide-pool creatures that

@@ -20,6 +20,7 @@ import { type SaveStore, getSaveStore } from '@/platform'
 import { CuratedScreen } from '@/ui/curated/CuratedScreen'
 import { GameplayScreen } from '@/ui/gameplay/GameplayScreen'
 import { JournalScreen } from '@/ui/journal/JournalScreen'
+import { HowToPlayScreen } from '@/ui/tutorial/HowToPlayScreen'
 import { HomeScreen } from './HomeScreen'
 import { PauseOverlay } from './PauseOverlay'
 import { SplashScreen } from './SplashScreen'
@@ -243,7 +244,12 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
       case 'Settings':
         return <Placeholder title="Settings" blurb="Fine-tune your tide pools soon." onBack={goHome} />
       case 'Tutorial':
-        return <Placeholder title="How to play" blurb="A gentle walkthrough is coming." onBack={goHome} />
+        return (
+          <HowToPlayScreen
+            onBack={goHome}
+            onPlay={() => onPlay(boardRequest(freshSeed(), lastPlay.size, lastPlay.difficulty))}
+          />
+        )
       case 'Splash':
         return (
           <SplashScreen

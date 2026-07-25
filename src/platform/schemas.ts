@@ -24,13 +24,28 @@ export interface InProgressBoardRecord {
   revealed: string[]
 }
 
-/** Owned/extended by feature 006 (Settings & themes). */
+/**
+ * Owned/extended by feature 006 (Settings & themes). Every group's fields are
+ * optional past the original set so a record written by an earlier build still
+ * loads and validates; `loadRecord` fills the gaps from DEFAULTS.
+ */
 export interface SettingsRecord {
   v: number
-  sound: { muted: boolean; volume: number }
-  visuals: { theme: string; reducedMotion: boolean; textScale: number; colorblind: boolean }
-  controls: { swapMarkButtons: boolean }
-  play: { defaultSize: string; defaultDifficulty: string }
+  sound: { muted: boolean; volume: number; sfx?: number; ambient?: number }
+  visuals: {
+    /** 'Day' | 'Night' | 'Auto' — Auto follows the OS preference. */
+    theme: string
+    reducedMotion: boolean
+    textScale: number
+    colorblind: boolean
+    highContrast?: boolean
+    /** Board scale multiplier, 1 = default. */
+    cellScale?: number
+  }
+  controls: { swapMarkButtons: boolean; tapToCycle?: boolean; confirmBeforeClear?: boolean }
+  /** Comfort aids — framed as comfort, never "easy mode" (FR-005). */
+  comfort?: { hoverHighlight?: boolean; mistakeNudge?: boolean; lineHelper?: boolean }
+  play: { defaultSize: string; defaultDifficulty: string; stopwatch?: boolean }
 }
 
 /** Owned by feature 005 (Shore journal). */
@@ -125,10 +140,18 @@ export const DEFAULTS: { [N in Namespace]: () => SchemaMap[N] } = {
   }),
   settings: () => ({
     v: 1,
-    sound: { muted: false, volume: 0.8 },
-    visuals: { theme: 'Day', reducedMotion: false, textScale: 1, colorblind: false },
-    controls: { swapMarkButtons: false },
-    play: { defaultSize: 'Small', defaultDifficulty: 'Calm' },
+    sound: { muted: false, volume: 0.8, sfx: 1, ambient: 0.5 },
+    visuals: {
+      theme: 'Day',
+      reducedMotion: false,
+      textScale: 1,
+      colorblind: false,
+      highContrast: false,
+      cellScale: 1,
+    },
+    controls: { swapMarkButtons: false, tapToCycle: false, confirmBeforeClear: false },
+    comfort: { hoverHighlight: true, mistakeNudge: true, lineHelper: false },
+    play: { defaultSize: 'Small', defaultDifficulty: 'Calm', stopwatch: false },
   }),
   journal: () => ({ v: 1, discoveries: {} }),
   stats: () => ({ v: 1, boardsSolved: 0, poolsFilled: 0, creaturesFound: 0 }),

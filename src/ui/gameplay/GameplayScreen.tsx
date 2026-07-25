@@ -27,7 +27,7 @@ import {
 import { DEFAULTS, getSaveStore, loadRecord, saveRecord } from '@/platform'
 import { getAudioEngine } from '@/audio'
 import { CompletePanel } from './CompletePanel'
-import { HowToPlay } from './HowToPlay'
+import { HowToPlay, HowToPlayTab } from './HowToPlay'
 import { PoolToast } from './PoolToast'
 import { TopBar } from './TopBar'
 
@@ -479,12 +479,12 @@ export function GameplayScreen({
     return () => window.removeEventListener('keydown', onKey)
   }, [applyDelta])
 
-  /** Dismiss the how-to rail for good (it's a reference, not a tutorial). */
-  const dismissHelp = useCallback(() => {
-    setShowHelp(false)
+  /** Show or hide the how-to rail, remembering the choice. */
+  const setHelpVisible = useCallback((visible: boolean) => {
+    setShowHelp(visible)
     void (async () => {
       const rec = await loadRecord(storeRef.current, 'onboarding')
-      await saveRecord(storeRef.current, 'onboarding', { ...rec, helpDismissed: true })
+      await saveRecord(storeRef.current, 'onboarding', { ...rec, helpDismissed: !visible })
     })()
   }, [])
 
@@ -517,7 +517,12 @@ export function GameplayScreen({
         onPause={onPause ?? (() => onHome?.())}
       />
       <div className="flex flex-1 min-h-0">
-        {showHelp && !complete && <HowToPlay onClose={dismissHelp} />}
+        {!complete &&
+          (showHelp ? (
+            <HowToPlay onClose={() => setHelpVisible(false)} />
+          ) : (
+            <HowToPlayTab onOpen={() => setHelpVisible(true)} />
+          ))}
         <div ref={containerRef} className="relative flex-1 min-h-0">
         <canvas
           ref={canvasRef}

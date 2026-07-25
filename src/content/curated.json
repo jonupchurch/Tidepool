@@ -1,37 +1,205 @@
 {
-  "version": 1,
+  "version": 2,
+  "groups": [
+    {
+      "id": "shallows",
+      "name": "Shallows",
+      "blurb": "Warm water, gentle edges.",
+      "order": 1
+    },
+    {
+      "id": "tide-pools",
+      "name": "Tide Pools",
+      "blurb": "Small worlds between the rocks.",
+      "order": 2
+    },
+    {
+      "id": "kelp-forest",
+      "name": "Kelp Forest",
+      "blurb": "Green light and long shadows.",
+      "order": 3
+    },
+    {
+      "id": "coral-garden",
+      "name": "Coral Garden",
+      "blurb": "Bright, crowded, intricate.",
+      "order": 4
+    },
+    {
+      "id": "open-shoal",
+      "name": "Open Shoal",
+      "blurb": "Wider water, longer lines.",
+      "order": 5
+    },
+    {
+      "id": "the-trench",
+      "name": "The Trench",
+      "blurb": "Cold, deep, and patient.",
+      "order": 6
+    }
+  ],
   "entries": [
     {
       "id": "first-cove",
       "name": "First Cove",
       "seed": "COVE-0001",
-      "size": "Small",
+      "size": "Medium",
       "difficulty": "Calm",
+      "group": "shallows",
       "order": 1
+    },
+    {
+      "id": "warm-shallows",
+      "name": "Warm Shallows",
+      "seed": "SHELL-0001",
+      "size": "Medium",
+      "difficulty": "Calm",
+      "group": "shallows",
+      "order": 2
+    },
+    {
+      "id": "shell-bank",
+      "name": "Shell Bank",
+      "seed": "FOAM-0001",
+      "size": "Medium",
+      "difficulty": "Calm",
+      "group": "shallows",
+      "order": 3
+    },
+    {
+      "id": "foam-line",
+      "name": "Foam Line",
+      "seed": "COVE-0002",
+      "size": "Medium",
+      "difficulty": "Calm",
+      "group": "shallows",
+      "order": 4
+    },
+    {
+      "id": "low-water",
+      "name": "Low Water",
+      "seed": "SHELL-0002",
+      "size": "Medium",
+      "difficulty": "Calm",
+      "group": "shallows",
+      "order": 5
+    },
+    {
+      "id": "sandbar",
+      "name": "Sandbar",
+      "seed": "FOAM-0002",
+      "size": "Medium",
+      "difficulty": "Calm",
+      "group": "shallows",
+      "order": 6
     },
     {
       "id": "tide-pool",
       "name": "Tide Pool",
       "seed": "TIDE-0001",
-      "size": "Small",
+      "size": "Medium",
       "difficulty": "Calm",
-      "order": 2
+      "group": "tide-pools",
+      "order": 7
     },
     {
-      "id": "quiet-reef",
-      "name": "Quiet Reef",
-      "seed": "REEF-0001",
-      "size": "Small",
-      "difficulty": "Tricky",
-      "order": 3
+      "id": "spray-zone",
+      "name": "Spray Zone",
+      "seed": "SPRAY-0001",
+      "size": "Medium",
+      "difficulty": "Calm",
+      "group": "tide-pools",
+      "order": 8
+    },
+    {
+      "id": "limpet-rock",
+      "name": "Limpet Rock",
+      "seed": "LIMPET-0001",
+      "size": "Medium",
+      "difficulty": "Calm",
+      "group": "tide-pools",
+      "order": 9
+    },
+    {
+      "id": "barnacle-ledge",
+      "name": "Barnacle Ledge",
+      "seed": "TIDE-0002",
+      "size": "Medium",
+      "difficulty": "Calm",
+      "group": "tide-pools",
+      "order": 10
+    },
+    {
+      "id": "salt-basin",
+      "name": "Salt Basin",
+      "seed": "SPRAY-0002",
+      "size": "Medium",
+      "difficulty": "Calm",
+      "group": "tide-pools",
+      "order": 11
+    },
+    {
+      "id": "ebb-pool",
+      "name": "Ebb Pool",
+      "seed": "LIMPET-0002",
+      "size": "Medium",
+      "difficulty": "Calm",
+      "group": "tide-pools",
+      "order": 12
     },
     {
       "id": "kelp-bed",
       "name": "Kelp Bed",
       "seed": "KELP-0001",
       "size": "Medium",
-      "difficulty": "Calm",
-      "order": 4
+      "difficulty": "Tricky",
+      "group": "kelp-forest",
+      "order": 13
+    },
+    {
+      "id": "drift-line",
+      "name": "Drift Line",
+      "seed": "DRIFT-0001",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "kelp-forest",
+      "order": 14
+    },
+    {
+      "id": "anemone-hollow",
+      "name": "Anemone Hollow",
+      "seed": "ANEMONE-0001",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "kelp-forest",
+      "order": 15
+    },
+    {
+      "id": "holdfast",
+      "name": "Holdfast",
+      "seed": "KELP-0002",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "kelp-forest",
+      "order": 16
+    },
+    {
+      "id": "green-canopy",
+      "name": "Green Canopy",
+      "seed": "DRIFT-0002",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "kelp-forest",
+      "order": 17
+    },
+    {
+      "id": "frond-maze",
+      "name": "Frond Maze",
+      "seed": "ANEMONE-0002",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "kelp-forest",
+      "order": 18
     },
     {
       "id": "coral-garden",
@@ -39,15 +207,53 @@
       "seed": "CORAL-0001",
       "size": "Medium",
       "difficulty": "Tricky",
-      "order": 5
+      "group": "coral-garden",
+      "order": 19
     },
     {
-      "id": "deep-channel",
-      "name": "Deep Channel",
-      "seed": "CHANNEL-0001",
+      "id": "pearl-cluster",
+      "name": "Pearl Cluster",
+      "seed": "PEARL-0001",
       "size": "Medium",
-      "difficulty": "Deep",
-      "order": 6
+      "difficulty": "Tricky",
+      "group": "coral-garden",
+      "order": 20
+    },
+    {
+      "id": "urchin-barren",
+      "name": "Urchin Barren",
+      "seed": "URCHIN-0001",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "coral-garden",
+      "order": 21
+    },
+    {
+      "id": "staghorn",
+      "name": "Staghorn",
+      "seed": "CORAL-0002",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "coral-garden",
+      "order": 22
+    },
+    {
+      "id": "fan-coral",
+      "name": "Fan Coral",
+      "seed": "PEARL-0002",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "coral-garden",
+      "order": 23
+    },
+    {
+      "id": "bright-reef",
+      "name": "Bright Reef",
+      "seed": "URCHIN-0002",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "coral-garden",
+      "order": 24
     },
     {
       "id": "open-shoal",
@@ -55,7 +261,53 @@
       "seed": "SHOAL-0001",
       "size": "Large",
       "difficulty": "Tricky",
-      "order": 7
+      "group": "open-shoal",
+      "order": 25
+    },
+    {
+      "id": "lagoon-mouth",
+      "name": "Lagoon Mouth",
+      "seed": "LAGOON-0001",
+      "size": "Large",
+      "difficulty": "Tricky",
+      "group": "open-shoal",
+      "order": 26
+    },
+    {
+      "id": "atoll-ring",
+      "name": "Atoll Ring",
+      "seed": "ATOLL-0001",
+      "size": "Large",
+      "difficulty": "Tricky",
+      "group": "open-shoal",
+      "order": 27
+    },
+    {
+      "id": "sunken-bar",
+      "name": "Sunken Bar",
+      "seed": "SHOAL-0002",
+      "size": "Large",
+      "difficulty": "Tricky",
+      "group": "open-shoal",
+      "order": 28
+    },
+    {
+      "id": "blue-hole",
+      "name": "Blue Hole",
+      "seed": "LAGOON-0002",
+      "size": "Large",
+      "difficulty": "Tricky",
+      "group": "open-shoal",
+      "order": 29
+    },
+    {
+      "id": "far-shoal",
+      "name": "Far Shoal",
+      "seed": "ATOLL-0002",
+      "size": "Large",
+      "difficulty": "Tricky",
+      "group": "open-shoal",
+      "order": 30
     },
     {
       "id": "the-trench",
@@ -63,7 +315,53 @@
       "seed": "TRENCH-0001",
       "size": "Large",
       "difficulty": "Deep",
-      "order": 8
+      "group": "the-trench",
+      "order": 31
+    },
+    {
+      "id": "fjord-wall",
+      "name": "Fjord Wall",
+      "seed": "FJORD-0001",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-trench",
+      "order": 32
+    },
+    {
+      "id": "brine-fall",
+      "name": "Brine Fall",
+      "seed": "BRINE-0001",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-trench",
+      "order": 33
+    },
+    {
+      "id": "cold-seep",
+      "name": "Cold Seep",
+      "seed": "TRENCH-0002",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-trench",
+      "order": 34
+    },
+    {
+      "id": "black-water",
+      "name": "Black Water",
+      "seed": "FJORD-0002",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-trench",
+      "order": 35
+    },
+    {
+      "id": "the-deep",
+      "name": "The Deep",
+      "seed": "BRINE-0002",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-trench",
+      "order": 36
     }
   ]
 }

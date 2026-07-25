@@ -4,6 +4,63 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — Curated shores: a 36-board ladder on a hex map
+
+The curated set becomes the game's authored progression: six groups of six,
+chained, mistake-tracked, and promoted to a first-class Home destination.
+
+### Fixed
+
+- **Chaining curated boards recorded only the first completion.** `curatedId`
+  lived on the shell's launch entry, but "Next board" advanced the board *inside*
+  `GameplayScreen` without telling the shell — so it stayed pinned to the entry
+  you first selected and every later completion re-recorded that one. Worse, the
+  boards you actually played came from the Endless stream, not the ladder.
+  "Next board" now goes through the shell (`onNextBoard`), which walks the
+  curated ladder and returns to the map off its end.
+- **The TopBar reflowed the board mid-play.** The "⚠ N to fix" chip appearing
+  changed the header's height, resizing the canvas and shifting every cell under
+  the cursor — one mis-click begat more. The header is now fixed-height and
+  non-wrapping.
+
+### Added
+
+- **36 curated boards** (was 8) in six groups — Shallows, Tide Pools, Kelp
+  Forest, Coral Garden, Open Shoal, The Trench. Medium through the middle,
+  escalating to Large at the end; difficulty never steps backwards. Every seed is
+  verified to solve uniquely, guess-free, and rate *exactly* on-tier. Manifest v2
+  gains a `groups` array (optional, so a v1 pack still renders).
+- **The map is a hex of hexes of hexes** — six groups on a hex ring, each group a
+  ring of six tiles, each tile a board. Every ring is hollow and its hole carries
+  that ring's label: the group's name and band, the overall tally at the centre.
+  Names wrap and centre inside the hex rather than truncating.
+- **Curated mistake tracking.** Each entry keeps the *fewest* mistakes of any
+  run, so replaying a board cleanly clears it for good and a sloppier replay
+  never adds them back. A board still carrying mistakes wears a dashed coral ring
+  (an SVG overlay — a CSS border would be cut away by the hex clip-path). Curated
+  only: Endless boards show the live counter and store nothing.
+- **Curated shores is a primary Home destination** with its own progress, no
+  longer a secondary link.
+- **A quiet how-to rail** left of the board: what a plain number means, `{n}` vs
+  `-n-`, and what the edge numbers count. Dismissed for good via the settings
+  seam. It's a layout sibling, not an overlay — as an overlay its close button
+  sat on the canvas and swallowed clicks meant for cells.
+
+### Verified
+
+- **482 unit + 18 e2e** green; typecheck passes; all 36 boards pass the CI oracle
+  gate. A new e2e chains three curated boards without returning to the map and
+  asserts each records its own completion — the exact reported bug. Another
+  fumbles a board, checks the mistake is recorded, replays it clean, and checks
+  the record clears.
+- Two dev-hook weaknesses fixed while chasing the above: cell centres and line
+  labels are now getters (the board re-lays out on pane resize, so snapshots went
+  stale), and `ready` is retired when a board starts loading (it stayed true
+  across a board change, so e2e read the outgoing board's cells).
+- Note: the **per-creature journal count already existed** (`journal.ts`
+  increments on re-find; `CreatureCard` renders "Found ×N") — verified rather
+  than rebuilt.
+
 ## 2026-07-25 — Row-total affordances, HUD counters, solved-board cleanup
 
 Second playtest pass on the same session: make the margin totals self-explaining

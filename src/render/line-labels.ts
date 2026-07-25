@@ -211,6 +211,34 @@ export function tickSegment(
   }
 }
 
+/**
+ * The arrowhead that caps the direction dash, as a filled triangle. It sits at
+ * the dash's inner end and points the way the row runs — so the whole glyph
+ * reads `———▶ 4` with the board beyond the number. Still entirely outside the
+ * board: the tip stops at the dash's near end, well clear of the first hex.
+ */
+export function arrowHead(
+  label: LineLabel,
+  layout: HexLayout,
+): { tip: { x: number; y: number }; left: { x: number; y: number }; right: { x: number; y: number } } {
+  const t = tickSegment(label, layout)
+  // The dash runs outward, so tip→tail is the inward (row) direction.
+  const dx = t.x1 - t.x2
+  const dy = t.y1 - t.y2
+  const mag = Math.hypot(dx, dy) || 1
+  const ux = dx / mag
+  const uy = dy / mag
+  const len = layout.size * 0.3
+  const half = layout.size * 0.17
+  const bx = t.x1 - ux * len
+  const by = t.y1 - uy * len
+  return {
+    tip: { x: t.x1, y: t.y1 },
+    left: { x: bx - uy * half, y: by + ux * half },
+    right: { x: bx + uy * half, y: by - ux * half },
+  }
+}
+
 /** +1 if `tail` lies forward of `head` along `step`, -1 otherwise. */
 function signOf(head: Axial, tail: Axial, step: Axial): number {
   const along = (tail.q - head.q) * step.q + (tail.r - head.r) * step.r

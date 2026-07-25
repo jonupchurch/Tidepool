@@ -36,3 +36,18 @@ export const sampleManifest: CuratedManifest = {
     { id: 'kelp-3', name: 'Kelp Forest', seed: 'KELP-0003', size: 'Medium', difficulty: 'Tricky', order: 3 },
   ],
 }
+
+/** The same, in grouped (v2) shape: two groups of two, plus ordering noise. */
+export const groupedManifest: CuratedManifest = {
+  version: 2,
+  groups: [
+    { id: 'shallows', name: 'Shallows', blurb: 'Warm water.', order: 1 },
+    { id: 'deeps', name: 'Deeps', blurb: 'Cold water.', order: 2 },
+  ],
+  entries: [
+    { id: 'b-2', name: 'Two', seed: 'COVE-0002', size: 'Medium', difficulty: 'Calm', group: 'shallows', order: 2 },
+    { id: 'd-4', name: 'Four', seed: 'TRENCH-0002', size: 'Large', difficulty: 'Deep', group: 'deeps', order: 4 },
+    { id: 'a-1', name: 'One', seed: 'COVE-0001', size: 'Medium', difficulty: 'Calm', group: 'shallows', order: 1 },
+    { id: 'c-3', name: 'Three', seed: 'TRENCH-0001', size: 'Large', difficulty: 'Deep', group: 'deeps', order: 3 },
+  ],
+}

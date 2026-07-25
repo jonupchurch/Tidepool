@@ -27,6 +27,7 @@ import {
 import { DEFAULTS, getSaveStore, loadRecord, saveRecord } from '@/platform'
 import { getAudioEngine } from '@/audio'
 import { CompletePanel } from './CompletePanel'
+import { HowToPlay } from './HowToPlay'
 import { PoolToast } from './PoolToast'
 import { TopBar } from './TopBar'
 
@@ -55,10 +56,17 @@ export interface GameplayScreenProps {
   /** Open the shell Pause overlay (003 seam); falls back to onHome. */
   onPause?: () => void
   /** Fires when the board is solved, with the earned (largest-pool) creature id
-   *  — the shell records curated completion (004 seam). */
-  onSolved?: (earnedCreatureId: string | null) => void
+   *  and the run's mistake count — the shell records curated completion (004
+   *  seam). Endless boards ignore both; only curated entries keep a record. */
+  onSolved?: (earnedCreatureId: string | null, errors: number) => void
   /** Provide the next board's params (feature 004 seam); defaults to a new seed. */
   nextParams?: (current: BoardParams) => BoardParams
+  /**
+   * Hand "Next board" to the shell instead of advancing in place. The shell
+   * needs the launch to go through it so progression state (e.g. which curated
+   * entry you're on) advances with the board; without it, that state goes stale.
+   */
+  onNextBoard?: () => void
 }
 
 export function GameplayScreen({
@@ -69,6 +77,7 @@ export function GameplayScreen({
   onPause,
   onSolved,
   nextParams,
+  onNextBoard,
 }: GameplayScreenProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -97,6 +106,7 @@ export function GameplayScreen({
   const [stonesLeft, setStonesLeft] = useState(0)
   const [poolsLeft, setPoolsLeft] = useState(0)
   const [errorsMade, setErrorsMade] = useState(0)
+  const [showHelp, setShowHelp] = useState(false)
   const [complete, setComplete] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
   const [canUndo, setCanUndo] = useState(false)
@@ -182,7 +192,7 @@ export function GameplayScreen({
         const s = sessionRef.current
         let largest: { cells: string[]; creatureId: string } | null = null
         if (s) for (const p of s.pools) if (!largest || p.cells.length > largest.cells.length) largest = p
-        onSolved?.(largest ? largest.creatureId : null)
+        onSolved?.(largest ? largest.creatureId : null, s?.errorsMade ?? 0)
       }
     },
     [redraw, syncChrome, save, clearSaved, onSolved],
@@ -292,6 +302,13 @@ export function GameplayScreen({
   const startBoard = useCallback(
     async (p: BoardParams, resume: boolean) => {
       setLoading(true)
+      // Dev-only: retire the previous board's test hook up front. It is replaced
+      // below once the new board is laid out — without this, `ready` stays true
+      // across a board change and e2e reads the OLD board's cells and solution.
+      if (import.meta.env.DEV && typeof window !== 'undefined') {
+        const w = window as unknown as { __TIDEPOOLS__?: { ready?: boolean } }
+        if (w.__TIDEPOOLS__) w.__TIDEPOOLS__.ready = false
+      }
       let board: Board
       let session: PlaySession
       if (resume) {
@@ -328,19 +345,26 @@ export function GameplayScreen({
       // the board through real pointer clicks by exposing cell centres + the
       // solution for this fixed-seed board.
       if (import.meta.env.DEV && typeof window !== 'undefined') {
-        const centres: Record<string, { x: number; y: number }> = {}
         const solution: Record<string, MarkKind> = {}
-        for (const [k, cell] of board.cells) {
-          centres[k] = hexToPixel(renderer.layout, cell.coord)
-          if (!cell.given) solution[k] = cell.state
-        }
+        for (const [k, cell] of board.cells) if (!cell.given) solution[k] = cell.state
         ;(window as unknown as { __TIDEPOOLS__?: unknown }).__TIDEPOOLS__ = {
           ready: true,
           seed: board.params.seed,
           lastSave: Promise.resolve(),
-          centres,
+          // Getters, not snapshots: the board re-lays out whenever the pane
+          // resizes (the how-to rail appearing, a window resize), so cached
+          // pixel positions would go stale and e2e clicks would miss.
+          get centres(): Record<string, { x: number; y: number }> {
+            const out: Record<string, { x: number; y: number }> = {}
+            const r = rendererRef.current
+            if (r) for (const [k, cell] of board.cells) out[k] = hexToPixel(r.layout, cell.coord)
+            return out
+          },
           solution,
-          lineLabels: renderer.lineLabels.map((l) => ({ id: l.id, x: l.x, y: l.y, total: l.total })),
+          get lineLabels() {
+            const r = rendererRef.current
+            return (r?.lineLabels ?? []).map((l) => ({ id: l.id, x: l.x, y: l.y, total: l.total }))
+          },
           guides: () => [...guidesRef.current].sort(),
           doneLines: () => [...doneLinesRef.current].sort(),
           progress: () => {
@@ -374,17 +398,29 @@ export function GameplayScreen({
   )
 
   const onNext = useCallback(() => {
+    // Let the shell drive when it wants to (it owns progression state).
+    if (onNextBoard) {
+      onNextBoard()
+      return
+    }
     const current = sessionRef.current?.board.params ?? params ?? DEFAULT_PARAMS
     nextSeedRef.current += 1
     const p =
       nextParams?.(current) ??
       ({ ...current, seed: `TIDE-${String(nextSeedRef.current).padStart(4, '0')}` } as BoardParams)
     void startBoard(p, false)
-  }, [params, nextParams, startBoard])
+  }, [params, nextParams, startBoard, onNextBoard])
 
   // Mount: load settings, then the board (resume in-progress if present).
   useEffect(() => {
     let disposed = false
+    // Retire any previous board's test hook synchronously, before the awaits
+    // below — the shell remounts this screen for each new board, and a stale
+    // `ready` here lets e2e read the outgoing board's cells.
+    if (import.meta.env.DEV && typeof window !== 'undefined') {
+      const w = window as unknown as { __TIDEPOOLS__?: { ready?: boolean } }
+      if (w.__TIDEPOOLS__) w.__TIDEPOOLS__.ready = false
+    }
     void (async () => {
       const s = await loadRecord(storeRef.current, 'settings')
       settingsRef.current = {
@@ -396,6 +432,12 @@ export function GameplayScreen({
       }
       audioRef.current.setMuted(s.sound.muted)
       audioRef.current.setVolume(s.sound.volume)
+      const onboarding = await loadRecord(storeRef.current, 'onboarding')
+      if (disposed) return
+      setShowHelp(!onboarding.helpDismissed)
+      // Let the rail land before the board measures its pane — otherwise the
+      // board lays out at full width and is immediately re-laid-out narrower.
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)))
       if (!disposed) await startBoard(params ?? DEFAULT_PARAMS, resume)
     })()
     return () => {
@@ -434,6 +476,15 @@ export function GameplayScreen({
     return () => window.removeEventListener('keydown', onKey)
   }, [applyDelta])
 
+  /** Dismiss the how-to rail for good (it's a reference, not a tutorial). */
+  const dismissHelp = useCallback(() => {
+    setShowHelp(false)
+    void (async () => {
+      const rec = await loadRecord(storeRef.current, 'onboarding')
+      await saveRecord(storeRef.current, 'onboarding', { ...rec, helpDismissed: true })
+    })()
+  }, [])
+
   const doUndo = useCallback(() => {
     const s = sessionRef.current
     if (!s) return
@@ -462,7 +513,9 @@ export function GameplayScreen({
         onRedo={doRedo}
         onPause={onPause ?? (() => onHome?.())}
       />
-      <div ref={containerRef} className="relative flex-1 min-h-0">
+      <div className="flex flex-1 min-h-0">
+        {showHelp && !complete && <HowToPlay onClose={dismissHelp} />}
+        <div ref={containerRef} className="relative flex-1 min-h-0">
         <canvas
           ref={canvasRef}
           className="block w-full h-full touch-none"
@@ -490,6 +543,7 @@ export function GameplayScreen({
             onHome={() => onHome?.()}
           />
         )}
+        </div>
       </div>
     </div>
   )

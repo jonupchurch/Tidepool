@@ -9,7 +9,10 @@ import {
   type BoardRequest,
   type CuratedRow,
   getCuratedRows,
+  groupRows,
+  loadCuratedPack,
   markCuratedSolved,
+  nextCuratedEntry,
   nextSeed,
   toBoardParams,
 } from '@/game/board-source'
@@ -37,6 +40,8 @@ const DEFAULT_STATS: HomeStats = {
   creaturesFound: 0,
   totalCreatures: 0,
   featuredCreature: null,
+  curatedSolved: 0,
+  curatedTotal: 0,
 }
 
 export interface AppShellProps {
@@ -135,8 +140,11 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
   // Record curated completion (the largest-pool creature) against its entry.
   const curatedId = entry.launch?.curatedId
   const onSolved = useCallback(
-    (earnedCreatureId: string | null) => {
-      if (curatedId && earnedCreatureId) void markCuratedSolved(store, curatedId, earnedCreatureId)
+    (earnedCreatureId: string | null, errors: number) => {
+      // Curated entries keep a mistake record (best run wins); Endless does not.
+      if (curatedId && earnedCreatureId) {
+        void markCuratedSolved(store, curatedId, earnedCreatureId, errors)
+      }
     },
     [curatedId, store],
   )
@@ -153,16 +161,38 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
     [],
   )
 
+  /**
+   * "Next board" goes through the shell rather than Gameplay's own advance, so
+   * the launch entry — and with it `curatedId` — moves with the board. Playing
+   * the curated ladder used to leave `curatedId` pinned to the entry you first
+   * selected, so every later completion re-recorded THAT entry and the boards
+   * you actually played were Endless seeds, not curated ones.
+   */
+  const currentParams = entry.launch?.params
+  const onNextBoard = useCallback(() => {
+    if (curatedId) {
+      const next = nextCuratedEntry(loadCuratedPack(), curatedId)
+      // Off the end of the coastline: back to the list to pick what's next.
+      if (!next) {
+        navigate('Curated')
+        return
+      }
+      const request = { seed: next.seed, size: next.size, difficulty: next.difficulty }
+      launchGameplay(toBoardParams(request), false, next.id)
+      return
+    }
+    if (currentParams) launchGameplay(nextBoard(currentParams), false)
+  }, [curatedId, currentParams, launchGameplay, nextBoard, navigate])
+
   // Pause actions — the board stays saved throughout; Resume returns to it.
-  const currentGameParams = entry.launch?.params
   const onNewBoard = useCallback(
     () => onPlay(boardRequest(freshSeed(), lastPlay.size, lastPlay.difficulty)),
     [onPlay, lastPlay],
   )
   const onRestart = useCallback(() => {
-    if (currentGameParams) launchGameplay(currentGameParams, false)
+    if (currentParams) launchGameplay(currentParams, false)
     else onNewBoard()
-  }, [currentGameParams, launchGameplay, onNewBoard])
+  }, [currentParams, launchGameplay, onNewBoard])
   const onPauseSettings = useCallback(() => {
     setPaused(false)
     navigate('Settings')
@@ -193,11 +223,18 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
             onJournal={() => navigate('Journal')}
             onPause={() => setPaused(true)}
             onSolved={onSolved}
+            onNextBoard={onNextBoard}
             nextParams={nextBoard}
           />
         )
       case 'Curated':
-        return <CuratedScreen rows={curatedRows} onSelect={onSelectCurated} onBack={goHome} />
+        return (
+          <CuratedScreen
+            groups={groupRows(loadCuratedPack(), curatedRows)}
+            onSelect={onSelectCurated}
+            onBack={goHome}
+          />
+        )
       case 'Journal':
         return <JournalScreen store={store} onBack={goHome} />
       case 'Settings':

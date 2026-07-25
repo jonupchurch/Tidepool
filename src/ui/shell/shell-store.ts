@@ -6,6 +6,7 @@
 import type { DifficultyTier, SizeTier } from '@/core'
 import { DIFFICULTY_TIERS, SIZE_TIERS } from '@/core'
 import { CREATURES, creatureDef } from '@/game'
+import { loadCuratedPack } from '@/game/board-source'
 import { type SaveStore, loadRecord, saveRecord } from '@/platform'
 import type { HomeStats, LastPlay, ResumeSnapshot, ShellPrefs, Theme } from './types'
 
@@ -59,17 +60,24 @@ export async function getResumeSnapshot(store: SaveStore): Promise<ResumeSnapsho
 // ── Home stats — from stats (008) + the journal (005), with the creature table ─
 
 export async function getHomeStats(store: SaveStore): Promise<HomeStats> {
-  const [stats, journal] = await Promise.all([
+  const [stats, journal, curated] = await Promise.all([
     loadRecord(store, 'stats'),
     loadRecord(store, 'journal'),
+    loadRecord(store, 'curatedProgress'),
   ])
   const foundIds = Object.keys(journal.discoveries)
   // Insertion order is preserved, so the last key is the most-recent discovery.
   const newest = foundIds.length ? foundIds[foundIds.length - 1] : null
+  const pack = loadCuratedPack()
+  const packIds = new Set(pack.entries.map((e) => e.id))
   return {
     boardsSolved: stats.boardsSolved,
     creaturesFound: foundIds.length || stats.creaturesFound,
     totalCreatures: CREATURES.length,
     featuredCreature: newest ? (creatureDef(newest)?.name ?? null) : null,
+    // Count only entries the shipped pack still contains, so progress from a
+    // retired board can't push the tally past the total.
+    curatedSolved: Object.keys(curated.solved).filter((id) => packIds.has(id)).length,
+    curatedTotal: pack.entries.length,
   }
 }

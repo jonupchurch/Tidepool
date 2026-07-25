@@ -26,7 +26,6 @@ export interface HomeScreenProps {
 }
 
 const SECONDARY: readonly { label: string; screen: Screen }[] = [
-  { label: 'Curated shores', screen: 'Curated' },
   { label: 'Shore journal', screen: 'Journal' },
   { label: 'Settings', screen: 'Settings' },
   { label: 'How to play', screen: 'Tutorial' },
@@ -99,6 +98,32 @@ export function HomeScreen({
           <span className="font-display text-2xl">Play</span>
           <span className="text-sm text-foam/80">
             {size} · {difficulty}
+          </span>
+        </button>
+
+        {/* Curated shores — a primary destination alongside Play, not a
+            secondary link: it's the authored progression through the game. */}
+        <button
+          type="button"
+          aria-label="Curated shores"
+          onClick={() => onNavigate('Curated')}
+          className="flex w-full items-center gap-3 rounded-2xl border border-tide/30 bg-foam px-6 py-4 text-left shadow-sm transition-colors hover:bg-tide-fill"
+        >
+          <span aria-hidden className="text-2xl">
+            🗺️
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block font-display text-xl text-deep-pool">Curated shores</span>
+            <span className="block text-sm text-tide">
+              A hand-tuned coastline, gently rising
+            </span>
+          </span>
+          <span className="shrink-0 text-right">
+            <span className="block font-display text-xl tabular-nums text-deep-pool">
+              {stats.curatedSolved}
+              <span className="text-rock">/{stats.curatedTotal}</span>
+            </span>
+            <span className="block text-xs text-rock">shores</span>
           </span>
         </button>
 

@@ -26,7 +26,16 @@ export {
   manifestRows,
   markCuratedSolved,
   getCuratedRows,
+  nextCuratedEntry,
+  groupRows,
   resolveLocks,
   OPEN_GATING,
 } from './curated'
-export type { CuratedEntry, CuratedManifest, CuratedRow, GatingConfig } from './curated'
+export type {
+  CuratedEntry,
+  CuratedGroup,
+  CuratedGroupRows,
+  CuratedManifest,
+  CuratedRow,
+  GatingConfig,
+} from './curated'

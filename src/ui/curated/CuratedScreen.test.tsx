@@ -1,36 +1,111 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
-import { manifestRows } from '@/game/board-source'
-import { sampleManifest } from '@/game/board-source/test-helpers'
+import { groupRows, manifestRows } from '@/game/board-source'
+import { groupedManifest, sampleManifest } from '@/game/board-source/test-helpers'
 import { CuratedScreen } from './CuratedScreen'
 
+const grouped = (
+  solved: Parameters<typeof manifestRows>[1] = {},
+  gating?: Parameters<typeof manifestRows>[2],
+) => groupRows(sampleManifest, manifestRows(sampleManifest, solved, gating))
+
+/** The "solved/total" tally in the hollow at the centre of the arrangement. */
+const tally = () =>
+  screen.getByText(
+    (_, el) => el?.tagName === 'P' && /^\d+\/\d+$/.test(el.textContent ?? ''),
+  ).textContent
+
 describe('CuratedScreen (US2)', () => {
-  it('renders entries in order with name, difficulty, and seed', () => {
-    const rows = manifestRows(sampleManifest, {})
-    render(<CuratedScreen rows={rows} onSelect={vi.fn()} onBack={vi.fn()} />)
+  it('renders every board as a hex tile, in order', () => {
+    render(<CuratedScreen groups={grouped()} onSelect={vi.fn()} onBack={vi.fn()} />)
     const names = screen.getAllByText(/First Cove|Quiet Reef|Kelp Forest/).map((n) => n.textContent)
     expect(names).toEqual(['First Cove', 'Quiet Reef', 'Kelp Forest'])
-    expect(screen.getByRole('button', { name: /copy seed COVE-0001/i })).toBeInTheDocument()
   })
 
   it('reflects merged completion + earned creature', () => {
-    const rows = manifestRows(sampleManifest, { 'reef-2': { earnedCreatureId: 'crab' } })
-    render(<CuratedScreen rows={rows} onSelect={vi.fn()} onBack={vi.fn()} />)
-    expect(screen.getByText(/found Shore Crab/i)).toBeInTheDocument()
-    // Solved entries offer Replay; unsolved offer Play.
-    expect(screen.getAllByRole('button', { name: /^replay$/i })).toHaveLength(1)
-    expect(screen.getAllByRole('button', { name: /^play$/i }).length).toBeGreaterThanOrEqual(1)
+    render(
+      <CuratedScreen
+        groups={grouped({ 'reef-2': { earnedCreatureId: 'crab' } })}
+        onSelect={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    )
+    expect(screen.getByText(/Shore Crab/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Quiet Reef.*solved/i })).toBeInTheDocument()
+    // The tally lives in the hollow at the centre of the whole arrangement.
+    expect(tally()).toBe('1/3')
   })
 
-  it('selecting an entry emits its BoardRequest', () => {
+  it('selecting a tile emits its BoardRequest', () => {
     const onSelect = vi.fn()
-    const rows = manifestRows(sampleManifest, {})
-    render(<CuratedScreen rows={rows} onSelect={onSelect} onBack={vi.fn()} />)
-    fireEvent.click(screen.getAllByRole('button', { name: /^play$/i })[0])
+    render(<CuratedScreen groups={grouped()} onSelect={onSelect} onBack={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /First Cove/i }))
     expect(onSelect).toHaveBeenCalledWith(
       { seed: 'COVE-0001', size: 'Small', difficulty: 'Calm' },
       'cove-1',
     )
+  })
+})
+
+describe('CuratedScreen groups', () => {
+  it('renders one titled cluster per group, boards nested inside', () => {
+    const groups = groupRows(groupedManifest, manifestRows(groupedManifest, {}))
+    render(<CuratedScreen groups={groups} onSelect={vi.fn()} onBack={vi.fn()} />)
+
+    const shallows = screen.getByRole('region', { name: 'Shallows' })
+    const deeps = screen.getByRole('region', { name: 'Deeps' })
+    // Each cluster carries its own band label...
+    expect(shallows).toHaveTextContent(/Medium · Calm/)
+    expect(deeps).toHaveTextContent(/Large · Deep/)
+    // ...and its own boards, in order, with no bleed between clusters.
+    expect(shallows).toHaveTextContent('One')
+    expect(shallows).toHaveTextContent('Two')
+    expect(deeps).toHaveTextContent('Three')
+    expect(deeps).toHaveTextContent('Four')
+    expect(shallows).not.toHaveTextContent('Three')
+  })
+
+  it('counts progress per group as well as overall', () => {
+    const groups = groupRows(
+      groupedManifest,
+      manifestRows(groupedManifest, { 'a-1': { earnedCreatureId: 'crab' } }),
+    )
+    render(<CuratedScreen groups={groups} onSelect={vi.fn()} onBack={vi.fn()} />)
+    expect(screen.getByRole('region', { name: 'Shallows' })).toHaveTextContent('(1/2)')
+    expect(screen.getByRole('region', { name: 'Deeps' })).toHaveTextContent('(0/2)')
+    expect(tally()).toBe('1/4')
+  })
+})
+
+describe('CuratedScreen mistakes', () => {
+  const withErrors = (errors: number) =>
+    groupRows(
+      groupedManifest,
+      manifestRows(groupedManifest, { 'a-1': { earnedCreatureId: 'crab', errors } }),
+    )
+
+  it('shows mistakes per group and in the overall tally', () => {
+    render(<CuratedScreen groups={withErrors(3)} onSelect={vi.fn()} onBack={vi.fn()} />)
+    expect(screen.getByRole('region', { name: 'Shallows' })).toHaveTextContent('⚠3')
+    expect(screen.getByText('⚠ 3')).toBeInTheDocument()
+    // The flawed board says so in its accessible name too.
+    expect(screen.getByRole('button', { name: /One.*3 mistakes/i })).toBeInTheDocument()
+  })
+
+  it('rings only the flawed board, and drops the ring when replayed clean', () => {
+    const { container, rerender } = render(
+      <CuratedScreen groups={withErrors(2)} onSelect={vi.fn()} onBack={vi.fn()} />,
+    )
+    expect(container.querySelectorAll('svg polygon')).toHaveLength(1)
+
+    rerender(<CuratedScreen groups={withErrors(0)} onSelect={vi.fn()} onBack={vi.fn()} />)
+    expect(container.querySelectorAll('svg polygon')).toHaveLength(0)
+  })
+
+  it('reads as clean once a solved board has no mistakes left', () => {
+    render(<CuratedScreen groups={withErrors(0)} onSelect={vi.fn()} onBack={vi.fn()} />)
+    expect(screen.getByText(/⚠ clean/)).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: 'Shallows' })).not.toHaveTextContent('⚠')
   })
 })
 
@@ -39,16 +114,21 @@ describe('CuratedScreen gating (US4)', () => {
 
   it('shows a soft lock on gated entries and makes them non-selectable', () => {
     const onSelect = vi.fn()
-    const rows = manifestRows(sampleManifest, {}, GATING) // kelp-3 locked
-    render(<CuratedScreen rows={rows} onSelect={onSelect} onBack={vi.fn()} />)
-    expect(screen.getByText(/unlock soon/i)).toBeInTheDocument()
-    // Only the two open entries expose a Play action; the locked one does not.
-    expect(screen.getAllByRole('button', { name: /^play$/i })).toHaveLength(2)
+    render(<CuratedScreen groups={grouped({}, GATING)} onSelect={onSelect} onBack={vi.fn()} />)
+    const locked = screen.getByRole('button', { name: /Kelp Forest, locked/i })
+    expect(locked).toBeDisabled()
+    fireEvent.click(locked)
+    expect(onSelect).not.toHaveBeenCalled()
   })
 
   it('unlocks the gated entry once its prerequisite is solved', () => {
-    const rows = manifestRows(sampleManifest, { 'cove-1': { earnedCreatureId: 'limpet' } }, GATING)
-    render(<CuratedScreen rows={rows} onSelect={vi.fn()} onBack={vi.fn()} />)
-    expect(screen.queryByText(/unlock soon/i)).not.toBeInTheDocument()
+    render(
+      <CuratedScreen
+        groups={grouped({ 'cove-1': { earnedCreatureId: 'limpet' } }, GATING)}
+        onSelect={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    )
+    expect(screen.queryByRole('button', { name: /locked/i })).not.toBeInTheDocument()
   })
 })

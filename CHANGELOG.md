@@ -4,6 +4,43 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-07-25 — Native saves on desktop (009 US2)
+
+### Added
+
+- **A file-based SaveStore for the desktop build**, so progress lives in
+  `%APPDATA%\com.gravytraining.tidepools\save.json` instead of the webview's
+  localStorage. The old arrangement worked locally but was invisible to Steam
+  Auto-Cloud, which syncs file *patterns* — this is the prerequisite for cloud
+  saves, not a rewrite for its own sake.
+- It passes **the same `SaveStore` contract** the web and memory backends do, so
+  the swappable seam is proven by construction rather than by assertion. Nothing
+  in `game/` or `ui/` changed — the only edit outside `platform/` and `src-tauri/`
+  is a test.
+
+### Fixed
+
+- **The desktop app would have silently used browser storage.** `isTauri()`
+  tested for `window.__TAURI__`, which Tauri v2 only defines when
+  `withGlobalTauri` is enabled — it isn't. The check looked correct and never
+  matched. Now tests `__TAURI_INTERNALS__`.
+- **`APP_VERSION` was still `0.0.0`** and is stamped inside every exported save.
+  A save file that claims it came from 0.0.0 is useless when diagnosing a bug
+  report. Now covered by the version-parity test alongside the other four sites.
+
+### Design notes
+
+One document rather than a file per key: a save has to move between machines as
+one consistent unit, and a partial sync could otherwise land a journal that
+disagrees with its stats. Writes are atomic (temp file → fsync → rename), so a
+crash leaves the old save or the new one but never a half-written file. A burst
+of writes coalesces into a single flush, since marking one cell touches several
+namespaces. Corrupt or unwritable saves degrade to a gentle notice and a playable
+session rather than a dead game.
+
+Verified end-to-end against the real binary: toggled a setting, killed the app,
+confirmed the bytes on disk with no stray temp file, relaunched, setting restored.
+
 ## 2026-07-25 — It's a desktop app (009 US1)
 
 ### Added

@@ -48,6 +48,13 @@ describe('version parity across the desktop build', () => {
     expect(found?.[1]).toBe(VERSION)
   })
 
+  it('the version stamped into exported saves matches', async () => {
+    // Informational, but it goes inside the player's save file — a save that
+    // claims it was written by 0.0.0 is useless for diagnosing a bug report.
+    const { APP_VERSION } = await import('@/platform/schemas')
+    expect(APP_VERSION).toBe(VERSION)
+  })
+
   it('the desktop bundle identifier is not the Tauri placeholder', () => {
     // `com.tauri.dev` is what `tauri init` writes; shipping it would collide
     // with every other unconfigured Tauri app on a player's machine.

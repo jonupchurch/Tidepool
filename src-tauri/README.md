@@ -54,6 +54,28 @@ sees), `package.json`, `tauri.conf.json` (the installer), and `Cargo.toml`.
 forgetting the rest fails the suite instead of shipping an installer that
 disagrees with the About screen.
 
+## Saves
+
+One file: **`%APPDATA%\com.gravytraining.tidepools\save.json`** on Windows (the
+app data dir for the configured `identifier`). Verified on a real machine, not
+read off documentation — the app exposes a `save_location` command so the path
+can always be confirmed rather than assumed.
+
+For **Steam Auto-Cloud** that maps to root path `%WinAppDataRoaming%`, subdirectory
+`com.gravytraining.tidepools`, pattern `save.json`.
+
+Why one file rather than one per key: Auto-Cloud syncs file *patterns*, and a
+save has to move between machines as a consistent unit. Split across files, a
+partial sync could land a journal that disagrees with its stats — corruption a
+player would notice and couldn't fix.
+
+Writes go to a temp file, get flushed to the physical disk, then rename over the
+real one. Renaming within a directory is atomic, so a crash or power cut leaves
+either the old save or the new one, never a half-written file.
+
+The logic lives in TypeScript (`src/platform/tauri-backend.ts`) where it's
+unit-testable without a webview; [`save.rs`](src/save.rs) just moves bytes.
+
 ## Notes
 
 - **`identifier`** (`com.gravytraining.tidepools`) determines where the OS puts

@@ -34,24 +34,41 @@ All PNG or JPG, at these exact sizes.
 
 ## Current files
 
-Both are landscape 3:2-ish illustrations carrying the wordmark, so they crop well
-to the wide capsules and not at all to the portrait ones.
+Every slot now has art. Two things still stand between these files and the
+partner site, both noted in the table.
 
-- `title-scene.png` — 1536×1024, shore at low tide. Crops to the **header
-  capsule** (460×215), **main capsule** (616×353), or **page background**
-  (1438×810).
-- `steam-scene.png` — 1448×1086, above/below the waterline. Same uses.
-  **Not usable as the library logo**: no alpha channel, wrong aspect, and it's a
-  scene rather than a wordmark.
+| File | Size | Slot | Ready? |
+|---|---|---|---|
+| `header-capsule@2x.png` | 920×430 | Header capsule 460×215 | downscale |
+| `small-capsule@2x.png` | 462×174 | Small capsule 231×87 | downscale |
+| `main-capsule@2x.png` | 1232×706 | Main capsule 616×353 | downscale |
+| `vertical-capsule@2x.png` | 748×896 | Vertical capsule 374×448 | downscale |
+| `library-capsule.png` | 600×900 | Library capsule | yes |
+| `library-header.png` | 920×430 | Library header | yes |
+| `library-hero.png` | 3840×1240 | Library hero | yes |
+| `library-logo.png` | 1280×720 | Library logo | **no — opaque** |
+| `page-background.png` | 1438×810 | Page background | yes |
+| `community-icon-256.png` | 256×256 | Community icon 184×184 | downscale |
+| `screenshot-1..5.png` | 1920×1080 | Screenshots | yes |
 
-Still needed, and not croppable from either:
+**The `@2x` files cannot be uploaded as they are.** Steam's capsule slots want
+exact pixel dimensions; supplying twice the size is how you generate the art,
+not how you submit it. Downscale to the slot size before upload — and check the
+wordmark survives it, since the small capsule is where legibility dies.
 
-- **Library capsule** 600×900 — portrait; needs its own composition. The hermit
-  crab in the shell would carry it.
-- **Library hero** 3840×1240 — much wider and larger than these sources;
-  generate at size rather than upscaling.
-- **Library logo** 1280×720 — the wordmark alone, on transparency.
-- **Small capsule** 231×87 — check the title is still readable at that size.
+**`library-logo.png` is RGB with no alpha channel.** Steam composites the logo
+over the hero, so as exported it renders as an opaque rectangle sitting on the
+banner — the first failure listed above. It needs re-exporting as the wordmark
+alone on transparency.
+
+`title-scene.png` (1536×1024) and `steam-scene.png` (1448×1086) are the earlier
+source illustrations, kept as crop sources rather than upload candidates.
+
+Both 920×430 files are the same scene from different generations. The one
+assigned to the **header capsule** is the tighter crop with the larger wordmark,
+because that slot renders at 460×215 where the title has the least room; the
+wider, more detailed one takes the **library header**, which displays large.
+Swapping them is one `git mv` if that reads wrong.
 
 ## Naming
 

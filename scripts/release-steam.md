@@ -93,13 +93,25 @@ verifying webkit2gtk resolves inside the Steam Linux Runtime rather than
 assuming the Deck provides it. Out of scope here; 009 calls the Deck
 opportunistic.
 
-**Auto-Cloud can't see the saves yet.** The game persists through
-localStorage/IndexedDB, which under WebView2 lives in
-`%LOCALAPPDATA%\com.gravytraining.tidepool\EBWebView\` — an opaque browser
-profile, not a save file. Auto-Cloud needs a file pattern it can match, so it
-needs the native save backend from 009 (the `platform/` seam already exists for
-exactly this). Configuring Auto-Cloud against the WebView2 profile directory
-would sync browser internals and is not the answer.
+**Auto-Cloud is ready to configure.** The desktop build does not use the
+webview's localStorage — `src/platform/tauri-backend.ts` writes the whole save
+as one document through the Rust commands in `src-tauri/src/save.rs`, landing at
+`<app data dir>/save.json`. On Windows that is
+`%APPDATA%\com.gravytraining.tidepool\save.json`. The single-file design was
+chosen for this: Auto-Cloud syncs file patterns, and a save split across files
+could partially sync into a journal that disagrees with its own stats.
+
+So the partner-site config is (Steamworks → Cloud):
+
+| Field | Value |
+|---|---|
+| Root | `WinAppDataRoaming` |
+| Subdirectory | `com.gravytraining.tidepool` |
+| Pattern | `save.json` |
+
+Match the identifier to `tauri.conf.json` if it ever changes, and remember the
+Linux build resolves its own app data dir — a second Auto-Cloud root, not the
+same one.
 
 **The build is unsigned.** Fine for Steam — the client writes depot files
 without a Mark-of-the-Web tag, so SmartScreen never fires. It only matters for

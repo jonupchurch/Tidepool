@@ -28,8 +28,8 @@ these scripts.
 4. **Set the launch option.** Partner site → Installation → General:
    executable `tidepool.exe`, OS Windows. Without it Steam installs the depot
    and has nothing to run.
-5. **Add the WebView2 redistributable.** See the caveat below — this one is easy
-   to miss and fails only on other people's machines.
+5. **Decide the WebView2 question** before public release — see the caveat
+   below. It does not block a first upload or your own testing.
 
 ## Every release
 
@@ -67,14 +67,23 @@ bad place to discover a mistake.
 
 ## Caveats worth knowing before launch
 
-**WebView2 is a runtime dependency.** Tauri on Windows renders through Microsoft
-Edge WebView2, which is *not* in your 5 MB exe. It's preinstalled on Windows 11
-and on up-to-date Windows 10, so it works on your machine and on most players'
-— and the failure on a machine without it is the app not starting, with no
-message. Add the WebView2 bootstrapper under Installation → Redistributables on
-the partner site so Steam installs it as a dependency. (The alternative is
-Tauri's fixed-runtime `webviewInstallMode`, which embeds a WebView2 build and
-adds ~100 MB.)
+**WebView2 is an unmanaged runtime dependency.** Tauri on Windows renders
+through Microsoft Edge WebView2, which is *not* in the 5 MB exe. On a machine
+without it the app does not start and says nothing.
+
+Steam cannot install it for you: the Common Redistributables list covers
+DirectX, Visual C++, .NET, OpenAL, XNA and PhysX — **WebView2 is not on it**.
+And because Steam ships the bare executable rather than an installer, the
+bootstrapper the NSIS build uses never runs. So there are three real options:
+
+| Option | Cost | Risk |
+|---|---|---|
+| **Rely on Evergreen** (current) | none | WebView2 ships with Windows 11 and has come down Windows Update on Windows 10 since 2021, so the gap is small but real: LTSC, Server, N editions, and un-updated machines. Failure mode is silent. |
+| **Fixed runtime** | ~180 MB depot | None at runtime. Set `bundle.windows.webviewInstallMode` to `fixedRuntime` with an extracted Fixed Version runtime folder. It sits *beside* the exe — it cannot go inside it — so the depot gains a folder and `release-steam.ts` must stage it too. |
+| **Steam install script** | approval friction | An `installscript.vdf` running the bootstrapper. Valve gates install scripts; needs their sign-off. |
+
+Shipping on Evergreen is a defensible launch choice for a small cozy puzzle
+game, but it is a *choice*, not the absence of one. Make it deliberately.
 
 **Steam Deck needs the Linux build, not Proton.** A Windows Tauri app under
 Proton needs WebView2, which does not work there. That's what the native

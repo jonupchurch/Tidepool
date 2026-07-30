@@ -18,6 +18,7 @@
     "release:steam": "vite-node scripts/release-steam.ts --",
     "make:icons": "vite-node scripts/make-icons.ts",
     "check:achievements": "vite-node scripts/check-achievements.ts",
+    "find:seed": "vite-node scripts/find-trailer-seed.ts --",
     "check:art": "vite-node scripts/check-art.ts",
     "check:audio": "vite-node scripts/check-audio.ts"
   },

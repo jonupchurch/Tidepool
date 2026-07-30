@@ -1,0 +1,47 @@
+// app_build.vdf — the SteamPipe build script for Tidepool.
+//
+// Don't hand this to steamcmd directly; run `npm run release:steam`. That
+// script stages content/ from the Tauri build and fills in the two double-
+// underscore placeholders below, writing a disposable `.app_build.run.vdf`
+// beside this file and handing steamcmd *that*. This file stays the committed
+// source of truth for the IDs and the upload policy.
+//
+// Those placeholders are spelled out nowhere else in this file on purpose: the
+// substitution is a plain find-and-replace, so a second mention would be the
+// one that got replaced.
+//
+// Full key reference: https://partner.steamgames.com/doc/sdk/uploading
+"appbuild"
+{
+	// Steamworks → Apps & Packages → Tidepool. Not the Partner ID (422979),
+	// which identifies the account and never appears in a build script.
+	"appid"		"5037710"
+
+	// Substituted per run with the version + commit, so a build in the partner
+	// site's list can be traced back to a specific tree.
+	"desc"		"__DESC__"
+
+	// Both relative to this file.
+	"buildoutput"	"..\output\"
+	"contentroot"	"..\content\"
+
+	// Empty on purpose: upload the build, but put it live on nothing. Promote
+	// it deliberately from the partner site (Builds → Set Build Live). Naming a
+	// branch here means one careless run ships straight to players.
+	"setlive"	""
+
+	// Substituted from the --preview flag: 1 reports what would upload without
+	// uploading anything.
+	"preview"	"__PREVIEW__"
+
+	// Only for a local content server. Not used.
+	"local"		""
+
+	"depots"
+	{
+		// Steam creates one depot at appid+1 with the app. If the partner site
+		// shows a different ID under SteamPipe → Depots, change it here and in
+		// depot_build_windows.vdf.
+		"5037711"	"depot_build_windows.vdf"
+	}
+}

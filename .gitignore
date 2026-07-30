@@ -20,6 +20,14 @@
 /src-tauri/target/
 /src-tauri/gen/
 
+# Steam (SteamPipe). The VDF scripts ARE committed — they're the build config.
+# Staged content, upload logs/chunk caches, the steamcmd install and the
+# per-run generated build script are all derived or huge.
+/steam/content/
+/steam/output/
+/steam/builder/
+/steam/scripts/.app_build.run.vdf
+
 # Testing (Vitest coverage, Playwright artifacts)
 /coverage
 /test-results/

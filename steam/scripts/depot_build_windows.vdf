@@ -1,0 +1,33 @@
+// depot_build_windows.vdf — what actually lands in the Windows depot.
+//
+// Exactly one file. Tauri embeds the built frontend in the executable, so
+// `tidepool.exe` is the entire game — there is no data folder to ship
+// alongside it. Everything else in `src-tauri/target/release/` is build residue.
+//
+// Not shipped, deliberately:
+//   *.pdb            debug symbols — 2.6 MB, and they leak local build paths
+//   steam_appid.txt  a *local dev* file that makes the Steam API init outside
+//                    the client. Shipping it lets the build run un-owned and
+//                    confuses Steam's own launch path.
+"DepotBuildConfig"
+{
+	// Must match the depot listed in app_build.vdf.
+	"DepotID"	"5037711"
+
+	// Relative to this file. `npm run release:steam` stages it; it is
+	// gitignored, and stale contents are cleared before each run.
+	"ContentRoot"	"..\content\windows\"
+
+	"FileMapping"
+	{
+		"LocalPath"	"*"
+		"DepotPath"	"."
+		"recursive"	"1"
+	}
+
+	// Belt and braces — staging already copies only the exe, but a depot is a
+	// bad place to discover a mistake.
+	"FileExclusion"	"*.pdb"
+	"FileExclusion"	"*.d"
+	"FileExclusion"	"steam_appid.txt"
+}

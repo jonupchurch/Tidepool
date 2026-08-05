@@ -70,10 +70,12 @@ Build Live on the partner site. Bump the version in **both** `package.json` and
 
 ## Known rough edges
 
-- `store/library-logo.png` in this repo is RGB with no alpha. Steam composites
-  the library logo over the hero art, so this copy would render as an opaque
-  rectangle. Corrected art is on the partner site; the repo copy is stale.
 - `screenshot-5.png` has the mouse cursor captured in it.
+- The small and vertical capsules are now the wordmark on transparency rather
+  than illustrated tiles, so those two slots are mostly empty space — most
+  visible on the vertical capsule. The illustrated versions are kept beside them
+  as `*-scene.png` if that reads wrong on the live store page. Neither has been
+  uploaded to the partner site yet.
 
 ## Blockers
 

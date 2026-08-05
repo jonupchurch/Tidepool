@@ -10,10 +10,10 @@ All PNG or JPG, at these exact sizes.
 
 | Asset | Size | Where it appears |
 |---|---|---|
-| Header capsule | 460 × 215 | Store page top, search results — seen most |
-| Small capsule | 231 × 87 | Search result rows |
-| Main capsule | 616 × 353 | Front-page features, sale pages |
-| Vertical capsule | 374 × 448 | Front-page daily deals |
+| Header capsule | 920 × 430 | Store page top, search results — seen most |
+| Small capsule | 462 × 174 | Search result rows |
+| Main capsule | 1232 × 706 | Front-page features, sale pages |
+| Vertical capsule | 748 × 896 | Front-page daily deals |
 | Library capsule | 600 × 900 | The player's library grid, after purchase |
 | Library header | 920 × 430 | Library detail view |
 | Library hero | 3840 × 1240 | Banner behind the library page |
@@ -34,39 +34,55 @@ All PNG or JPG, at these exact sizes.
 
 ## Current files
 
-Every slot now has art. Two things still stand between these files and the
-partner site, both noted in the table.
+Every slot has art, and every file is at its slot's exact size — ready to
+upload as-is.
 
 | File | Size | Slot | Ready? |
 |---|---|---|---|
-| `header-capsule@2x.png` | 920×430 | Header capsule 460×215 | downscale |
-| `small-capsule@2x.png` | 462×174 | Small capsule 231×87 | downscale |
-| `main-capsule@2x.png` | 1232×706 | Main capsule 616×353 | downscale |
-| `vertical-capsule@2x.png` | 748×896 | Vertical capsule 374×448 | downscale |
+| `header-capsule@2x.png` | 920×430 | Header capsule | yes |
+| `small-capsule.png` | 462×174 | Small capsule | yes |
+| `main-capsule@2x.png` | 1232×706 | Main capsule | yes |
+| `vertical-capsule.png` | 748×896 | Vertical capsule | yes |
 | `library-capsule.png` | 600×900 | Library capsule | yes |
 | `library-header.png` | 920×430 | Library header | yes |
 | `library-hero.png` | 3840×1240 | Library hero | yes |
-| `library-logo.png` | 1280×720 | Library logo | **no — opaque** |
+| `library-logo.png` | 1280×720 | Library logo | yes |
 | `page-background.png` | 1438×810 | Page background | yes |
 | `community-icon-256.png` | 256×256 | Community icon 184×184 | downscale |
 | `screenshot-1..5.png` | 1920×1080 | Screenshots | yes |
 
-**The `@2x` files cannot be uploaded as they are.** Steam's capsule slots want
-exact pixel dimensions; supplying twice the size is how you generate the art,
-not how you submit it. Downscale to the slot size before upload — and check the
-wordmark survives it, since the small capsule is where legibility dies.
+**The `@2x` names are a leftover, not an instruction.** They were written when
+this file listed the capsule slots at half their real size (460×215, 231×87,
+616×353, 374×448) and the art therefore looked like it needed downscaling. It
+does not: 920×430 *is* the header capsule, 1232×706 *is* the main capsule.
+Upload those two as they are. Dropping the suffix is a rename nobody has done
+yet.
 
-**`library-logo.png` is RGB with no alpha channel.** Steam composites the logo
-over the hero, so as exported it renders as an opaque rectangle sitting on the
-banner — the first failure listed above. It needs re-exporting as the wordmark
-alone on transparency.
+### The wordmark assets
+
+`small-capsule.png`, `vertical-capsule.png` and `library-logo.png` are the
+wordmark alone on transparency, generated from `wordmark-source.png` by
+`npm run make:store-logo`. Don't hand-edit them — change the source and re-run.
+
+The library logo has to be transparent (Steam draws it over the hero), and the
+capsules are transparent because they're the same asset from the same script.
+That means those two capsule slots are **a title on empty space, not
+illustrated tiles** — a deliberate choice, and a departure from how Steam
+capsules usually look. The vertical capsule feels it most: the wordmark is
+3.88:1 and the slot is portrait, so the title spans the width and roughly 80% of
+the tile is empty. The previous illustrated versions are kept as
+`small-capsule-scene.png` and `vertical-capsule-scene.png` — swapping back is
+one `git mv` each.
 
 `title-scene.png` (1536×1024) and `steam-scene.png` (1448×1086) are the earlier
 source illustrations, kept as crop sources rather than upload candidates.
+`wordmark-source.png` (1672×941) is the logo as delivered, on white — it is a
+source, never an upload.
 
 Both 920×430 files are the same scene from different generations. The one
 assigned to the **header capsule** is the tighter crop with the larger wordmark,
-because that slot renders at 460×215 where the title has the least room; the
+because that slot renders small in search results where the title has the least
+room; the
 wider, more detailed one takes the **library header**, which displays large.
 Swapping them is one `git mv` if that reads wrong.
 

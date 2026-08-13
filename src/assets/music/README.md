@@ -51,9 +51,16 @@ is sold on Steam, so this table is the record that it may be.
 
 | Track | File | Source | Date | Licence / terms |
 |---|---|---|---|---|
-| Driftwood Garden | _(to add)_ | Suno | 2026-08 | _(to confirm — see below)_ |
+| Driftwood Garden | `driftwood-garden.mp3` (3.2 MB) | Suno | 2026-08 | **to confirm** — see below |
 
-Fill the row in when the file lands. Worth capturing: the Suno track id or link,
-the plan/tier it was generated under (that's what determines commercial use
-rights), and the prompt, so the track can be regenerated or extended in the same
-voice later.
+Still to capture for this row, and worth doing while it's fresh: the Suno track
+id or link, **the plan/tier it was generated under** — that's what determines
+whether it may be used commercially, and it's the one field that actually
+matters for a paid Steam release — and the prompt, so the track can be
+regenerated or extended in the same voice later.
+
+Loop points aren't measured yet. That happens when
+[014](../../../specs/014-ambient-music/plan.md) is built: the file is MP3, so
+either it gets re-encoded to Ogg or the encoder padding gets trimmed with
+explicit `loopStart` / `loopEnd`. Keep the Suno WAV if you still have it — it's
+the better master for either route.

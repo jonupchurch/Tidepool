@@ -10,7 +10,7 @@ switch, independent of the effects mute. See
 
 ## Dropping a track
 
-Put the file here, kebab-case, extension `.mp3`, `.ogg` or `.wav`:
+Put the **shipping** file here, kebab-case, `.mp3` or `.ogg`:
 
 ```
 src/assets/music/driftwood-garden.mp3
@@ -20,47 +20,60 @@ Discovery is at build time via Vite's `import.meta.glob`, the same way the sound
 effects work — no manifest to edit, no code change, no runtime 404. Until a file
 exists the game simply plays no music, and the toggle still works.
 
+**Only shipping files belong in this folder.** Anything here is copied into the
+web and Steam builds, played or not — so a WAV master left alongside its MP3
+adds its whole size to everyone's download for a file that never sounds. Masters
+go in `assets/masters/` at the repo root, which is outside `src/` (so the build
+globs can't see it) and gitignored (so clones stay small). Keep your own copies
+of those — git isn't holding them for you.
+
 ## Format
 
 **Ogg Vorbis is preferred over MP3**, for one specific reason: MP3 bakes encoder
-delay and padding into the file, and browsers disagree about whether decoding
-strips it. The result is an audible click or gap every time the loop wraps —
-which on an ambient bed is the one thing you'll notice.
+delay and padding into the file, and decoders disagree about whether to strip
+it. The result is a click or a gap every time the loop wraps — on an ambient bed,
+the one thing you'd notice.
 
-If the track ships as MP3, the loop points have to be trimmed explicitly in the
-catalog (`loopStart` / `loopEnd`) rather than looping the whole buffer. That's
-supported, it's just data someone has to measure. Ogg avoids the question.
+That's solvable without re-encoding, but only with numbers someone has measured:
+the true content length, and the delay offset to start the loop at. Those live in
+the table below, per track, and the music catalog reads them. Don't guess them —
+the MP3's own Xing/LAME header and the WAV master's sample count are the sources,
+and they're what the recorded values came from.
 
-Suno exports both MP3 and WAV. If you have the WAV, keep it — exact loop points
-are easier to measure from it, and it's the better master to re-encode from.
+## Tracks
 
-Other guidance:
-
-- **Long enough not to feel like a loop** — a couple of minutes at least.
-- **Mixed to sit under the game**, not over it. The music channel defaults below
-  the effects level, but the track should already be quiet and un-busy.
-- **Watch the download size.** This ships in the Steam build and the web build.
-  Stereo at a modest bitrate is plenty for an ambient bed.
-
-## Provenance
-
-Generated audio needs its licence and origin recorded **here, at the point it
-lands** — not reconstructed later when someone asks. The fonts
-([`../fonts/`](../fonts/README.md)) carry their OFL terms the same way. This game
-is sold on Steam, so this table is the record that it may be.
-
-| Track | File | Source | Date | Licence / terms |
+| Track | Ships as | Master | Source | Licence |
 |---|---|---|---|---|
-| Driftwood Garden | `driftwood-garden.mp3` (3.2 MB) | Suno | 2026-08 | **to confirm** — see below |
+| Driftwood Garden | `driftwood-garden.mp3` — 3.2 MB, 48 kHz stereo | `assets/masters/driftwood-garden.wav` — 24.7 MB | Suno (Pro plan) | Royalty-free, commercial use permitted |
 
-Still to capture for this row, and worth doing while it's fresh: the Suno track
-id or link, **the plan/tier it was generated under** — that's what determines
-whether it may be used commercially, and it's the one field that actually
-matters for a paid Steam release — and the prompt, so the track can be
-regenerated or extended in the same voice later.
+Suno's Pro plan grants commercial rights to generated audio, which is what a paid
+Steam release needs. Recorded here so the question is answered at the file rather
+than re-litigated later.
 
-Loop points aren't measured yet. That happens when
-[014](../../../specs/014-ambient-music/plan.md) is built: the file is MP3, so
-either it gets re-encoded to Ogg or the encoder padding gets trimmed with
-explicit `loopStart` / `loopEnd`. Keep the Suno WAV if you still have it — it's
-the better master for either route.
+### Driftwood Garden — loop data
+
+Measured, not estimated. WAV master is the authority on true length; the MP3's
+Xing/LAME header is the authority on the padding around it.
+
+| | |
+|---|---|
+| Sample rate | 48 000 Hz, stereo |
+| True length (WAV master) | 6 464 640 samples = **134.680 s** |
+| MP3 encoder | `Lavc60.31`, Xing header present |
+| MP3 encoder delay | 576 samples = 0.012 s |
+| MP3 end padding | 1 464 samples |
+| MP3 decoded length incl. padding | 6 467 328 samples = 134.736 s |
+
+So the padding to hide is ~56 ms spread across both ends — small, and exactly the
+size of gap that reads as a glitch rather than as silence.
+
+The catalog carries these as data and the engine picks the right behaviour at
+runtime: after `decodeAudioData`, compare the decoded buffer's duration against
+the true length above. If the decoder already stripped the padding, loop the
+whole buffer. If it didn't, set `loopStart` to the delay offset and `loopEnd` to
+`loopStart + trueDuration`. That works whichever way a given browser or webview
+decides to behave, instead of betting on one.
+
+Re-encoding to Ogg from the WAV master would make all of this unnecessary. It
+needs an encoder (`ffmpeg`) that isn't installed here — worth doing if the seam
+is ever audible in practice.

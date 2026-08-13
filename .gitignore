@@ -28,6 +28,13 @@
 /steam/builder/
 /steam/scripts/.app_build.run.vdf
 
+# Audio/art masters. Archival sources we re-encode the shipped assets FROM —
+# not shipped themselves, and big (a WAV master is ~8x its MP3). Kept out of
+# src/ so Vite's build-time asset globs can't sweep them into the bundle, and
+# out of git so a clone doesn't carry tens of MB of files nobody plays.
+# Keep your own copies; src/assets/music/README.md records what each one is.
+/assets/masters/
+
 # Testing (Vitest coverage, Playwright artifacts)
 /coverage
 /test-results/

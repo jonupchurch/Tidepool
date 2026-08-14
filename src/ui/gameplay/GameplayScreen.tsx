@@ -124,12 +124,11 @@ export function GameplayScreen({
     })
   }, [])
 
-  // Settings apply live: mirror them into the ref the canvas reads, push the
-  // audio ones at the engine, and repaint (colourblind marks change the board).
+  // Settings apply live: mirror them into the ref the canvas reads and repaint
+  // (colourblind marks change the board). Engine levels are NOT set here — the
+  // shell owns them, because the ambient bed has to outlive this screen (014).
   useEffect(() => {
     settingsRef.current = live
-    audioRef.current.setMuted(live.sound.muted)
-    audioRef.current.setVolume(live.sound.volume * live.sound.sfx)
     redraw()
   }, [live, redraw])
 

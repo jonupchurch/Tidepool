@@ -45,6 +45,7 @@ export function HomeScreen({
   const [difficulty, setDifficulty] = useState<DifficultyTier>(lastPlay.difficulty)
 
   const toggleMute = () => onPrefsChange({ ...prefs, muted: !prefs.muted })
+  const toggleMusic = () => onPrefsChange({ ...prefs, music: !prefs.music })
   const toggleTheme = () => onPrefsChange({ ...prefs, theme: prefs.theme === 'Night' ? 'Day' : 'Night' })
 
   // Reflect the persisted last-used selection whenever it (re)loads.
@@ -57,7 +58,9 @@ export function HomeScreen({
 
   return (
     <div className="relative grid h-full w-full place-items-center overflow-y-auto bg-sand text-ink">
-      {/* Global toggles (US5) — mute + Day/Night Tide. */}
+      {/* Global toggles (US5) — mute + music + Day/Night Tide. Mute is the
+          master ("everything off, one press"); music is the finer control, so
+          you can keep the marks audible in a quiet room (014 US1). */}
       <div className="absolute right-4 top-4 flex gap-2">
         <button
           type="button"
@@ -67,6 +70,18 @@ export function HomeScreen({
           className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
         >
           {prefs.muted ? '🔇' : '🔊'}
+        </button>
+        <button
+          type="button"
+          aria-label={prefs.music ? 'Turn music off' : 'Turn music on'}
+          aria-pressed={prefs.music}
+          onClick={toggleMusic}
+          className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
+        >
+          {/* One glyph, struck through when off. A second speaker emoji beside
+              the mute button read as a duplicate of it; a note that is plainly
+              crossed out doesn't. State is carried by aria-pressed regardless. */}
+          <span className={prefs.music ? '' : 'line-through decoration-2 opacity-50'}>🎵</span>
         </button>
         <button
           type="button"

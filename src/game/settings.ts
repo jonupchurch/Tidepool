@@ -13,7 +13,9 @@ export type ThemeChoice = 'Day' | 'Night' | 'Auto'
 export const THEME_CHOICES: readonly ThemeChoice[] = ['Day', 'Night', 'Auto']
 
 export interface Settings {
-  sound: { muted: boolean; volume: number; sfx: number; ambient: number }
+  /** `muted` is the master switch (everything). `music` is the ambient bed
+   *  alone, so "quiet room, but still hear my marks land" is one press. */
+  sound: { muted: boolean; volume: number; sfx: number; ambient: number; music: boolean }
   visuals: {
     theme: ThemeChoice
     reducedMotion: boolean
@@ -29,7 +31,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  sound: { muted: false, volume: 0.8, sfx: 1, ambient: 0.5 },
+  sound: { muted: false, volume: 0.8, sfx: 1, ambient: 0.5, music: true },
   visuals: {
     theme: 'Day',
     reducedMotion: false,
@@ -80,6 +82,7 @@ export function resolveSettings(raw: unknown): Settings {
       volume: num(sound.volume, d.sound.volume, 0, 1),
       sfx: num(sound.sfx, d.sound.sfx, 0, 1),
       ambient: num(sound.ambient, d.sound.ambient, 0, 1),
+      music: bool(sound.music, d.sound.music),
     },
     visuals: {
       theme: choice(visuals.theme, THEME_CHOICES, d.visuals.theme),

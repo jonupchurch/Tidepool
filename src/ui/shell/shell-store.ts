@@ -8,7 +8,7 @@ import { DIFFICULTY_TIERS, SIZE_TIERS } from '@/core'
 import { CREATURES, creatureDef } from '@/game'
 import { loadCuratedPack } from '@/game/board-source'
 import { type SaveStore, loadRecord, saveRecord } from '@/platform'
-import type { HomeStats, LastPlay, ResumeSnapshot, ShellPrefs, Theme } from './types'
+import type { HomeStats, LastPlay, ResumeSnapshot, StoredShellPrefs, Theme } from './types'
 
 const asTheme = (x: string): Theme => (x === 'Night' ? 'Night' : 'Day')
 const asSize = (x: string): SizeTier =>
@@ -18,12 +18,12 @@ const asDifficulty = (x: string): DifficultyTier =>
 
 // ── Shell prefs (theme + mute) — owned by 003 ─────────────────────────────────
 
-export async function loadShellPrefs(store: SaveStore): Promise<ShellPrefs> {
+export async function loadShellPrefs(store: SaveStore): Promise<StoredShellPrefs> {
   const rec = await loadRecord(store, 'shellPrefs')
   return { theme: asTheme(rec.theme), muted: rec.muted }
 }
 
-export async function saveShellPrefs(store: SaveStore, prefs: ShellPrefs): Promise<void> {
+export async function saveShellPrefs(store: SaveStore, prefs: StoredShellPrefs): Promise<void> {
   await saveRecord(store, 'shellPrefs', { v: 1, theme: prefs.theme, muted: prefs.muted })
 }
 

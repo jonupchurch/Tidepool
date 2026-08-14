@@ -14,9 +14,23 @@ export type Screen = 'Splash' | 'Home' | 'Gameplay' | 'Curated' | 'Journal' | 'T
 export type Theme = 'Day' | 'Night'
 
 /** Persisted, applied app-wide: the theme choice + global mute. */
-export interface ShellPrefs {
+/**
+ * The 003-era persisted shell-prefs shape. Superseded by settings (006), which
+ * is now the single source of truth for theme and sound — these accessors sit on
+ * no live path. Kept as its own type so `ShellPrefs` can grow without dragging
+ * new fields into a legacy record nothing reads.
+ */
+export interface StoredShellPrefs {
   theme: Theme
   muted: boolean
+}
+
+export interface ShellPrefs {
+  theme: Theme
+  /** Master switch — silences everything, music included. */
+  muted: boolean
+  /** The ambient bed alone, independent of `muted` (014). */
+  music: boolean
 }
 
 /** The size/difficulty a fresh Play uses — the "last-used" board request. */

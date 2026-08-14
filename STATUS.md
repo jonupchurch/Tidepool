@@ -76,17 +76,26 @@ Build Live on the partner site. Bump the version in **both** `package.json` and
 - **Linux/Steam Deck is opportunistic**, per 009's spec. CI builds the artifacts
   on `ubuntu-22.04`; shipping them means a second depot and verifying webkit2gtk
   resolves inside the Steam Linux Runtime.
-- **"Driftwood Garden" is approved, loop included.** Jon listened on 2026-08-13
-  and heard it wrap cleanly at 2:15. This was the only claim in 014/015 that a
-  test could not make — the channel, switch, volume and loop-point handling are
-  all covered against a fake Web Audio, but how it *sounds* needed ears. The
-  seamless wrap also confirms the loop arithmetic in `src/audio/music.ts`
-  (encoder delay 576 samples + end padding read from the file's own Xing/LAME
-  header, trimmed only if the decoder hadn't already). Don't re-open either as
-  an outstanding item.
+- **"Driftwood Garden" sounds right, but the loop does not.** Jon approved the
+  music on 2026-08-13; on further listening the wrap is an audible, abrupt
+  switch. Tracked under rough edges below — the track itself is not the problem.
 
 ## Known rough edges
 
+- **The music loop is audibly abrupt, and the MP3 padding was never the cause.**
+  Measured from the WAV master: the track has a **3.55 s fade-in** and a
+  **1.34 s fade-out**. Looping the whole file therefore dies away to near
+  silence and swells back — about five seconds of dip at every wrap. No amount
+  of sample-accurate splicing fixes that; the track was composed with an intro
+  and an outro, not written to loop. The loop-point arithmetic already in
+  `src/audio/music.ts` is correct and is not the problem.
+
+  The fix is to loop an inner region instead of the whole file, crossfading its
+  tail over its head so the seam is inaudible. Analysis of the master: the
+  music has an **8 s phrase** inside a **40 s section**, and the best-correlating
+  grid-aligned loop is **12.54 s → 124.54 s** (112 s = 14 phrases, r=0.51),
+  with ~8.8 s of usable material after the end to crossfade into. Awaiting
+  Jon's call on whether to fix it in code or regenerate a looping master.
 - `screenshot-5.png` has the mouse cursor captured in it.
 - The small and vertical capsules are now the wordmark on transparency rather
   than illustrated tiles, so those two slots are mostly empty space — most

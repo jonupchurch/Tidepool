@@ -8,9 +8,20 @@ let failures = 0
 const pack = loadCuratedPack()
 
 for (const entry of pack.entries) {
-  const label = `${entry.id} (${entry.seed}, ${entry.size}/${entry.difficulty})`
+  const extras = [entry.shape ? entry.shape : null, entry.clues?.lineConnectivity ? '{n}' : null]
+    .filter(Boolean)
+    .join(' ')
+  const label = `${entry.id} (${entry.seed}, ${entry.size}/${entry.difficulty}${extras ? ` ${extras}` : ''})`
   try {
-    const params = toBoardParams({ seed: entry.seed, size: entry.size, difficulty: entry.difficulty })
+    // Per-entry clues + shape must flow through, or the gate would validate a
+    // DIFFERENT board from the one that ships.
+    const params = toBoardParams({
+      seed: entry.seed,
+      size: entry.size,
+      difficulty: entry.difficulty,
+      ...(entry.clues ? { clues: entry.clues } : {}),
+      ...(entry.shape ? { shape: entry.shape } : {}),
+    })
     const result = solve(generateBoard(params))
     const ok = result.solved && result.unique && result.rating === entry.difficulty
     if (ok) {

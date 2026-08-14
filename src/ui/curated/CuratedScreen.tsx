@@ -9,10 +9,12 @@
 // emitted as percentages of a square container, so the whole arrangement scales
 // with the viewport without re-measuring.
 import { useState } from 'react'
-import type { BoardRequest, CuratedGroupRows, CuratedRow } from '@/game/board-source'
+import type { BoardRequest, CuratedGroupRows, CuratedPage, CuratedRow } from '@/game/board-source'
+import { tally } from '@/game/board-source'
 
 export interface CuratedScreenProps {
-  groups: CuratedGroupRows[]
+  /** The coastline, one entry per page. Page one is always first. */
+  pages: CuratedPage[]
   onSelect: (request: BoardRequest, curatedId: string) => void
   onBack: () => void
 }
@@ -48,10 +50,15 @@ const size = (v: number): number => (v / (EXTENT * 2)) * 100
 /** Mistakes recorded across a set of boards (best run each). */
 const errorsIn = (rows: CuratedRow[]): number => rows.reduce((n, r) => n + (r.errors ?? 0), 0)
 
-export function CuratedScreen({ groups, onSelect, onBack }: CuratedScreenProps) {
-  const all = groups.flatMap((g) => g.rows)
-  const solved = all.filter((r) => r.solved).length
-  const errors = errorsIn(all)
+export function CuratedScreen({ pages, onSelect, onBack }: CuratedScreenProps) {
+  const [index, setIndex] = useState(0)
+  const safe = Math.min(index, Math.max(0, pages.length - 1))
+  const active = pages[safe]
+  const groups = active?.groups ?? []
+  const page = tally(groups)
+  const overall = tally(pages.flatMap((p) => p.groups))
+  const errors = errorsIn(groups.flatMap((g) => g.rows))
+  const multi = pages.length > 1
 
   return (
     <div className="h-full w-full overflow-y-auto bg-sand text-ink">
@@ -60,6 +67,38 @@ export function CuratedScreen({ groups, onSelect, onBack }: CuratedScreenProps) 
           <h1 className="font-display text-4xl text-deep-pool">Curated shores</h1>
           <p className="mt-1 text-tide">A gentle coastline of hand-tuned pools.</p>
         </header>
+
+        {/* The pager. A page nobody can find, or can't get back from, is worse
+            than no second page — so it is stated, not inferred, and both arrows
+            are real buttons rather than swipe-only affordances. */}
+        {multi && (
+          <nav
+            className="mt-4 flex items-center gap-3"
+            aria-label="Coastline pages"
+          >
+            <button
+              type="button"
+              onClick={() => setIndex(safe - 1)}
+              disabled={safe === 0}
+              aria-label="Previous page"
+              className="rounded-full bg-foam px-3 py-1 text-deep-pool hover:bg-driftwood disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              ←
+            </button>
+            <p aria-live="polite" className="text-sm tabular-nums text-tide">
+              Page {active?.page ?? 1} of {pages.length} · {overall.solved}/{overall.total} overall
+            </p>
+            <button
+              type="button"
+              onClick={() => setIndex(safe + 1)}
+              disabled={safe >= pages.length - 1}
+              aria-label="Next page"
+              className="rounded-full bg-foam px-3 py-1 text-deep-pool hover:bg-driftwood disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              →
+            </button>
+          </nav>
+        )}
 
         <div className="@container relative my-6 aspect-square w-full min-w-88 max-w-3xl">
           {groups.slice(0, RING.length).map((g, i) => (
@@ -77,16 +116,19 @@ export function CuratedScreen({ groups, onSelect, onBack }: CuratedScreenProps) 
             style={{ left: '50%', top: '50%' }}
           >
             <p className="font-display text-[3.2cqw] leading-tight text-deep-pool">
-              {solved}
-              <span className="text-rock">/{all.length}</span>
+              {page.solved}
+              <span className="text-rock">/{page.total}</span>
             </p>
             <p className="text-[1.5cqw] uppercase tracking-wide text-rock">shores</p>
             {/* Replay a board cleanly and its mistakes drop off this tally. */}
             <p
               className={`mt-[0.4cqw] text-[1.5cqw] tabular-nums ${errors > 0 ? 'text-coral' : 'text-tide'}`}
             >
-              {errors > 0 ? `⚠ ${errors}` : solved > 0 ? '⚠ clean' : ''}
+              {errors > 0 ? `⚠ ${errors}` : page.solved > 0 ? '⚠ clean' : ''}
             </p>
+            {page.clean > 0 && (
+              <p className="text-[1.5cqw] tabular-nums text-tide">✨ {page.clean}</p>
+            )}
           </div>
         </div>
 

@@ -28,6 +28,9 @@ export {
   getCuratedRows,
   nextCuratedEntry,
   groupRows,
+  pagesOf,
+  pageOf,
+  tally,
   resolveLocks,
   OPEN_GATING,
 } from './curated'
@@ -36,6 +39,7 @@ export type {
   CuratedGroup,
   CuratedGroupRows,
   CuratedManifest,
+  CuratedPage,
   CuratedRow,
   GatingConfig,
 } from './curated'

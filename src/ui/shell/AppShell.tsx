@@ -10,6 +10,7 @@ import {
   type CuratedRow,
   getCuratedRows,
   groupRows,
+  pagesOf,
   loadCuratedPack,
   markCuratedSolved,
   nextCuratedEntry,
@@ -282,7 +283,7 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
       case 'Curated':
         return (
           <CuratedScreen
-            groups={groupRows(loadCuratedPack(), curatedRows)}
+            pages={pagesOf(groupRows(loadCuratedPack(), curatedRows))}
             onSelect={onSelectCurated}
             onBack={goHome}
           />

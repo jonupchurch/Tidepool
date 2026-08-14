@@ -4,6 +4,36 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-13 — A second coastline
+
+### Added
+
+- **Thirty-six more curated boards**, on a second page of the coastline, using
+  the mechanics the last two updates built: braced and dashed row totals, and
+  boards shaped like atolls, crescents, shoals and a narrow sound.
+- **A pager** on the curated screen, with the page you're on and your progress
+  across the whole coast stated rather than implied.
+
+Page one is exactly the coastline it was, and your progress on it is untouched.
+
+### The part worth explaining
+
+Page two introduces one new thing at a time. A group of ordinary boards to
+re-find your feet, then a shape, then a deeper shape, then row annotations on
+familiar ground, then the two together. Meeting `{n}` for the first time on a
+large, deep, oddly-shaped board would be a wall rather than a step — so page two
+opens a little easier than page one closes, then climbs past it.
+
+The boards were found by a search, not by hand, and it can be re-run. That
+matters more than it sounds: every time a clue mechanic changes, thirty-six
+boards have to be re-found and re-proved unique, guess-free and exactly on-tier.
+The search also reports what it rejected, which is how one band was caught asking
+for something impossible — it wanted row annotations at Tricky, and row
+annotations are a Deep-tier technique, so the reducer stripped every one. It
+searched 180 seeds and found nothing until the tier matched the mechanic.
+
+The whole pack — both pages, 72 boards — is re-validated on every build.
+
 ## 2026-08-13 — Boards that aren't hexagons
 
 ### Added

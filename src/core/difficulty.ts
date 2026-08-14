@@ -28,15 +28,22 @@ export function allowedTechniquesFor(tier: DifficultyTier): Set<Technique> {
       // Centered on the connectivity mechanic. Line totals stay available (they
       // resolve isolated water cells, keeping boards solvable), but subset is
       // excluded so the reduction leans on `{}`/`--` — making Deep reliably
-      // reachable and rated Deep.
-      return new Set<Technique>(['forced-count', 'line-total', 'connectivity'])
+      // reachable and rated Deep. Row annotations (010) are the same class of
+      // reasoning and live here too; they only ever appear on a board whose
+      // clue toggles asked for them.
+      return new Set<Technique>([
+        'forced-count',
+        'line-total',
+        'connectivity',
+        'line-connectivity',
+      ])
   }
 }
 
 export function rateDifficulty(techniquesUsed: Technique[], maxDepth: number): DifficultyTier {
   const used = new Set(techniquesUsed)
   let tier: DifficultyTier
-  if (used.has('connectivity')) {
+  if (used.has('connectivity') || used.has('line-connectivity')) {
     tier = 'Deep'
   } else if (used.has('subset-overlap') || used.has('line-total')) {
     tier = 'Tricky'

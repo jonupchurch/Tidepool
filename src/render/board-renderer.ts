@@ -59,6 +59,14 @@ function clueText(clue: AdjacencyClue): string {
   return `${clue.count}`
 }
 
+/** A row total's text — same braces and dashes as `clueText`, so the two forms
+ *  read as one vocabulary wherever they appear (010 FR-008). */
+function lineText(label: LineLabel): string {
+  if (label.connectivity === 'connected') return `{${label.total}}`
+  if (label.connectivity === 'split') return `-${label.total}-`
+  return `${label.total}`
+}
+
 function hexPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number): void {
   ctx.beginPath()
   for (let i = 0; i < 6; i++) {
@@ -281,7 +289,7 @@ class CanvasBoardRenderer implements BoardRenderer {
       ctx.save()
       if (struck) ctx.globalAlpha = 0.55
       ctx.fillStyle = colour
-      ctx.fillText(`${l.total}`, l.x, l.y)
+      ctx.fillText(lineText(l), l.x, l.y)
       ctx.restore()
     }
   }

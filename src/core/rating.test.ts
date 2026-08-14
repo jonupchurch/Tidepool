@@ -31,7 +31,15 @@ describe('rating fidelity', () => {
   }
 
   it('harder tiers require more advanced techniques', () => {
-    const rank = { 'forced-count': 0, 'line-total': 1, 'subset-overlap': 1, connectivity: 2 }
+    // Row annotations (010) are the same class of reasoning as ring
+    // connectivity, so they rank alongside it.
+    const rank = {
+      'forced-count': 0,
+      'line-total': 1,
+      'subset-overlap': 1,
+      connectivity: 2,
+      'line-connectivity': 2,
+    }
     const hardest = (difficulty: DifficultyTier) => {
       const res = solve(generateBoard(params(`CMP-${difficulty}`, 'Medium', difficulty)))
       return Math.max(...res.techniquesUsed.map((t) => rank[t]))

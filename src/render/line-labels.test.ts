@@ -316,3 +316,99 @@ function axialOf(l: { x: number; y: number }): { q: number; r: number } {
   const q = (l.x - layout.originX) / (layout.size * SQRT3) - r / 2
   return { q, r }
 }
+
+// 010: an annotated total renders as `{4}` / `-4-`, which is roughly twice as
+// wide as `4`. Placement is tuned in hex-step units for a bare number, so the
+// annotated case needs its own clearance or the labels touch.
+describe('annotated row totals (010)', () => {
+  const annotatedBoard = {
+    ...board,
+    lines: board.lines.map((l, i) => ({
+      ...l,
+      // Annotate every other row: a mix is the case that actually exercises
+      // "the wider of the pair sets the clearance".
+      ...(i % 2 === 0 ? { connectivity: 'connected' as const } : {}),
+    })),
+  }
+  const annotatedLayout = fitLayout(
+    annotatedBoard.present,
+    W,
+    H,
+    24,
+    lineAnchors(annotatedBoard).flatMap((a) => [a.coord, a.tip]),
+  )
+  const annotatedLabels = lineLabels(annotatedBoard, annotatedLayout)
+
+  it('carries the annotation through to the label', () => {
+    expect(annotatedLabels.some((l) => l.connectivity === 'connected')).toBe(true)
+    expect(annotatedLabels.filter((l) => !l.connectivity).length).toBeGreaterThan(0)
+  })
+
+  it('the wider clearance actually takes effect on placement', () => {
+    // Same board, same rows — only the annotations differ. If the clearance
+    // rule were inert, every label would land in exactly the same place.
+    const bare = lineLabels(board, annotatedLayout)
+    const byId = new Map(bare.map((l) => [l.id, l]))
+    const moved = annotatedLabels.filter((l) => {
+      const b = byId.get(l.id)
+      return b && (Math.abs(b.x - l.x) > 0.01 || Math.abs(b.y - l.y) > 0.01)
+    })
+    expect(moved.length).toBeGreaterThan(0)
+  })
+
+  it('clears the wider gap wherever the nudge search can satisfy it', () => {
+    // The dense fully-clued board above is deliberately over-subscribed: the
+    // nudge search gives up after MAX_NUDGE and some labels end up inside even
+    // the BARE gap. That is pre-existing behaviour, not something 010 changed,
+    // so the widened-clearance rule is checked on a board with room instead.
+    const sparse = presentSet(hexRegion(3))
+    const sparseWater = [...sparse].filter((_, i) => i % 3 === 0)
+    const base = fullyClued(sparse, layoutOf(sparse, sparseWater), { withLines: true })
+    const roomy = {
+      ...base,
+      // Three well-separated rows on one axis, all annotated.
+      lines: base.lines
+        .filter((l) => l.axis === 0 && Math.abs(l.index) === 3)
+        .map((l) => ({ ...l, connectivity: 'split' as const })),
+    }
+    const l2 = fitLayout(
+      roomy.present,
+      W,
+      H,
+      24,
+      lineAnchors(roomy).flatMap((a) => [a.coord, a.tip]),
+    )
+    const placed = lineLabels(roomy, l2)
+    expect(placed.length).toBeGreaterThan(1)
+    const stepPx = Math.sqrt(3) * l2.size
+    for (const a of placed) {
+      for (const b of placed) {
+        if (a.id === b.id) continue
+        expect(Math.hypot(a.x - b.x, a.y - b.y), `${a.id} vs ${b.id}`).toBeGreaterThanOrEqual(
+          1.5 * 1.45 * stepPx * 0.999,
+        )
+      }
+    }
+  })
+
+  it('an annotated label keeps a click target matching its width', () => {
+    const wide = annotatedLabels.find((l) => l.connectivity)!
+    const radius = annotatedLayout.size * 0.55
+    // A point out at the brace — past a bare label's radius, inside a wide one's.
+    const offset = radius * 1.2
+    expect(labelAt(annotatedLabels, wide.x + offset, wide.y, radius)?.id).toBe(wide.id)
+  })
+
+  it('does not widen the target for a plain total', () => {
+    const plain = lineLabels(board, layout)
+    const l = plain[0]
+    const radius = layout.size * 0.55
+    expect(labelAt(plain, l.x + radius * 1.2, l.y, radius)).toBeNull()
+  })
+
+  it('leaves an unannotated board carrying no annotation at all', () => {
+    // Boards players already have take the bare gap on every label, so their
+    // layout is untouched — the same reason the seed string is append-only.
+    expect(lineLabels(board, layout).every((l) => l.connectivity === undefined)).toBe(true)
+  })
+})

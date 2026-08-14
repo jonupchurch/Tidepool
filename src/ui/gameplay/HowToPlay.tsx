@@ -3,7 +3,7 @@
 // with the button beneath it; the choice persists through the settings seam so it
 // stays gone once you know the rules. The same text is the How to play screen —
 // both read from `how-to-play-content`.
-import { CLUE_FORMS, EDGE_NUMBERS, MARKING, SETTLED } from './how-to-play-content'
+import { CLUE_FORMS, EDGE_NUMBERS, EDGE_RUNS, MARKING, SETTLED } from './how-to-play-content'
 
 export interface HowToPlayProps {
   onClose: () => void
@@ -52,6 +52,7 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
       </dl>
 
       <p className="mt-3 text-xs leading-relaxed">{EDGE_NUMBERS}</p>
+      <p className="mt-2 text-xs leading-relaxed">{EDGE_RUNS}</p>
       <p className="mt-2 text-xs leading-relaxed">{SETTLED}</p>
 
       <button

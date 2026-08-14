@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "groups": [
     {
       "id": "shallows",
@@ -36,6 +36,48 @@
       "name": "The Trench",
       "blurb": "Cold, deep, and patient.",
       "order": 6
+    },
+    {
+      "id": "drowned-reef",
+      "name": "Drowned Reef",
+      "blurb": "Where the shallows give out.",
+      "order": 7,
+      "page": 2
+    },
+    {
+      "id": "the-atoll",
+      "name": "The Atoll",
+      "blurb": "A ring of stone around still water.",
+      "order": 8,
+      "page": 2
+    },
+    {
+      "id": "crescent-bay",
+      "name": "Crescent Bay",
+      "blurb": "A coast with a bite taken out of it.",
+      "order": 9,
+      "page": 2
+    },
+    {
+      "id": "the-braid",
+      "name": "The Braid",
+      "blurb": "Rows that run together, or come apart.",
+      "order": 10,
+      "page": 2
+    },
+    {
+      "id": "the-shoal",
+      "name": "The Shoal",
+      "blurb": "Long water, and not much of it deep.",
+      "order": 11,
+      "page": 2
+    },
+    {
+      "id": "the-sound",
+      "name": "The Sound",
+      "blurb": "Cold, narrow, and a long way down.",
+      "order": 12,
+      "page": 2
     }
   ],
   "entries": [
@@ -362,6 +404,444 @@
       "difficulty": "Deep",
       "group": "the-trench",
       "order": 36
+    },
+    {
+      "id": "drowned-reef-1",
+      "name": "First Descent",
+      "seed": "DROWN-0001",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "drowned-reef",
+      "order": 37
+    },
+    {
+      "id": "drowned-reef-2",
+      "name": "Broken Coral",
+      "seed": "REEF-0001",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "drowned-reef",
+      "order": 38
+    },
+    {
+      "id": "drowned-reef-3",
+      "name": "Green Dark",
+      "seed": "SUNK-0001",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "drowned-reef",
+      "order": 39
+    },
+    {
+      "id": "drowned-reef-4",
+      "name": "Silt",
+      "seed": "DROWN-0002",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "drowned-reef",
+      "order": 40
+    },
+    {
+      "id": "drowned-reef-5",
+      "name": "The Ledge",
+      "seed": "REEF-0002",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "drowned-reef",
+      "order": 41
+    },
+    {
+      "id": "drowned-reef-6",
+      "name": "Undertow",
+      "seed": "SUNK-0002",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "drowned-reef",
+      "order": 42
+    },
+    {
+      "id": "the-atoll-1",
+      "name": "Outer Ring",
+      "seed": "RING-0001",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "the-atoll",
+      "order": 43,
+      "shape": "atoll"
+    },
+    {
+      "id": "the-atoll-2",
+      "name": "Still Centre",
+      "seed": "RING-0002",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "the-atoll",
+      "order": 44,
+      "shape": "atoll"
+    },
+    {
+      "id": "the-atoll-3",
+      "name": "Coral Wall",
+      "seed": "ATOLL-0003",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "the-atoll",
+      "order": 45,
+      "shape": "atoll"
+    },
+    {
+      "id": "the-atoll-4",
+      "name": "The Gap",
+      "seed": "RING-0003",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "the-atoll",
+      "order": 46,
+      "shape": "atoll"
+    },
+    {
+      "id": "the-atoll-5",
+      "name": "Windward",
+      "seed": "LAGOON-0003",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "the-atoll",
+      "order": 47,
+      "shape": "atoll"
+    },
+    {
+      "id": "the-atoll-6",
+      "name": "Leeward",
+      "seed": "ATOLL-0004",
+      "size": "Medium",
+      "difficulty": "Tricky",
+      "group": "the-atoll",
+      "order": 48,
+      "shape": "atoll"
+    },
+    {
+      "id": "crescent-bay-1",
+      "name": "The Hook",
+      "seed": "BAY-0001",
+      "size": "Medium",
+      "difficulty": "Deep",
+      "group": "crescent-bay",
+      "order": 49,
+      "shape": "crescent"
+    },
+    {
+      "id": "crescent-bay-2",
+      "name": "Inner Curve",
+      "seed": "HOOK-0001",
+      "size": "Medium",
+      "difficulty": "Deep",
+      "group": "crescent-bay",
+      "order": 50,
+      "shape": "crescent"
+    },
+    {
+      "id": "crescent-bay-3",
+      "name": "Sheltered",
+      "seed": "CURVE-0001",
+      "size": "Medium",
+      "difficulty": "Deep",
+      "group": "crescent-bay",
+      "order": 51,
+      "shape": "crescent"
+    },
+    {
+      "id": "crescent-bay-4",
+      "name": "Open Horn",
+      "seed": "BAY-0002",
+      "size": "Medium",
+      "difficulty": "Deep",
+      "group": "crescent-bay",
+      "order": 52,
+      "shape": "crescent"
+    },
+    {
+      "id": "crescent-bay-5",
+      "name": "Slack Water",
+      "seed": "HOOK-0002",
+      "size": "Medium",
+      "difficulty": "Deep",
+      "group": "crescent-bay",
+      "order": 53,
+      "shape": "crescent"
+    },
+    {
+      "id": "crescent-bay-6",
+      "name": "The Bight",
+      "seed": "CURVE-0002",
+      "size": "Medium",
+      "difficulty": "Deep",
+      "group": "crescent-bay",
+      "order": 54,
+      "shape": "crescent"
+    },
+    {
+      "id": "the-braid-1",
+      "name": "One Run",
+      "seed": "WEAVE-0001",
+      "size": "Medium",
+      "difficulty": "Deep",
+      "group": "the-braid",
+      "order": 55,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      }
+    },
+    {
+      "id": "the-braid-2",
+      "name": "Two Threads",
+      "seed": "WEAVE-0002",
+      "size": "Medium",
+      "difficulty": "Deep",
+      "group": "the-braid",
+      "order": 56,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      }
+    },
+    {
+      "id": "the-braid-3",
+      "name": "Counterflow",
+      "seed": "STRAND-0002",
+      "size": "Medium",
+      "difficulty": "Deep",
+      "group": "the-braid",
+      "order": 57,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      }
+    },
+    {
+      "id": "the-braid-4",
+      "name": "The Knot",
+      "seed": "BRAID-0004",
+      "size": "Medium",
+      "difficulty": "Deep",
+      "group": "the-braid",
+      "order": 58,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      }
+    },
+    {
+      "id": "the-braid-5",
+      "name": "Loose Weave",
+      "seed": "WEAVE-0004",
+      "size": "Medium",
+      "difficulty": "Deep",
+      "group": "the-braid",
+      "order": 59,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      }
+    },
+    {
+      "id": "the-braid-6",
+      "name": "Tight Weave",
+      "seed": "STRAND-0004",
+      "size": "Medium",
+      "difficulty": "Deep",
+      "group": "the-braid",
+      "order": 60,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      }
+    },
+    {
+      "id": "the-shoal-1",
+      "name": "Long Bar",
+      "seed": "BAR-0001",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-shoal",
+      "order": 61,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      },
+      "shape": "shoal"
+    },
+    {
+      "id": "the-shoal-2",
+      "name": "Low Tide",
+      "seed": "FLATS-0001",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-shoal",
+      "order": 62,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      },
+      "shape": "shoal"
+    },
+    {
+      "id": "the-shoal-3",
+      "name": "The Flats",
+      "seed": "BAR-0002",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-shoal",
+      "order": 63,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      },
+      "shape": "shoal"
+    },
+    {
+      "id": "the-shoal-4",
+      "name": "Sandline",
+      "seed": "FLATS-0002",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-shoal",
+      "order": 64,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      },
+      "shape": "shoal"
+    },
+    {
+      "id": "the-shoal-5",
+      "name": "Ripple",
+      "seed": "BAR-0003",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-shoal",
+      "order": 65,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      },
+      "shape": "shoal"
+    },
+    {
+      "id": "the-shoal-6",
+      "name": "Far Bank",
+      "seed": "FLATS-0003",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-shoal",
+      "order": 66,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      },
+      "shape": "shoal"
+    },
+    {
+      "id": "the-sound-1",
+      "name": "The Narrows",
+      "seed": "SOUND-0001",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-sound",
+      "order": 67,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      },
+      "shape": "wedge"
+    },
+    {
+      "id": "the-sound-2",
+      "name": "Cold Mouth",
+      "seed": "SOUND-0002",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-sound",
+      "order": 68,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      },
+      "shape": "wedge"
+    },
+    {
+      "id": "the-sound-3",
+      "name": "Deep Channel",
+      "seed": "FJORD-0003",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-sound",
+      "order": 69,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      },
+      "shape": "wedge"
+    },
+    {
+      "id": "the-sound-4",
+      "name": "Black Reach",
+      "seed": "SOUND-0004",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-sound",
+      "order": 70,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      },
+      "shape": "wedge"
+    },
+    {
+      "id": "the-sound-5",
+      "name": "Sill",
+      "seed": "NARROW-0004",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-sound",
+      "order": 71,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      },
+      "shape": "wedge"
+    },
+    {
+      "id": "the-sound-6",
+      "name": "The Head",
+      "seed": "FJORD-0004",
+      "size": "Large",
+      "difficulty": "Deep",
+      "group": "the-sound",
+      "order": 72,
+      "clues": {
+        "connectivity": true,
+        "lineTotals": true,
+        "lineConnectivity": true
+      },
+      "shape": "wedge"
     }
   ]
 }

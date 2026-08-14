@@ -22,6 +22,20 @@ export type {
 export { DIFFICULTY_TIERS, SIZE_TIERS } from './board'
 export type { Axial, Line } from './hex'
 
+// Board silhouettes (012) — the catalog + its guards. `present` is still the
+// engine's notion of topology; a shape is just a way of producing one.
+export type { ShapeId } from './shapes'
+export {
+  DEFAULT_SHAPE,
+  SHAPE_IDS,
+  checkSilhouette,
+  isShapeId,
+  shapeName,
+  shapePresent,
+  shapeRegion,
+  shapeSupportsSize,
+} from './shapes'
+
 // Hex geometry (public — consumed by render layout, pool enumeration, clue
 // highlighting; downstream features reuse this rather than re-deriving geometry)
 export {

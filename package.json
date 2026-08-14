@@ -13,6 +13,7 @@
     "test:e2e": "playwright test",
     "validate:curated": "vite-node scripts/validate-curated.ts",
     "validate:shapes": "vite-node scripts/validate-shapes.ts",
+    "find:curated": "vite-node scripts/find-curated-seeds.ts --",
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",

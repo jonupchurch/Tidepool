@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest'
 import type { CuratedProgressRecord } from '@/platform'
 import {
   getCuratedRows,
+  pagesOf,
   groupRows,
   loadCuratedPack,
   manifestRows,
   markCuratedSolved,
   nextCuratedEntry,
 } from './curated'
+import { DEFAULT_CLUES, isBoardRequest, toBoardParams } from './request'
 import { groupedManifest, makeFakeStore, sampleManifest } from './test-helpers'
 
 describe('loadCuratedPack', () => {
@@ -25,30 +27,83 @@ describe('loadCuratedPack', () => {
 describe('the shipped pack is a complete ladder', () => {
   const pack = loadCuratedPack()
 
-  it('ships 6 groups of 6, each group one size/difficulty band', () => {
-    expect(pack.groups).toHaveLength(6)
+  it('ships pages of 6 groups of 6, each group one size/difficulty band', () => {
     const grouped = groupRows(pack, manifestRows(pack, {}))
-    expect(grouped).toHaveLength(6)
-    for (const g of grouped) {
-      expect(g.rows, `${g.group.id}`).toHaveLength(6)
-      const bands = new Set(g.rows.map((r) => `${r.entry.size}/${r.entry.difficulty}`))
-      expect(bands.size, `${g.group.id} mixes bands`).toBe(1)
+    const pages = pagesOf(grouped)
+    expect(pages.length).toBeGreaterThanOrEqual(2)
+    for (const { page, groups } of pages) {
+      expect(groups, `page ${page}`).toHaveLength(6)
+      for (const g of groups) {
+        expect(g.rows, `${g.group.id}`).toHaveLength(6)
+        const bands = new Set(g.rows.map((r) => `${r.entry.size}/${r.entry.difficulty}`))
+        expect(bands.size, `${g.group.id} mixes bands`).toBe(1)
+      }
     }
   })
 
-  it('never gets easier as you go, and every board has a distinct seed', () => {
-    const rank = { Calm: 0, Tricky: 1, Deep: 2 }
-    const sizeRank = { Small: 0, Medium: 1, Large: 2 }
-    const entries = pack.entries
-    expect(entries).toHaveLength(36)
-    for (let i = 1; i < entries.length; i++) {
-      const prev = entries[i - 1]
-      const cur = entries[i]
-      const step = rank[cur.difficulty] + sizeRank[cur.size] - (rank[prev.difficulty] + sizeRank[prev.size])
-      expect(step, `${prev.id} → ${cur.id} steps backwards`).toBeGreaterThanOrEqual(0)
+  it('page one is exactly the coastline it always was', () => {
+    // 013 FR-007. Page one carries no `page` field at all, so a v2 pack and a
+    // v3 pack describe the same first page — and none of its entries may have
+    // grown a clue set or a silhouette.
+    const first = pagesOf(groupRows(pack, manifestRows(pack, {})))[0]
+    expect(first.page).toBe(1)
+    const rows = first.groups.flatMap((g) => g.rows)
+    expect(rows).toHaveLength(36)
+    for (const r of rows) {
+      expect(r.entry.clues, `${r.entry.id} gained a clue set`).toBeUndefined()
+      expect(r.entry.shape, `${r.entry.id} gained a shape`).toBeUndefined()
     }
-    expect(new Set(entries.map((e) => e.seed)).size).toBe(entries.length)
-    expect(new Set(entries.map((e) => e.id)).size).toBe(entries.length)
+  })
+
+  const RANK = { Calm: 0, Tricky: 1, Deep: 2 }
+  const SIZE_RANK = { Small: 0, Medium: 1, Large: 2 }
+  const bandRank = (e: { difficulty: keyof typeof RANK; size: keyof typeof SIZE_RANK }) =>
+    RANK[e.difficulty] + SIZE_RANK[e.size]
+
+  it('never gets easier as you go WITHIN a page, and every board is distinct', () => {
+    // Within a page the climb is monotonic. Across the boundary it deliberately
+    // is not: page two opens easier than page one closes, because it is also
+    // teaching new mechanics, and meeting `{n}` for the first time on a
+    // Large/Deep board would be a wall rather than a step.
+    const pages = pagesOf(groupRows(pack, manifestRows(pack, {})))
+    for (const { page, groups } of pages) {
+      const entries = groups.flatMap((g) => g.rows).map((r) => r.entry)
+      for (let i = 1; i < entries.length; i++) {
+        expect(
+          bandRank(entries[i]) - bandRank(entries[i - 1]),
+          `page ${page}: ${entries[i - 1].id} → ${entries[i].id} steps backwards`,
+        ).toBeGreaterThanOrEqual(0)
+      }
+    }
+    expect(new Set(pack.entries.map((e) => e.seed)).size).toBe(pack.entries.length)
+    expect(new Set(pack.entries.map((e) => e.id)).size).toBe(pack.entries.length)
+  })
+
+  it('page two is weighted deeper than page one (FR-010)', () => {
+    const pages = pagesOf(groupRows(pack, manifestRows(pack, {})))
+    const mean = (i: number) => {
+      const entries = pages[i].groups.flatMap((g) => g.rows).map((r) => r.entry)
+      return entries.reduce((n, e) => n + bandRank(e), 0) / entries.length
+    }
+    expect(mean(1)).toBeGreaterThan(mean(0))
+  })
+
+  it('order is globally monotonic across pages, not restarted per page', () => {
+    // Both the next-board chain and the gating sort this flat list, so they
+    // cross the page boundary for free — and both break, only past page one, if
+    // a later editor numbers each page from 1.
+    const orders = [...pack.entries].map((e) => e.order)
+    expect(new Set(orders).size).toBe(orders.length)
+    expect([...orders].sort((a, b) => a - b)).toEqual(orders)
+  })
+
+  it('carries both new mechanics on page two, across several groups (SC-004)', () => {
+    const second = pagesOf(groupRows(pack, manifestRows(pack, {})))[1]
+    const entries = second.groups.flatMap((g) => g.rows).map((r) => r.entry)
+    const shaped = new Set(entries.filter((e) => e.shape).map((e) => e.group))
+    const annotated = new Set(entries.filter((e) => e.clues?.lineConnectivity).map((e) => e.group))
+    expect(shaped.size).toBeGreaterThan(1)
+    expect(annotated.size).toBeGreaterThan(1)
   })
 })
 
@@ -183,5 +238,72 @@ describe('curated progress through the store', () => {
     const firstCove = rows.find((r) => r.entry.id === 'first-cove')
     expect(firstCove?.solved).toBe(true)
     expect(firstCove?.earnedCreature).toBe('Limpet')
+  })
+})
+
+// 013 FR-011/FR-012. Both of these sort the flat entry list, so they cross a
+// page boundary for free — and both would look perfectly correct on page one
+// while being broken past it. That is exactly why they get their own tests.
+describe('the page boundary', () => {
+  const pack = loadCuratedPack()
+  const sorted = [...pack.entries].sort((a, b) => a.order - b.order)
+  const firstPageIds = new Set(
+    pagesOf(groupRows(pack, manifestRows(pack, {})))[0]
+      .groups.flatMap((g) => g.rows)
+      .map((r) => r.entry.id),
+  )
+  const lastOfPageOne = [...sorted].reverse().find((e) => firstPageIds.has(e.id))!
+  const firstOfPageTwo = sorted.find((e) => !firstPageIds.has(e.id))!
+
+  it('the next-board chain walks from the end of one page into the start of the next', () => {
+    expect(nextCuratedEntry(pack, lastOfPageOne.id)?.id).toBe(firstOfPageTwo.id)
+  })
+
+  it('and stops cleanly at the end of the last page', () => {
+    expect(nextCuratedEntry(pack, sorted[sorted.length - 1].id)).toBeNull()
+  })
+
+  it('gating treats every page as one ordered coastline', () => {
+    // With nothing solved and gating on, the frontier sits at the very start —
+    // so page two must be locked, not open because it is "a different page".
+    const rows = manifestRows(pack, {}, { enabled: true, unlockAfter: 1 })
+    const byId = new Map(rows.map((r) => [r.entry.id, r]))
+    expect(byId.get(sorted[0].id)?.locked).toBe(false)
+    expect(byId.get(firstOfPageTwo.id)?.locked).toBe(true)
+  })
+
+  it('solving all of page one opens the start of page two', () => {
+    const solved = Object.fromEntries(
+      [...firstPageIds].map((id) => [id, { earnedCreatureId: 'crab', errors: 0 }]),
+    )
+    const rows = manifestRows(pack, solved, { enabled: true, unlockAfter: 1 })
+    expect(rows.find((r) => r.entry.id === firstOfPageTwo.id)?.locked).toBe(false)
+  })
+})
+
+describe('per-entry clues and shape reach the engine', () => {
+  const pack = loadCuratedPack()
+
+  it('a shaped or annotated entry carries that into its BoardRequest', () => {
+    const rows = manifestRows(pack, {})
+    const shaped = rows.find((r) => r.entry.shape)
+    const annotated = rows.find((r) => r.entry.clues?.lineConnectivity)
+    expect(shaped?.request.shape).toBe(shaped?.entry.shape)
+    expect(annotated?.request.clues?.lineConnectivity).toBe(true)
+  })
+
+  it('a plain entry asks for nothing extra, so page one is untouched', () => {
+    const plain = manifestRows(pack, {}).find((r) => !r.entry.shape && !r.entry.clues)!
+    expect(plain.request.shape).toBeUndefined()
+    expect(plain.request.clues).toBeUndefined()
+    // ...and that request maps to exactly the defaults it always did.
+    expect(toBoardParams(plain.request).clues).toEqual(DEFAULT_CLUES)
+    expect(toBoardParams(plain.request).shape).toBeUndefined()
+  })
+
+  it('every shipped request is one the launcher will accept', () => {
+    for (const row of manifestRows(pack, {})) {
+      expect(isBoardRequest(row.request), row.entry.id).toBe(true)
+    }
   })
 })

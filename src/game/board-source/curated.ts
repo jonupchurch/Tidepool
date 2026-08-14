@@ -2,7 +2,7 @@
 // progress, and derive per-entry BoardRequests + lock state. The manifest is
 // oracle-validated in CI so no unsolvable board can ship. Pure (progress I/O
 // goes through the injected SaveStore seam). No DOM, no randomness.
-import type { DifficultyTier, SizeTier } from '@/core'
+import type { ClueToggles, DifficultyTier, ShapeId, SizeTier } from '@/core'
 import { type SaveStore, loadRecord, saveRecord } from '@/platform'
 import curatedJson from '@/content/curated.json'
 import { creatureDef } from '../creatures'
@@ -16,7 +16,17 @@ export interface CuratedEntry {
   difficulty: DifficultyTier
   /** id of the CuratedGroup this board belongs to (manifest v2+). */
   group?: string
+  /**
+   * `order` is GLOBAL and monotonic across pages, not per-page. Both the
+   * next-board chain and the optional gating sort this flat list, so they cross
+   * a page boundary for free — and both break, silently and only past page one,
+   * if a later editor restarts numbering per page.
+   */
   order: number
+  /** Per-board clue set (manifest v3+). Absent = the defaults page one uses. */
+  clues?: ClueToggles
+  /** Per-board silhouette (manifest v3+). Absent = the filled hexagon. */
+  shape?: ShapeId
 }
 
 /** A run of boards sharing a size/difficulty band — one cluster on the screen. */
@@ -25,7 +35,19 @@ export interface CuratedGroup {
   name: string
   blurb: string
   order: number
+  /** Which page this run belongs to (manifest v3+). Absent = page 1, so the
+   *  shipped v2 pack reads unchanged. */
+  page?: number
 }
+
+/** A page of the coastline: its number and the groups laid out on it. */
+export interface CuratedPage {
+  page: number
+  groups: CuratedGroupRows[]
+}
+
+/** The page a group sits on — absent means the first. */
+export const pageOf = (g: CuratedGroup): number => g.page ?? 1
 
 export interface CuratedManifest {
   version: number
@@ -145,7 +167,13 @@ export function manifestRows(
   const locks = resolveLocks(entries, solvedIds, config)
   return entries.map((entry) => ({
     entry,
-    request: { seed: entry.seed, size: entry.size, difficulty: entry.difficulty },
+    request: {
+      seed: entry.seed,
+      size: entry.size,
+      difficulty: entry.difficulty,
+      ...(entry.clues ? { clues: entry.clues } : {}),
+      ...(entry.shape ? { shape: entry.shape } : {}),
+    },
     solved: solvedIds.has(entry.id),
     earnedCreature: solved[entry.id]
       ? (creatureDef(solved[entry.id].earnedCreatureId)?.name ?? null)
@@ -188,4 +216,36 @@ export async function markCuratedSolved(
     ...progress,
     solved: { ...progress.solved, [id]: { earnedCreatureId, errors: best } },
   })
+}
+
+/**
+ * Bucket grouped rows into pages, in page order. A v2 pack (no `page` anywhere)
+ * comes back as a single page 1, so the shipped coastline renders unchanged.
+ */
+export function pagesOf(groups: CuratedGroupRows[]): CuratedPage[] {
+  const byPage = new Map<number, CuratedGroupRows[]>()
+  for (const g of groups) {
+    const p = pageOf(g.group)
+    const bucket = byPage.get(p)
+    if (bucket) bucket.push(g)
+    else byPage.set(p, [g])
+  }
+  return [...byPage.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([page, gs]) => ({ page, groups: gs }))
+}
+
+/** Progress across a set of groups — the tally a page (or the whole coast) shows. */
+export function tally(groups: CuratedGroupRows[]): {
+  solved: number
+  total: number
+  clean: number
+} {
+  const rows = groups.flatMap((g) => g.rows)
+  return {
+    solved: rows.filter((r) => r.solved).length,
+    total: rows.length,
+    // Only an explicit zero counts as clean; see CuratedRow.errors (011 FR-008).
+    clean: rows.filter((r) => r.errors === 0).length,
+  }
 }

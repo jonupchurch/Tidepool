@@ -76,14 +76,14 @@ Build Live on the partner site. Bump the version in **both** `package.json` and
 - **Linux/Steam Deck is opportunistic**, per 009's spec. CI builds the artifacts
   on `ubuntu-22.04`; shipping them means a second depot and verifying webkit2gtk
   resolves inside the Steam Linux Runtime.
+- **"Driftwood Garden" is approved.** Jon listened on 2026-08-13 and it sounds
+  right. This was the only claim in 014/015 that a test could not make — the
+  channel, switch, volume and loop-point arithmetic are all covered against a
+  fake Web Audio, but how it *sounds* needed ears. Don't re-open it as an
+  outstanding item.
 
 ## Known rough edges
 
-- **Nobody has listened to the music.** The channel, the switch, the volume
-  control and the loop-point arithmetic are all tested against a fake Web Audio,
-  but whether "Driftwood Garden" sounds right — and whether the loop seam is
-  audible where it wraps — needs a human with speakers. If it clicks, the fix is
-  re-encoding to Ogg from the WAV master (needs `ffmpeg`, not installed here).
 - `screenshot-5.png` has the mouse cursor captured in it.
 - The small and vertical capsules are now the wordmark on transparency rather
   than illustrated tiles, so those two slots are mostly empty space — most

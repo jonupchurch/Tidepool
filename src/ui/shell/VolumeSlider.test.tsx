@@ -82,6 +82,14 @@ describe('VolumeSlider', () => {
     })
   })
 
+  it('drives the filled portion of the track from the value', () => {
+    // The track is rebuilt from the design tokens (Chromium paints the native
+    // unfilled track a fixed charcoal that no `color-scheme` overrides), and
+    // the fill point is the one part the stylesheet cannot derive on its own.
+    renderShell(<VolumeSlider value={0.25} onChange={vi.fn()} />)
+    expect(screen.getByRole('slider').style.getPropertyValue('--tp-range-pct')).toBe('25%')
+  })
+
   it('accepts a custom accessible name', () => {
     renderShell(<VolumeSlider value={0.5} onChange={vi.fn()} label="Master volume" />)
     expect(screen.getByRole('slider', { name: 'Master volume' })).toBeInTheDocument()

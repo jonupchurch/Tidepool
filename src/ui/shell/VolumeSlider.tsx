@@ -6,9 +6,13 @@
 // `<input type="range">`, not a div with pointer handlers. Native buys keyboard
 // operation, touch dragging and the slider ARIA contract outright, and the shell
 // is already held to "every control is a real, named element" by `a11y.test.tsx`.
-// The only cost is styling latitude, and `accent-color` — Tailwind's `accent-*`,
-// reading the same `--color-tide` token as everything else — covers the filled
-// track and the thumb in one utility.
+//
+// `accent-color` alone was tried first and isn't enough: Chromium paints the
+// unfilled track a fixed charcoal — rgb(59,59,59), sampled, not guessed —
+// regardless of `color-scheme`, in both themes and under a dark OS. That reads
+// as a hard dark bar across the daylight palette, so the appearance is stripped
+// and the track rebuilt from the design tokens; see `.tp-range` in index.css.
+import type { CSSProperties } from 'react'
 
 export interface VolumeSliderProps {
   /** Current level, 0..1. */
@@ -52,9 +56,11 @@ export function VolumeSlider({
       // A screen reader would otherwise announce "0.35". Percentages are the
       // unit players actually have a feel for.
       aria-valuetext={muted ? `${percent}%, muted` : `${percent}%`}
-      className={`h-1.5 cursor-pointer appearance-none rounded-full bg-driftwood accent-tide transition-opacity ${
-        muted ? 'opacity-40' : ''
-      } ${className}`}
+      // The filled portion is the one thing the stylesheet can't work out for
+      // itself, so it comes across as a custom property; everything else about
+      // `.tp-range` lives in index.css with the rest of the themed CSS.
+      style={{ '--tp-range-pct': `${percent}%` } as CSSProperties}
+      className={`tp-range h-6 transition-opacity ${muted ? 'opacity-40' : ''} ${className}`}
     />
   )
 }

@@ -4,6 +4,39 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-13 — Edge numbers can say how the water sits
+
+### Added
+
+- **`{n}` and `-n-` on the numbers around the edge.** A braced total means that
+  line's water is all in one unbroken run; a dashed one means it comes apart into
+  two or more. The same vocabulary the clue tiles have always used, now on the
+  row totals — and it carries real deductions, not just a different way of
+  writing the number.
+
+Boards only use it when they ask for it. Nothing you have played changes.
+
+### The part worth explaining
+
+Only annotate where it says something. A row whose water can only be arranged one
+way learns nothing from being braced, and a clue that is always true is noise to
+read past. The clue tiles decide this with a count window — between two and
+(neighbours − 2) — which is exactly right for a ring of six and quietly wrong for
+a row, which can be longer, and can have holes in it once boards stop being
+hexagons. So rows ask the real question instead: are both answers actually
+possible here? The tiles' rule is left alone, because changing it would move
+every board in existence.
+
+Holes end a run, the same way a stone does. Two pools either side of a gap are
+`-2-`, not `{2}` — which is what you would say looking at it. No board can have a
+gapped row yet, but the rule is fixed now so the shapes work can't disagree with
+it later.
+
+The solver had to learn to reason from these the way a person does, and it is
+checked against brute-force enumeration on every row short enough to enumerate
+— a couple of thousand cases across totals, both annotations, and partial
+knowledge. That is what makes "guess-free" a claim rather than a hope.
+
 ## 2026-08-13 — Ambient music, and a switch to turn it off
 
 ### Added

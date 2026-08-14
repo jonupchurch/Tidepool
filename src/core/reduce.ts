@@ -15,11 +15,17 @@ function cloneBoard(board: Board): Board {
     params: board.params,
     present: board.present,
     cells,
-    lines: board.lines.slice(),
+    // Deep, not `.slice()`: reduction now clears a line's annotation in place,
+    // and a shallow copy would reach back and mutate the caller's board.
+    lines: board.lines.map((l) => ({ ...l })),
   })
 }
 
-type Item = { kind: 'cell'; key: string } | { kind: 'line'; line: LineClue }
+type Item =
+  | { kind: 'cell'; key: string }
+  | { kind: 'line'; line: LineClue }
+  /** Drop just the `{}`/`--` from a row, keeping its total (010). */
+  | { kind: 'annotation'; line: LineClue }
 
 /**
  * Reduce `board`'s clue set to a minimal one, preserving guess-free solvability
@@ -39,6 +45,18 @@ export function reduceClues(
     if (cell.given) items.push({ kind: 'cell', key: k })
   }
   for (const line of work.lines) items.push({ kind: 'line', line })
+  // An annotated total is really two clues in one; offering the annotation for
+  // removal on its own keeps "minimal" honest, rather than a board keeping a
+  // `{4}` where a plain `4` would have done.
+  //
+  // DANGER: this list feeds a SEEDED shuffle, so adding items to it changes the
+  // removal order and therefore every reduced board. It is safe only because an
+  // annotated line can exist solely on a board whose clue toggles asked for one
+  // — boards that predate 010 build the same list they always did. Guarded by
+  // fingerprints.test.ts.
+  for (const line of work.lines) {
+    if (line.connectivity) items.push({ kind: 'annotation', line })
+  }
   shuffle(rng, items)
 
   for (const item of items) {
@@ -51,6 +69,11 @@ export function reduceClues(
         cell.given = true
         cell.clue = savedClue
       }
+    } else if (item.kind === 'annotation') {
+      const saved = item.line.connectivity
+      if (!saved) continue // the whole line already went
+      item.line.connectivity = undefined
+      if (!techniqueSolves(work, allowed).solved) item.line.connectivity = saved
     } else {
       const idx = work.lines.indexOf(item.line)
       if (idx === -1) continue

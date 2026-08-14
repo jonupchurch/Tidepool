@@ -25,6 +25,7 @@ export type { Axial, Line } from './hex'
 // Hex geometry (public — consumed by render layout, pool enumeration, clue
 // highlighting; downstream features reuse this rather than re-deriving geometry)
 export {
+  AXIS_STEP,
   DIRECTIONS,
   key,
   lineIndex,

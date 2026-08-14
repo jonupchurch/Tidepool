@@ -9,6 +9,7 @@ import {
   type SolveCtx,
   connectivityPass,
   forcedCountPass,
+  lineConnectivityPass,
   setup,
   subsetPass,
 } from './techniques'
@@ -17,6 +18,7 @@ const TECHNIQUE_ORDER: Technique[] = [
   'forced-count',
   'line-total',
   'connectivity',
+  'line-connectivity',
   'subset-overlap',
 ]
 
@@ -50,6 +52,15 @@ function runTechniques(
     }
     if (ctx.contradiction) break
     if (allowed.has('connectivity') && connectivityPass(constraints, assign, ctx)) {
+      depth++
+      continue
+    }
+    if (ctx.contradiction) break
+    if (
+      allowLine &&
+      allowed.has('line-connectivity') &&
+      lineConnectivityPass(constraints, assign, ctx)
+    ) {
       depth++
       continue
     }
@@ -93,6 +104,14 @@ function propagate(constraints: Constraint[], assign: Assign): boolean {
     }
     if (ctx.contradiction) return false
     if (connectivityPass(constraints, assign, ctx)) {
+      if (ctx.contradiction) return false
+      continue
+    }
+    if (ctx.contradiction) return false
+    // The counter propagates with the WHOLE catalog, not just what a tier
+    // allows: every pass is sound, and a board that leans on row annotations
+    // can't propagate without this and blows the step budget instead.
+    if (lineConnectivityPass(constraints, assign, ctx)) {
       if (ctx.contradiction) return false
       continue
     }

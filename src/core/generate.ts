@@ -4,9 +4,16 @@
 // served board is minimal, uniquely solvable, and guess-free (spec US1/US2/US5).
 import type { Board, BoardParams, Cell, DifficultyTier, LineClue, SizeTier } from './board'
 import { isDifficultyTier, isSizeTier, makeBoard } from './board'
-import { type Layout, adjacencyClue, lineTotal } from './clues'
+import {
+  type Layout,
+  adjacencyClue,
+  lineAdjacency,
+  lineConnectivityInforms,
+  lineConnectivityOf,
+  lineTotal,
+} from './clues'
 import { allowedTechniquesFor } from './difficulty'
-import { hexRegion, key, linesOf, parseKey, presentSet } from './hex'
+import { AXIS_STEP, hexRegion, key, linesOf, parseKey, presentSet } from './hex'
 import { reduceClues } from './reduce'
 import { type Rng, nextInt, seedToRng } from './rng'
 import { countSolutions, solve, techniqueSolves } from './solver'
@@ -19,9 +26,26 @@ const WATER_PER_MILLE = 500
 const MIN_WATER_FRACTION = 0.25
 const MAX_WATER_FRACTION = 0.75
 
+/**
+ * The reproducible key a board's RNG is derived from.
+ *
+ * DANGER: every segment here is load-bearing forever. Adding a field to the
+ * existing `c…l…` segment would change the stream for EVERY board in existence
+ * — every shipped curated board, every seed a player wrote down, and every
+ * in-progress save (which resumes by regenerating from its stored params).
+ *
+ * So new mechanics append their own segment, and only when switched on:
+ *
+ *   off (today, forever):  COVE-0001|Medium|Calm|c1l1|#3
+ *   row annotations on:    KELP-0007|Large|Deep|c1l1|lc1|#3
+ *
+ * `fingerprints.test.ts` is the guard. If it fails, this is the first place to
+ * look, and the fix is almost never to update the table.
+ */
 function rngSeedString(p: BoardParams, candidate: number): string {
   const c = `c${p.clues.connectivity ? 1 : 0}l${p.clues.lineTotals ? 1 : 0}`
-  return `${p.seed}|${p.size}|${p.difficulty}|${c}|#${candidate}`
+  const extra = p.clues.lineConnectivity ? '|lc1' : ''
+  return `${p.seed}|${p.size}|${p.difficulty}|${c}${extra}|#${candidate}`
 }
 
 function randomLayout(present: Set<string>, rng: Rng): Layout {
@@ -61,12 +85,17 @@ function buildFullyCluedBoard(
   }
   let lines: LineClue[] = []
   if (params.clues.lineTotals) {
-    lines = linesOf(present).map((ln) => ({
-      axis: ln.axis,
-      index: ln.index,
-      total: lineTotal(ln.cells, layout),
-      from: 'start' as const,
-    }))
+    lines = linesOf(present).map((ln) => {
+      const total = lineTotal(ln.cells, layout)
+      const base = { axis: ln.axis, index: ln.index, total, from: 'start' as const }
+      if (!params.clues.lineConnectivity) return base
+      // Annotate only where it says something: a row whose water can only be
+      // arranged one way learns nothing from `{}`/`--` (FR-004).
+      const adjacent = lineAdjacency(ln.cells, AXIS_STEP[ln.axis])
+      if (!lineConnectivityInforms(ln.cells.length, total, adjacent)) return base
+      const water = ln.cells.map((k) => layout.get(k) === 'water')
+      return { ...base, connectivity: lineConnectivityOf(water, adjacent) }
+    })
   }
   return makeBoard({ params, present, cells, lines })
 }

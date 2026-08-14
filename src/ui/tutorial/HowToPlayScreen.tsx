@@ -1,7 +1,7 @@
 // HowToPlayScreen.tsx — the rules, off the menu. Same content as the quiet rail
 // beside the board (shared via `how-to-play-content`), laid out to be read
 // rather than glanced at.
-import { CLUE_FORMS, EDGE_NUMBERS, MARKING, SETTLED } from '@/ui/gameplay/how-to-play-content'
+import { CLUE_FORMS, EDGE_NUMBERS, EDGE_RUNS, MARKING, SETTLED } from '@/ui/gameplay/how-to-play-content'
 
 export interface HowToPlayScreenProps {
   onBack: () => void
@@ -44,6 +44,7 @@ export function HowToPlayScreen({ onBack, onPlay }: HowToPlayScreenProps) {
         <section className="rounded-2xl bg-foam p-5">
           <h2 className="font-display text-lg text-deep-pool">Numbers around the edge</h2>
           <p className="mt-1 text-sm leading-relaxed text-ink/80">{EDGE_NUMBERS}</p>
+          <p className="mt-2 text-sm leading-relaxed text-ink/80">{EDGE_RUNS}</p>
         </section>
 
         <div className="flex justify-center gap-3">

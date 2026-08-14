@@ -5,8 +5,8 @@
 // carrying local connectivity for the ring it came from.
 import type { Board, Connectivity, Technique } from './board'
 import type { Line } from './hex'
-import { DIRECTIONS, key, linesOf } from './hex'
-import { circularRuns } from './clues'
+import { AXIS_STEP, DIRECTIONS, key, linesOf } from './hex'
+import { circularRuns, lineAdjacency } from './clues'
 
 export type CellVal = 'water' | 'rock' | 'unknown'
 export type Assign = Map<string, CellVal>
@@ -20,6 +20,12 @@ export interface Constraint {
   /** for connectivity: the origin's 6 ring slots (cell key or null if absent) */
   ring?: (string | null)[]
   connectivity?: Connectivity
+  /**
+   * For an annotated LINE only: whether `cells[i+1]` physically adjoins
+   * `cells[i]`. Length is `cells.length - 1`. A `false` is a hole in the row,
+   * which ends a run just as a stone does (010 FR-003).
+   */
+  adjacent?: boolean[]
 }
 
 /** Accumulates progress across a solving run. */
@@ -60,7 +66,18 @@ export function setup(board: Board): { assign: Assign; constraints: Constraint[]
     for (const ln of linesOf(board.present)) byId.set(`${ln.axis},${ln.index}`, ln)
     for (const lc of board.lines) {
       const ln = byId.get(`${lc.axis},${lc.index}`)
-      if (ln) constraints.push({ cells: ln.cells, water: lc.total, source: 'line' })
+      if (!ln) continue
+      constraints.push({
+        cells: ln.cells,
+        water: lc.total,
+        source: 'line',
+        ...(lc.connectivity
+          ? {
+              connectivity: lc.connectivity,
+              adjacent: lineAdjacency(ln.cells, AXIS_STEP[lc.axis]),
+            }
+          : {}),
+      })
     }
   }
 
@@ -198,6 +215,162 @@ export function connectivityPass(
   let changed = false
   for (const c of constraints) {
     if (c.connectivity && applyConnectivity(c, assign, ctx)) changed = true
+    if (ctx.contradiction) return changed
+  }
+  return changed
+}
+
+/**
+ * Row-connectivity forcing (010): given a row's total, its `{}`/`--`
+ * annotation, and what is already known, force any cell that comes out the same
+ * in every valid arrangement.
+ *
+ * The ring version enumerates 2^6 arrangements, which is fine for six slots. A
+ * row can be 15 cells on a Large board, so this uses a forward/backward DP
+ * instead — O(cells x water x 4) rather than 2^15.
+ *
+ * State is (index, water used, runs so far capped at 2, whether we are inside a
+ * run). Capping runs at 2 is sound because the annotation only distinguishes
+ * "exactly one run" from "more than one": once there are two, more make no
+ * difference. `reach[i]` holds the states arrivable at position i; `viable[i]`
+ * holds those from which a valid completion exists. A cell is forced when every
+ * arrangement that is both reachable and viable agrees on it.
+ */
+export function applyLineConnectivity(
+  c: Constraint,
+  assign: Assign,
+  ctx: SolveCtx,
+): boolean {
+  if (!c.connectivity || !c.adjacent || c.source !== 'line') return false
+  const cells = c.cells
+  const n = cells.length
+  const adjacent = c.adjacent
+  const wantRuns = c.connectivity === 'connected' ? 1 : 2
+
+  const known: (boolean | null)[] = cells.map((k) => {
+    const v = assign.get(k)
+    return v === 'water' ? true : v === 'rock' ? false : null
+  })
+  // NB: a fully-known row is NOT an early return. It can still be *invalid* —
+  // and saying so is what lets the uniqueness counter prune a branch that has
+  // already violated the annotation. Skipping that check would let it count
+  // assignments the annotation forbids, and report a board unique that isn't.
+  const anyUnknown = known.some((v) => v === null)
+
+  // `runs` saturates at 2, which MEANS "two or more". Three runs is still a
+  // perfectly good `--` arrangement, so the cap must fold them together rather
+  // than reject them — dropping them would shrink the space of valid
+  // arrangements and force cells that aren't actually forced.
+  const RUNS_MAX = 2
+  const RUN_STATES = RUNS_MAX + 1 // 0, 1, "2 or more"
+  const stateCount = (c.water + 1) * RUN_STATES * 2
+
+  const encode = (water: number, runs: number, inRun: boolean): number =>
+    (water * RUN_STATES + runs) * 2 + (inRun ? 1 : 0)
+  const decode = (s: number): { water: number; runs: number; inRun: boolean } => {
+    const inRun = (s & 1) === 1
+    const rest = s >> 1
+    const runs = rest % RUN_STATES
+    return { water: (rest - runs) / RUN_STATES, runs, inRun }
+  }
+
+  /** Advance one cell. Returns the next state, or -1 if it can't be taken. */
+  const step = (s: number, wet: boolean, i: number): number => {
+    const { water, runs, inRun } = decode(s)
+    if (!wet) return encode(water, runs, false)
+    if (water + 1 > c.water) return -1
+    // A water cell extends the current run only if it also touches its
+    // predecessor; a hole in the row starts a new run just as a stone does.
+    const continues = inRun && i > 0 && adjacent[i - 1]
+    return encode(water + 1, continues ? runs : Math.min(runs + 1, RUNS_MAX), true)
+  }
+
+  /** The values cell `i` may take from state `s` (respecting what's known). */
+  const options = (i: number): boolean[] =>
+    known[i] === null ? [true, false] : [known[i] as boolean]
+
+  // Forward: which states are arrivable at each position?
+  const reach: Uint8Array[] = Array.from({ length: n + 1 }, () => new Uint8Array(stateCount))
+  reach[0][encode(0, 0, false)] = 1
+  for (let i = 0; i < n; i++) {
+    for (let s = 0; s < stateCount; s++) {
+      if (!reach[i][s]) continue
+      for (const wet of options(i)) {
+        const ns = step(s, wet, i)
+        if (ns >= 0) reach[i + 1][ns] = 1
+      }
+    }
+  }
+
+  // Backward: from which states can a valid arrangement still be completed?
+  const viable: Uint8Array[] = Array.from({ length: n + 1 }, () => new Uint8Array(stateCount))
+  for (let s = 0; s < stateCount; s++) {
+    const { water, runs } = decode(s)
+    // `connected` is runs <= 1, not runs === 1 — matching `lineConnectivityOf`
+    // and the ring's `circularRuns`. A row with no water at all is trivially
+    // one arc. Informativeness keeps that off real boards, but the DP has to
+    // agree with the definition, not with what generation happens to produce.
+    if (water === c.water && (wantRuns === 1 ? runs <= 1 : runs >= 2)) viable[n][s] = 1
+  }
+  for (let i = n - 1; i >= 0; i--) {
+    for (let s = 0; s < stateCount; s++) {
+      if (!reach[i][s]) continue
+      for (const wet of options(i)) {
+        const ns = step(s, wet, i)
+        if (ns >= 0 && viable[i + 1][ns]) {
+          viable[i][s] = 1
+          break
+        }
+      }
+    }
+  }
+
+  if (!viable[0][encode(0, 0, false)]) {
+    ctx.contradiction = true
+    return false
+  }
+  if (!anyUnknown) return false // valid, and nothing left to force
+
+  // A cell is forced when only one value survives across every arrangement that
+  // is both reachable to here and completable from here.
+  let changed = false
+  for (let i = 0; i < n; i++) {
+    if (known[i] !== null) continue
+    let canBeWater = false
+    let canBeRock = false
+    for (let s = 0; s < stateCount; s++) {
+      if (!reach[i][s] || !viable[i][s]) continue
+      for (const wet of [true, false]) {
+        const ns = step(s, wet, i)
+        if (ns >= 0 && viable[i + 1][ns]) {
+          if (wet) canBeWater = true
+          else canBeRock = true
+        }
+      }
+      if (canBeWater && canBeRock) break
+    }
+    if (canBeWater && !canBeRock) {
+      assign.set(cells[i], 'water')
+      changed = true
+    } else if (canBeRock && !canBeWater) {
+      assign.set(cells[i], 'rock')
+      changed = true
+    }
+  }
+  if (changed) ctx.used.add('line-connectivity')
+  return changed
+}
+
+export function lineConnectivityPass(
+  constraints: Constraint[],
+  assign: Assign,
+  ctx: SolveCtx,
+): boolean {
+  let changed = false
+  for (const c of constraints) {
+    if (c.source === 'line' && c.connectivity && applyLineConnectivity(c, assign, ctx)) {
+      changed = true
+    }
     if (ctx.contradiction) return changed
   }
   return changed

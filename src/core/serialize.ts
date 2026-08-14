@@ -8,7 +8,9 @@ import { key, parseKey } from './hex'
 const FORMAT_VERSION = 1
 
 type CellTuple = [string, 'w' | 'r', 0 | 1, number?, ('c' | 's')?]
-type LineTuple = [Axis, number, number, 'start' | 'end']
+// The trailing 'c'/'s' mirrors CellTuple's connectivity slot: optional, so an
+// unannotated row serializes exactly as it always did.
+type LineTuple = [Axis, number, number, 'start' | 'end', ('c' | 's')?]
 
 interface CanonicalBoard {
   v: number
@@ -53,7 +55,11 @@ export function serializeBoard(board: Board): string {
     .map(encodeCell)
   const lines: LineTuple[] = [...board.lines]
     .sort((a, b) => a.axis - b.axis || a.index - b.index)
-    .map((l) => [l.axis, l.index, l.total, l.from])
+    .map((l) =>
+      l.connectivity
+        ? [l.axis, l.index, l.total, l.from, l.connectivity === 'connected' ? 'c' : 's']
+        : [l.axis, l.index, l.total, l.from],
+    )
   const canonical: CanonicalBoard = { v: FORMAT_VERSION, params: board.params, cells, lines }
   return JSON.stringify(canonical)
 }
@@ -68,12 +74,12 @@ export function deserializeBoard(s: string): Board {
     cells.set(k, cell)
     present.add(k)
   }
-  const lines: LineClue[] = c.lines.map((l) => ({
-    axis: l[0],
-    index: l[1],
-    total: l[2],
-    from: l[3],
-  }))
+  const lines: LineClue[] = c.lines.map((l) => {
+    const base = { axis: l[0], index: l[1], total: l[2], from: l[3] }
+    if (l[4] === 'c') return { ...base, connectivity: 'connected' as const }
+    if (l[4] === 's') return { ...base, connectivity: 'split' as const }
+    return base
+  })
   return makeBoard({ params: c.params, present, cells, lines })
 }
 

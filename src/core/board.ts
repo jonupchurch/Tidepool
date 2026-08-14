@@ -14,6 +14,12 @@ export const DIFFICULTY_TIERS: readonly DifficultyTier[] = ['Calm', 'Tricky', 'D
 export interface ClueToggles {
   connectivity: boolean
   lineTotals: boolean
+  /**
+   * `{n}` / `-n-` on row totals (010). Optional and default-off: it contributes
+   * to the RNG seed string ONLY when enabled, so every board that predates it
+   * generates byte-identically. See `rngSeedString` and `fingerprints.test.ts`.
+   */
+  lineConnectivity?: boolean
 }
 
 /** Human-friendly seed, `WORD-NNNN` (e.g. `CORAL-4417`). */
@@ -59,6 +65,12 @@ export interface LineClue {
   index: number
   total: number
   from: 'start' | 'end'
+  /**
+   * `{}` (the row's water is one unbroken run) / `--` (two or more runs);
+   * absent = plain number. A stone OR a missing cell ends a run, so this reads
+   * the way the row looks (010 FR-002/FR-003).
+   */
+  connectivity?: Connectivity
 }
 
 export interface Board {
@@ -72,7 +84,12 @@ export interface Board {
   bounds: { minQ: number; maxQ: number; minR: number; maxR: number }
 }
 
-export type Technique = 'forced-count' | 'line-total' | 'connectivity' | 'subset-overlap'
+export type Technique =
+  | 'forced-count'
+  | 'line-total'
+  | 'connectivity'
+  | 'subset-overlap'
+  | 'line-connectivity'
 
 export interface SolverResult {
   /** technique solver reached a complete assignment, guess-free */

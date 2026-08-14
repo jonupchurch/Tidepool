@@ -14,4 +14,8 @@ export const MARKING = 'Fill every cell: left-click for water, right-click for s
 export const EDGE_NUMBERS =
   "Numbers around the edge count the water in that whole line. Click one to trace its line, right-click to grey it out once you've settled it."
 
+/** The same `{}` / `--` vocabulary, on a row total rather than a tile (010). */
+export const EDGE_RUNS =
+  'An edge number can be braced or dashed too: {n} means that line’s water sits in one unbroken run, -n- means it comes apart into two or more.'
+
 export const SETTLED = 'A cell you get right locks in place, so a stray click can never undo it.'

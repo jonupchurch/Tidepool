@@ -39,9 +39,13 @@ test('How to play is reachable from Home and explains the clue forms', async ({ 
 
   await expect(page.getByRole('heading', { name: /how to play/i })).toBeVisible()
   await expect(page.getByText(/left-click for water/i)).toBeVisible()
-  await expect(page.getByText('{n}')).toBeVisible()
-  await expect(page.getByText('-n-')).toBeVisible()
+  // `exact` matters now: the edge-runs sentence below also contains "{n}", and
+  // a substring match would find both and fail on strict mode.
+  await expect(page.getByText('{n}', { exact: true })).toBeVisible()
+  await expect(page.getByText('-n-', { exact: true })).toBeVisible()
   await expect(page.getByText(/count the water in that whole line/i)).toBeVisible()
+  // 010: the same braces/dashes, explained for row totals too.
+  await expect(page.getByText(/one unbroken run/i)).toBeVisible()
 
   // It offers a way straight into a board.
   await page.getByRole('button', { name: /^play$/i }).click()

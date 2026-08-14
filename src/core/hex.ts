@@ -73,6 +73,21 @@ export function lineIndex(a: Axial, axis: Axis): number {
   }
 }
 
+/**
+ * The forward step along each axis, matching `linesOf()`'s cell order (sorted
+ * by q, then r): axis 0 runs E (r fixed), axis 1 runs SE (q fixed), axis 2 runs
+ * NE (s = -q-r fixed).
+ *
+ * Core geometry, not a rendering detail: the solver needs it to tell whether two
+ * consecutive cells of a row physically adjoin, which is what makes a row's
+ * `{n}`/`-n-` annotation mean anything on a board with holes in it.
+ */
+export const AXIS_STEP: Record<Axis, Axial> = {
+  0: { q: 1, r: 0 },
+  1: { q: 0, r: 1 },
+  2: { q: 1, r: -1 },
+}
+
 export interface Line {
   axis: Axis
   index: number

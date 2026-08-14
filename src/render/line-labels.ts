@@ -8,20 +8,14 @@
 // a direction unrelated to the line, which left them ambiguous and stacked at
 // the corners.) Where two labels would still collide, the loser slides further
 // out along its own axis — never sideways — so the alignment cue survives.
-import type { Axial, Axis, Board } from '@/core'
-import { linesOf, parseKey } from '@/core'
+import type { Axial, Axis, Board, Connectivity } from '@/core'
+import { AXIS_STEP, linesOf, parseKey } from '@/core'
 import { type HexLayout, hexToPixel } from './layout'
 
-/**
- * The forward step along each axis, matching `linesOf()`'s cell order (sorted
- * by q, then r): axis 0 runs E (r fixed), axis 1 runs SE (q fixed), axis 2
- * runs NE (s = -q-r fixed).
- */
-export const AXIS_STEP: Record<Axis, Axial> = {
-  0: { q: 1, r: 0 },
-  1: { q: 0, r: 1 },
-  2: { q: 1, r: -1 },
-}
+// AXIS_STEP moved to core/hex.ts — the solver needs the same steps to tell
+// whether two consecutive cells of a row adjoin. Re-exported so the renderer's
+// existing importers keep working.
+export { AXIS_STEP }
 
 /** A label's resolved position in axial space — independent of hex size. */
 export interface LineAnchor {
@@ -30,6 +24,8 @@ export interface LineAnchor {
   axis: Axis
   index: number
   total: number
+  /** `{}` / `--` on this row's total (010); absent = a plain number. */
+  connectivity?: Connectivity
   /** anchor coord, fractional: a point just off the end of the row */
   coord: Axial
   /** far tip of the direction dash — the outermost ink this label puts down */
@@ -51,6 +47,13 @@ const NUDGE_STEP = 0.55
 const MAX_NUDGE = 3
 /** Closest two label centres may sit, in hex-step units (scale-free). */
 const MIN_GAP = 1.5
+/**
+ * How much more room an annotated total needs. `-10-` is roughly twice the
+ * width of `10`, so the spacing tuned for a bare number lets braced ones touch.
+ * Applied per-label, so a board with no annotations keeps its exact current
+ * label placement.
+ */
+const ANNOTATED_GAP_SCALE = 1.45
 /** Direction-dash span, as distances from the label centre in hex-steps. */
 const TICK_NEAR = 0.32
 const TICK_FAR = 0.86
@@ -73,7 +76,7 @@ export function lineAnchors(board: Board): LineAnchor[] {
   if (board.lines.length === 0) return []
   const byId = new Map(linesOf(board.present).map((l) => [`${l.axis},${l.index}`, l]))
   const placed: LineAnchor[] = []
-  const placedUnits: Array<{ x: number; y: number }> = []
+  const placedUnits: Array<{ x: number; y: number; gap: number }> = []
 
   for (const lc of board.lines) {
     const id = `${lc.axis},${lc.index}`
@@ -92,8 +95,11 @@ export function lineAnchors(board: Board): LineAnchor[] {
       })
       return { coord: out(d), tip: out(d + TICK_FAR), cells }
     }
+    // The pair's clearance is set by the WIDER of the two labels, so a wide
+    // one pushes a narrow neighbour away rather than only being pushed itself.
+    const myGap = lc.connectivity ? MIN_GAP * ANNOTATED_GAP_SCALE : MIN_GAP
     const free = (u: { x: number; y: number }): boolean =>
-      !placedUnits.some((p) => Math.hypot(p.x - u.x, p.y - u.y) < MIN_GAP)
+      !placedUnits.some((p) => Math.hypot(p.x - u.x, p.y - u.y) < Math.max(p.gap, myGap))
 
     // A row total is equally true at either end, so a crowded label moves to the
     // OPPOSITE END of its own row before it ever pushes further out — that keeps
@@ -118,11 +124,12 @@ export function lineAnchors(board: Board): LineAnchor[] {
       axis: lc.axis,
       index: lc.index,
       total: lc.total,
+      ...(lc.connectivity ? { connectivity: lc.connectivity } : {}),
       coord: chosen.coord,
       tip: chosen.tip,
       cells: chosen.cells,
     })
-    placedUnits.push(u)
+    placedUnits.push({ ...u, gap: myGap })
   }
 
   return placed
@@ -144,10 +151,13 @@ export function labelAt(
   radius: number,
 ): LineLabel | null {
   let best: LineLabel | null = null
-  let bestD = radius
+  let bestD = Infinity
   for (const l of labels) {
+    // An annotated total is physically wider, so its target grows with it —
+    // otherwise the braces would sit outside the clickable area.
+    const r = l.connectivity ? radius * ANNOTATED_GAP_SCALE : radius
     const d = Math.hypot(l.x - x, l.y - y)
-    if (d <= bestD) {
+    if (d <= r && d < bestD) {
       bestD = d
       best = l
     }

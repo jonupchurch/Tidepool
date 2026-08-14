@@ -2,8 +2,9 @@
 // reduce → rate, advancing through seed-derived candidates until one matches
 // the requested difficulty (else returning the closest, honestly rated). The
 // served board is minimal, uniquely solvable, and guess-free (spec US1/US2/US5).
-import type { Board, BoardParams, Cell, DifficultyTier, LineClue, SizeTier } from './board'
+import type { Board, BoardParams, Cell, DifficultyTier, LineClue } from './board'
 import { isDifficultyTier, isSizeTier, makeBoard } from './board'
+import { isShapeId } from './shapes'
 import {
   type Layout,
   adjacencyClue,
@@ -13,12 +14,12 @@ import {
   lineTotal,
 } from './clues'
 import { allowedTechniquesFor } from './difficulty'
-import { AXIS_STEP, hexRegion, key, linesOf, parseKey, presentSet } from './hex'
+import { AXIS_STEP, key, linesOf, parseKey, presentSet } from './hex'
+import { DEFAULT_SHAPE, shapeRegion, shapeSupportsSize } from './shapes'
 import { reduceClues } from './reduce'
 import { type Rng, nextInt, seedToRng } from './rng'
 import { countSolutions, solve, techniqueSolves } from './solver'
 
-const SIZE_RADIUS: Record<SizeTier, number> = { Small: 3, Medium: 5, Large: 7 }
 const MAX_CANDIDATES = 120
 /** Probability (per-mille) a candidate cell is water. */
 const WATER_PER_MILLE = 500
@@ -44,8 +45,13 @@ const MAX_WATER_FRACTION = 0.75
  */
 function rngSeedString(p: BoardParams, candidate: number): string {
   const c = `c${p.clues.connectivity ? 1 : 0}l${p.clues.lineTotals ? 1 : 0}`
-  const extra = p.clues.lineConnectivity ? '|lc1' : ''
-  return `${p.seed}|${p.size}|${p.difficulty}|${c}${extra}|#${candidate}`
+  // Optional segments append in a FIXED order — clue toggles, then shape. Two
+  // features each adding "their own segment" is only safe if that order is
+  // decided once and pinned, or a board with both differs depending on which
+  // code path composed the string. See generate.test.ts.
+  const lc = p.clues.lineConnectivity ? '|lc1' : ''
+  const shape = p.shape && p.shape !== DEFAULT_SHAPE ? `|s:${p.shape}` : ''
+  return `${p.seed}|${p.size}|${p.difficulty}|${c}${lc}${shape}|#${candidate}`
 }
 
 function randomLayout(present: Set<string>, rng: Rng): Layout {
@@ -111,6 +117,12 @@ function validateParams(params: BoardParams): void {
     throw new Error('generateBoard: clue toggles required')
   if (typeof params.seed !== 'string' || params.seed.length === 0)
     throw new Error('generateBoard: seed required')
+  if (params.shape !== undefined) {
+    if (!isShapeId(params.shape)) throw new Error(`generateBoard: unknown shape "${params.shape}"`)
+    if (!shapeSupportsSize(params.shape, params.size)) {
+      throw new Error(`generateBoard: shape "${params.shape}" does not support ${params.size}`)
+    }
+  }
 }
 
 /**
@@ -121,8 +133,7 @@ function validateParams(params: BoardParams): void {
 export function generateBoard(params: BoardParams): Board {
   validateParams(params)
 
-  const radius = SIZE_RADIUS[params.size]
-  const present = presentSet(hexRegion(radius))
+  const present = presentSet(shapeRegion(params.size, params.shape ?? DEFAULT_SHAPE))
   const allowed = allowedTechniquesFor(params.difficulty)
 
   let best: Board | null = null

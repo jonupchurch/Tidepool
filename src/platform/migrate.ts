@@ -36,6 +36,11 @@ export const MIGRATIONS: Record<Namespace, Record<number, Migration>> = {
       poolsFilled: typeof old.poolsFilled === 'number' ? old.poolsFilled : 0,
       creaturesFound: typeof old.creaturesFound === 'number' ? old.creaturesFound : 0,
     }),
+    // v1 → v2 (011): perfect-solve tracking. Starts at zero and unseeded — the
+    // count of already-clean curated boards can't be recovered here, because a
+    // migration gets one raw record and has no store to read `curatedProgress`
+    // from. `seedPerfectFromCurated` does that at boot, once, behind the flag.
+    1: (old) => ({ ...old, v: 2, boardsPerfect: 0, perfectSeeded: false }),
   },
   curatedProgress: { 0: legacyTo1('curatedProgress') },
   onboarding: { 0: legacyTo1('onboarding') },

@@ -9,7 +9,7 @@ import { JournalScreen } from './JournalScreen'
 async function seeded(): Promise<SaveStore> {
   const store = memoryStore()
   await saveDiscoveries(store, { crab: { firstFoundSeed: 'TIDE-0007', count: 2 } })
-  await saveStats(store, { boardsSolved: 4, poolsFilled: 17, creaturesFound: 1 })
+  await saveStats(store, { boardsSolved: 4, poolsFilled: 17, creaturesFound: 1, boardsPerfect: 2 })
   return store
 }
 

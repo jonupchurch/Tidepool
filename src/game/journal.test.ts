@@ -2,16 +2,18 @@
 // discovery-record branch, and `recordDiscovery` end-to-end through a store.
 import { CREATURES } from './creatures'
 import { memoryStore } from './journal-fixtures'
+import { loadRecord, saveRecord } from '@/platform'
 import {
   type DiscoveryMap,
   applyDiscovery,
   buildJournalView,
+  countCleanCurated,
   filterCards,
   isNewDiscovery,
   recordBoardSolved,
   recordDiscovery,
 } from './journal'
-import { loadDiscoveries, loadStats } from './journal-store'
+import { loadDiscoveries, loadStats, seedPerfectFromCurated } from './journal-store'
 
 describe('buildJournalView (read model)', () => {
   it('renders a card for every catalog creature with accurate found/silhouette state', () => {
@@ -83,7 +85,12 @@ describe('recordDiscovery (SC-002/SC-003) — persisted through the store', () =
     const store = memoryStore()
     await recordDiscovery(store, 'crab', 'TIDE-0007')
     expect(await loadDiscoveries(store)).toEqual({ crab: { firstFoundSeed: 'TIDE-0007', count: 1 } })
-    expect(await loadStats(store)).toEqual({ boardsSolved: 0, poolsFilled: 1, creaturesFound: 1 })
+    expect(await loadStats(store)).toEqual({
+      boardsSolved: 0,
+      poolsFilled: 1,
+      creaturesFound: 1,
+      boardsPerfect: 0,
+    })
   })
 
   it('re-find increments count, preserves first-found, and counts another filled pool', async () => {
@@ -105,6 +112,121 @@ describe('recordDiscovery (SC-002/SC-003) — persisted through the store', () =
   it('recordBoardSolved bumps only boardsSolved', async () => {
     const store = memoryStore()
     await recordBoardSolved(store)
-    expect(await loadStats(store)).toEqual({ boardsSolved: 1, poolsFilled: 0, creaturesFound: 0 })
+    expect(await loadStats(store)).toEqual({
+      boardsSolved: 1,
+      poolsFilled: 0,
+      creaturesFound: 0,
+      boardsPerfect: 0,
+    })
+  })
+})
+
+// 011 — a board finished with no wrong mark ever placed.
+describe('recordBoardSolved: perfect solves (FR-001/FR-002)', () => {
+  it('a clean solve raises both totals', async () => {
+    const store = memoryStore()
+    await recordBoardSolved(store, { perfect: true })
+    const stats = await loadStats(store)
+    expect(stats.boardsSolved).toBe(1)
+    expect(stats.boardsPerfect).toBe(1)
+  })
+
+  it('a solve with a mistake raises only boards-solved', async () => {
+    const store = memoryStore()
+    await recordBoardSolved(store, { perfect: false })
+    const stats = await loadStats(store)
+    expect(stats.boardsSolved).toBe(1)
+    expect(stats.boardsPerfect).toBe(0)
+  })
+
+  it('accumulates a mixed run of solves', async () => {
+    const store = memoryStore()
+    for (const perfect of [true, false, true, true, false]) {
+      await recordBoardSolved(store, { perfect })
+    }
+    const stats = await loadStats(store)
+    expect(stats.boardsSolved).toBe(5)
+    expect(stats.boardsPerfect).toBe(3)
+  })
+
+  it('defaults to not-perfect when no verdict is given', async () => {
+    const store = memoryStore()
+    await recordBoardSolved(store)
+    expect((await loadStats(store)).boardsPerfect).toBe(0)
+  })
+})
+
+describe('countCleanCurated (FR-007/FR-008)', () => {
+  it('counts entries whose best run had zero mistakes', () => {
+    expect(
+      countCleanCurated({
+        a: { earnedCreatureId: 'crab', errors: 0 },
+        b: { earnedCreatureId: 'limpet', errors: 3 },
+        c: { earnedCreatureId: 'crab', errors: 0 },
+      }),
+    ).toBe(2)
+  })
+
+  it('does NOT count entries solved before mistakes were tracked', () => {
+    // `errors` absent = solved by an older build. The game would rather
+    // under-report than award a perfect it has no evidence for.
+    expect(
+      countCleanCurated({
+        old: { earnedCreatureId: 'crab' },
+        clean: { earnedCreatureId: 'crab', errors: 0 },
+      }),
+    ).toBe(1)
+  })
+
+  it('is zero for a player with no curated progress', () => {
+    expect(countCleanCurated({})).toBe(0)
+  })
+})
+
+describe('seedPerfectFromCurated (FR-007) — runs once, ever', () => {
+  it('backfills from clean curated solves so an upgrader does not see a zero', async () => {
+    const store = memoryStore()
+    await saveRecord(store, 'curatedProgress', {
+      v: 1,
+      solved: {
+        a: { earnedCreatureId: 'crab', errors: 0 },
+        b: { earnedCreatureId: 'crab', errors: 0 },
+        c: { earnedCreatureId: 'limpet', errors: 2 },
+        d: { earnedCreatureId: 'limpet' },
+      },
+    })
+    await seedPerfectFromCurated(store)
+    expect((await loadStats(store)).boardsPerfect).toBe(2)
+  })
+
+  it('is idempotent — restarts never double-count', async () => {
+    const store = memoryStore()
+    await saveRecord(store, 'curatedProgress', {
+      v: 1,
+      solved: { a: { earnedCreatureId: 'crab', errors: 0 } },
+    })
+    await seedPerfectFromCurated(store)
+    await seedPerfectFromCurated(store)
+    await seedPerfectFromCurated(store)
+    expect((await loadStats(store)).boardsPerfect).toBe(1)
+  })
+
+  it('does not clobber perfects earned after the backfill', async () => {
+    const store = memoryStore()
+    await saveRecord(store, 'curatedProgress', {
+      v: 1,
+      solved: { a: { earnedCreatureId: 'crab', errors: 0 } },
+    })
+    await seedPerfectFromCurated(store)
+    await recordBoardSolved(store, { perfect: true })
+    await seedPerfectFromCurated(store) // a later boot
+    expect((await loadStats(store)).boardsPerfect).toBe(2)
+  })
+
+  it('leaves a fresh player at zero and still marks them seeded', async () => {
+    const store = memoryStore()
+    await seedPerfectFromCurated(store)
+    expect((await loadStats(store)).boardsPerfect).toBe(0)
+    expect((await loadRecord(store, 'stats')).perfectSeeded).toBe(true)
   })
 })

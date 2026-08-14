@@ -10,6 +10,9 @@ export function StatsFooter({ stats }: { stats: JournalStats }) {
       aria-label="Lifetime shore stats"
     >
       <span>🌊 {stats.boardsSolved} boards solved</span>
+      {/* Shown at zero rather than hidden: it reads as something to reach for,
+          where an absent line reads as something broken (011 US2). */}
+      <span>✨ {stats.boardsPerfect} finished clean</span>
       <span>💧 {stats.poolsFilled} pools filled</span>
       <span>🐚 {stats.creaturesFound} creatures found</span>
     </footer>

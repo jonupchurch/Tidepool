@@ -217,7 +217,9 @@ export function GameplayScreen({
         const pool = s.pools.find((pp) => pp.id === id)
         if (pool) await recordDiscovery(storeRef.current, pool.creatureId, seed)
       }
-      if (delta.complete) await recordBoardSolved(storeRef.current)
+      // `errorsMade` counts a wrong mark when it is placed, so a board finished
+      // after a fixed mistake is not perfect — which is the point (011 FR-003).
+      if (delta.complete) await recordBoardSolved(storeRef.current, { perfect: s.errorsMade === 0 })
     })()
     if (import.meta.env.DEV && typeof window !== 'undefined') {
       const hook = (window as unknown as { __TIDEPOOLS__?: { lastSave?: Promise<void> } }).__TIDEPOOLS__
@@ -556,6 +558,7 @@ export function GameplayScreen({
         <PoolToast message={toast} />
         {complete && (
           <CompletePanel
+            perfect={errorsMade === 0}
             onNext={onNext}
             onJournal={() => onJournal?.()}
             onHome={() => onHome?.()}

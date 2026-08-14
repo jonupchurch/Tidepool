@@ -4,6 +4,38 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-13 — Boards you finished without a single wrong mark
+
+### Added
+
+- **A lifetime count of boards finished clean**, beside boards solved, pools
+  filled and creatures found in the journal. A board counts when no wrong mark
+  was ever placed on it — undoing a mistake doesn't launder it, because the tally
+  counts marks at the moment they land, not what's left on the board at the end.
+- **A line on the completion panel** when you finish clean. One sentence, same
+  voice, no sound and no animation. A board finished with a mistake reads exactly
+  as it always has.
+- **A mark on the curated coastline** for boards whose best run was clean, so
+  replaying a board you fumbled has something to show for it.
+
+### The part worth explaining
+
+Your existing clean solves are counted. Curated boards have recorded their best
+mistake count for a while, so the evidence was already on disk — opening the new
+counter to a zero would have read as the game having forgotten. That backfill
+runs once, on the first launch after updating, behind a flag that makes a second
+run a no-op.
+
+It deliberately doesn't happen in the schema migration, which is where you'd
+expect it. A migration here gets one record and no way to read another, by
+design — that's what keeps migrations testable — so it couldn't see your curated
+progress even if it wanted to.
+
+Boards solved before mistakes were tracked at all are **not** counted, and no
+longer show as zero-mistake on the map either. That zero used to be harmless
+because it only suppressed a warning; now it would award a clean-solve mark for a
+board nobody ever checked. Absence of evidence isn't evidence of a clean run.
+
 ## 2026-07-25 — A render error no longer means a white screen
 
 ### Added

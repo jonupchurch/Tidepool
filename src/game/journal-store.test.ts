@@ -8,7 +8,12 @@ describe('journal-store adapter', () => {
   it('defaults to an empty discoveries map + zeroed stats on a fresh store', async () => {
     const store = memoryStore()
     expect(await loadDiscoveries(store)).toEqual({})
-    expect(await loadStats(store)).toEqual({ boardsSolved: 0, poolsFilled: 0, creaturesFound: 0 })
+    expect(await loadStats(store)).toEqual({
+      boardsSolved: 0,
+      poolsFilled: 0,
+      creaturesFound: 0,
+      boardsPerfect: 0,
+    })
   })
 
   it('round-trips a discovery record through the store', async () => {
@@ -30,9 +35,10 @@ describe('journal-store adapter', () => {
 
   it('round-trips lifetime stats (SC-003)', async () => {
     const store = memoryStore()
-    await saveStats(store, { boardsSolved: 3, poolsFilled: 11, creaturesFound: 5 })
-    expect(await loadStats(store)).toEqual({ boardsSolved: 3, poolsFilled: 11, creaturesFound: 5 })
+    const stats = { boardsSolved: 3, poolsFilled: 11, creaturesFound: 5, boardsPerfect: 2 }
+    await saveStats(store, stats)
+    expect(await loadStats(store)).toEqual(stats)
     const raw = await store.get<{ v: number }>(keyFor('stats'))
-    expect(raw?.v).toBe(1)
+    expect(raw?.v).toBe(2)
   })
 })

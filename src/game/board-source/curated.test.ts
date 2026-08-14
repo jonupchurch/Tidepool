@@ -130,10 +130,23 @@ describe('curated mistake record (best run wins)', () => {
     expect(rows.find((r) => r.entry.id === 'first-cove')?.errors).toBe(1)
   })
 
-  it('reads pre-tracking records as clean, and unsolved as null', () => {
+  // Changed by 011. This used to read a pre-tracking record as `0`, which was
+  // harmless while zero only meant "don't draw the coral ring". Now zero also
+  // earns a clean-solve mark, so reporting it for a board that was never
+  // checked would award something the game has no evidence for (FR-008) — and
+  // would disagree with the lifetime perfect count, which reads the raw record
+  // and excludes them. Both "never solved" and "solved, unknown" are no record.
+  it('reads an unknown mistake count as null, whether unsolved or pre-tracking', () => {
     const rows = manifestRows(sampleManifest, { 'cove-1': { earnedCreatureId: 'crab' } })
+    expect(rows.find((r) => r.entry.id === 'cove-1')?.errors).toBeNull() // solved, not tracked
+    expect(rows.find((r) => r.entry.id === 'reef-2')?.errors).toBeNull() // never solved
+  })
+
+  it('still reads an explicitly clean run as zero', () => {
+    const rows = manifestRows(sampleManifest, {
+      'cove-1': { earnedCreatureId: 'crab', errors: 0 },
+    })
     expect(rows.find((r) => r.entry.id === 'cove-1')?.errors).toBe(0)
-    expect(rows.find((r) => r.entry.id === 'reef-2')?.errors).toBeNull()
   })
 })
 

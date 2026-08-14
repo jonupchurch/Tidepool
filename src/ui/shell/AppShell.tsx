@@ -16,7 +16,7 @@ import {
   nextSeed,
   toBoardParams,
 } from '@/game/board-source'
-import { hydrateSettings, setSetting } from '@/game'
+import { hydrateSettings, seedPerfectFromCurated, setSetting } from '@/game'
 import { type SaveStore, getSaveStore } from '@/platform'
 import { AboutScreen } from '@/ui/about/AboutScreen'
 import { CuratedScreen } from '@/ui/curated/CuratedScreen'
@@ -89,6 +89,10 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
   useEffect(() => {
     void (async () => {
       await hydrateSettings(store)
+      // One-time (self-flagging) backfill of the perfect-solve total from
+      // curated progress, so a player upgrading with clean solves already on
+      // record doesn't meet a zero. No-op on every boot after the first.
+      await seedPerfectFromCurated(store)
       setLastPlay(await getLastPlay(store))
       setBooted(true)
     })()

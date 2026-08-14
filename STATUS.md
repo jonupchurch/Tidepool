@@ -76,11 +76,14 @@ Build Live on the partner site. Bump the version in **both** `package.json` and
 - **Linux/Steam Deck is opportunistic**, per 009's spec. CI builds the artifacts
   on `ubuntu-22.04`; shipping them means a second depot and verifying webkit2gtk
   resolves inside the Steam Linux Runtime.
-- **"Driftwood Garden" is approved.** Jon listened on 2026-08-13 and it sounds
-  right. This was the only claim in 014/015 that a test could not make — the
-  channel, switch, volume and loop-point arithmetic are all covered against a
-  fake Web Audio, but how it *sounds* needed ears. Don't re-open it as an
-  outstanding item.
+- **"Driftwood Garden" is approved, loop included.** Jon listened on 2026-08-13
+  and heard it wrap cleanly at 2:15. This was the only claim in 014/015 that a
+  test could not make — the channel, switch, volume and loop-point handling are
+  all covered against a fake Web Audio, but how it *sounds* needed ears. The
+  seamless wrap also confirms the loop arithmetic in `src/audio/music.ts`
+  (encoder delay 576 samples + end padding read from the file's own Xing/LAME
+  header, trimmed only if the decoder hadn't already). Don't re-open either as
+  an outstanding item.
 
 ## Known rough edges
 

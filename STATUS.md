@@ -1,17 +1,20 @@
 # Tidepool — Status
 
-_Snapshot; updated each work session. Last updated: 2026-07-30._
+_Snapshot; updated each work session. Last updated: 2026-08-13._
 
 ## Current phase
 
-**Shipping.** All nine features are built and merged, and **build 24479382
+**Shipping.** All fifteen features are built and merged, and **build 24479382
 (`Tidepool 1.0.1`) is live on the `default` branch of Steam app 5037710** —
 downloaded, installed and launched from the Steam client. What remains before
 release is store-page process on the partner site, not code.
 
+Features 010–015 landed after that build went up, so **the live Steam build does
+not contain them.** They ship with the next upload.
+
 ## Built
 
-Features 001–009, in build order, each specced and planned via Spec-Kit before
+Features 001–015, in build order, each specced and planned via Spec-Kit before
 implementation. Per-feature detail is in `CHANGELOG.md`; this is the index.
 
 | | Feature | |
@@ -25,10 +28,16 @@ implementation. Per-feature detail is in `CHANGELOG.md`; this is the index.
 | 007 | Tutorial | How to play |
 | 008 | Persistence | `platform/` seam, versioned schemas, migration |
 | 009 | Desktop packaging | Tauri wrap, native saves, offline fonts, CI artifacts |
+| 010 | Line annotations | `{n}` and `-n-` on edge numbers, and the solver technique for them |
+| 011 | Perfect solves | clean-solve tracking, lifetime total, curated marks |
+| 012 | Irregular shores | named silhouettes — atoll, crescent, wedge, shoal |
+| 013 | Curated page two | 36 more boards, found by a re-runnable search |
+| 014 | Ambient music | music channel, its own switch, measured loop points |
+| 015 | Master volume | one level for both channels, on Home and Pause |
 
 Plus, since: all 12 creature portraits, audio, the About screen, the curated hex
 map, HiDPI rendering, a root error boundary, 29 achievements, and the SteamPipe
-release pipeline. **596 unit tests + e2e green.**
+release pipeline. **823 unit tests + 32 e2e green.**
 
 ## Release — what's left
 
@@ -70,6 +79,11 @@ Build Live on the partner site. Bump the version in **both** `package.json` and
 
 ## Known rough edges
 
+- **Nobody has listened to the music.** The channel, the switch, the volume
+  control and the loop-point arithmetic are all tested against a fake Web Audio,
+  but whether "Driftwood Garden" sounds right — and whether the loop seam is
+  audible where it wraps — needs a human with speakers. If it clicks, the fix is
+  re-encoding to Ogg from the WAV master (needs `ffmpeg`, not installed here).
 - `screenshot-5.png` has the mouse cursor captured in it.
 - The small and vertical capsules are now the wordmark on transparency rather
   than illustrated tiles, so those two slots are mostly empty space — most

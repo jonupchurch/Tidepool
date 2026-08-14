@@ -4,6 +4,47 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-13 — How much, not just whether
+
+### Added
+
+- **A volume slider**, on Home under the sound switches and in the Pause overlay
+  beside the music switch. It sets one level for everything — the ambient bed and
+  the marks landing move together and keep their balance with each other.
+
+Mute is unchanged and still independent: it silences everything in one press,
+whatever the level says. Setting a level while muted is allowed and remembered —
+the slider dims and says so rather than pretending to be live.
+
+### The part worth explaining
+
+Most of this already existed. The game has had a master gain node since the
+music landed, with the sound-effect and music channels hanging beneath it, and
+the level driving it has been in the settings record all along. It simply never
+had a control. So the work was a slider, one setter, and — more usefully — a
+test that the thing called "master" actually is one.
+
+That test is the reason to write any of this down. Nothing checked the *shape*
+of the audio graph, only the numbers going into it, which meant a refactor could
+connect the music channel straight to the speakers and every existing test would
+still pass while the volume control quietly governed sound effects only. The
+fake audio harness now records what connects to what, and that failure was
+reproduced deliberately to confirm the guard catches it.
+
+The slider itself took two attempts. Browsers offer `accent-color` to tint a
+native range control from a palette, and it does tint the filled track and the
+thumb — but Chromium paints the *unfilled* track a fixed charcoal that no colour
+scheme setting overrides. On a page this pale that is a hard dark bar across the
+corner. Sampling the actual pixels rather than trusting the API is what caught
+it, and it also caught a fix that did nothing: an earlier colour-scheme rule
+changed the computed style and not one pixel. The track is now rebuilt from the
+same two palette tokens the rest of the game uses, so it follows Day and Night
+without a second rule.
+
+Separate sliders for music and effects are the obvious next thing, and are
+deliberately not here — the fields and the gain nodes for them already exist,
+so it is a small feature on its own rather than a rider on this one.
+
 ## 2026-08-13 — A second coastline
 
 ### Added

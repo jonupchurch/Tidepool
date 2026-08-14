@@ -132,5 +132,14 @@ if (run.status !== 0) {
   )
 }
 
-console.log(`\n  ok  uploaded — ${desc}`)
-console.log('      It is NOT live. Partner site → Builds → Set Build Live to promote it.')
+// `--preview` runs steamcmd all the way through a build *preview*, which
+// succeeds without uploading anything. Reporting "uploaded" either way is how
+// someone ends up believing a dry run shipped, or — worse — that a real run
+// didn't need doing.
+if (preview) {
+  console.log(`\n  ok  preview only, nothing uploaded — ${desc}`)
+  console.log('      Re-run without --preview to upload it.')
+} else {
+  console.log(`\n  ok  uploaded — ${desc}`)
+  console.log('      It is NOT live. Partner site → Builds → Set Build Live to promote it.')
+}

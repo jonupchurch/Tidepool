@@ -4,13 +4,14 @@ _Snapshot; updated each work session. Last updated: 2026-08-13._
 
 ## Current phase
 
-**Shipping.** All fifteen features are built and merged, and **build 24479382
-(`Tidepool 1.0.1`) is live on the `default` branch of Steam app 5037710** —
-downloaded, installed and launched from the Steam client. What remains before
-release is store-page process on the partner site, not code.
+**Shipping.** All fifteen features are built and merged. **Build 24743146
+(`Tidepool 1.1.0`) was uploaded on 2026-08-14 and is NOT yet live** — it carries
+features 010–015. Promote it from the partner site (Builds → Set Build Live)
+when you're ready; `setlive` is deliberately empty, so an upload never reaches
+players on its own.
 
-Features 010–015 landed after that build went up, so **the live Steam build does
-not contain them.** They ship with the next upload.
+Until then the live build on `default` is still **24479382 (`Tidepool 1.0.1`)**,
+which contains none of 010–015.
 
 ## Built
 

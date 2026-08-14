@@ -84,8 +84,9 @@ Build Live on the partner site. Bump the version in **both** `package.json` and
   The engine now loops **12.54 s → 124.54 s** — 112 s, exactly 14 of the track's
   8 s phrases — with a 4 s crossfade baked into the buffer, so the join is
   sample-continuous and the level never drops below a normal musical minimum.
-  The intro is heard once per session; the outro is never heard, which is
-  correct for a bed. A track authored to loop needs no entry in `LOOP_REGIONS`.
+  **Jon confirmed by ear on 2026-08-13 that it now wraps seamlessly.** The intro
+  is heard once per session; the outro is never heard, which is correct for a
+  bed. A track authored to loop needs no entry in `LOOP_REGIONS`.
 
 ## Known rough edges
 

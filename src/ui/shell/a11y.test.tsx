@@ -11,6 +11,8 @@ import { renderShell, sampleLastPlay, sampleShellPrefs } from './test-helpers'
 const homeProps = (over: Partial<HomeScreenProps> = {}): HomeScreenProps => ({
   prefs: sampleShellPrefs,
   onPrefsChange: vi.fn(),
+  volume: 0.8,
+  onVolumeChange: vi.fn(),
   lastPlay: sampleLastPlay,
   resume: null,
   stats: { boardsSolved: 0, creaturesFound: 0, totalCreatures: 6, featuredCreature: null, curatedSolved: 0, curatedTotal: 36 },
@@ -42,6 +44,12 @@ describe('shell accessibility', () => {
     expect(screen.getByRole('button', { name: /^play$/i })).toBeEnabled()
     // The seed field is labeled.
     expect(screen.getByRole('textbox', { name: /enter a seed/i })).toBeInTheDocument()
+    // 015: the volume control is not a button, so the sweep above skips it —
+    // and "every Home control" is the claim this test makes. A native range
+    // input is what keeps it keyboard-operable without bespoke key handling.
+    const volume = screen.getByRole('slider', { name: /volume/i })
+    expect(volume.tagName).toBe('INPUT')
+    expect(volume).toBeEnabled()
   })
 
   it('Pause is a modal dialog whose actions are in a sensible focus order', () => {

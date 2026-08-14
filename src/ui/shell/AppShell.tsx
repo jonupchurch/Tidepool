@@ -165,6 +165,13 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
     setSetting('sound', 'music', next.music)
   }, [])
 
+  // Volume gets its own setter rather than a `ShellPrefs` field (015 FR-010).
+  // `changePrefs` rewrites every switch on each call — fine for a button press,
+  // wrong for a value that is dragged: it would re-write three unrelated
+  // settings per detent, one of which is an explicit Day/Night that would
+  // overwrite a stored 'Auto'. One setting changes, so one setting is written.
+  const changeVolume = useCallback((volume: number) => setSetting('sound', 'volume', volume), [])
+
   const launchGameplay = useCallback(
     (params: BoardParams, doResume: boolean, curatedId?: string) => {
       setPaused(false)
@@ -255,6 +262,8 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
           <HomeScreen
             prefs={prefs}
             onPrefsChange={changePrefs}
+            volume={settings.sound.volume}
+            onVolumeChange={changeVolume}
             lastPlay={lastPlay}
             resume={resume}
             stats={stats}
@@ -323,6 +332,9 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
           onHome={goHome}
           music={prefs.music}
           onMusicChange={(music) => setSetting('sound', 'music', music)}
+          volume={settings.sound.volume}
+          onVolumeChange={changeVolume}
+          muted={prefs.muted}
         />
       )}
     </main>

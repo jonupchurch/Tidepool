@@ -8,12 +8,18 @@ import { DIFFICULTY_TIERS, SIZE_TIERS } from '@/core'
 import { toBoardParams } from '@/game/board-source'
 import { SeedEntry } from '@/ui/modes/SeedEntry'
 import { ResumeCard } from './ResumeCard'
+import { VolumeSlider } from './VolumeSlider'
 import { boardRequest, freshSeed } from './board-request'
 import type { HomeStats, LastPlay, ResumeSnapshot, Screen, ShellPrefs } from './types'
 
 export interface HomeScreenProps {
   prefs: ShellPrefs
   onPrefsChange: (prefs: ShellPrefs) => void
+  /** Master level, 0..1 (015). Its own prop rather than a `ShellPrefs` field:
+   *  `onPrefsChange` rewrites every switch on each call, and this one is dragged.
+   *  Keeping it separate means a drag writes exactly one setting. */
+  volume: number
+  onVolumeChange: (volume: number) => void
   lastPlay: LastPlay
   resume: ResumeSnapshot | null
   stats: HomeStats
@@ -34,6 +40,8 @@ const SECONDARY: readonly { label: string; screen: Screen }[] = [
 export function HomeScreen({
   prefs,
   onPrefsChange,
+  volume,
+  onVolumeChange,
   lastPlay,
   resume,
   stats,
@@ -60,38 +68,48 @@ export function HomeScreen({
     <div className="relative grid h-full w-full place-items-center overflow-y-auto bg-sand text-ink">
       {/* Global toggles (US5) — mute + music + Day/Night Tide. Mute is the
           master ("everything off, one press"); music is the finer control, so
-          you can keep the marks audible in a quiet room (014 US1). */}
-      <div className="absolute right-4 top-4 flex gap-2">
-        <button
-          type="button"
-          aria-label={prefs.muted ? 'Unmute' : 'Mute'}
-          aria-pressed={prefs.muted}
-          onClick={toggleMute}
-          className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
-        >
-          {prefs.muted ? '🔇' : '🔊'}
-        </button>
-        <button
-          type="button"
-          aria-label={prefs.music ? 'Turn music off' : 'Turn music on'}
-          aria-pressed={prefs.music}
-          onClick={toggleMusic}
-          className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
-        >
-          {/* One glyph, struck through when off. A second speaker emoji beside
-              the mute button read as a duplicate of it; a note that is plainly
-              crossed out doesn't. State is carried by aria-pressed regardless. */}
-          <span className={prefs.music ? '' : 'line-through decoration-2 opacity-50'}>🎵</span>
-        </button>
-        <button
-          type="button"
-          aria-label="Night Tide"
-          aria-pressed={prefs.theme === 'Night'}
-          onClick={toggleTheme}
-          className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
-        >
-          {prefs.theme === 'Night' ? '🌙' : '☀️'}
-        </button>
+          you can keep the marks audible in a quiet room (014 US1). The volume
+          slider sits under them (015): the switches answer "any sound?", it
+          answers "how much?". */}
+      <div className="absolute right-4 top-4 flex flex-col items-stretch gap-2">
+        <div className="flex gap-2">
+          <button
+            type="button"
+            aria-label={prefs.muted ? 'Unmute' : 'Mute'}
+            aria-pressed={prefs.muted}
+            onClick={toggleMute}
+            className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
+          >
+            {prefs.muted ? '🔇' : '🔊'}
+          </button>
+          <button
+            type="button"
+            aria-label={prefs.music ? 'Turn music off' : 'Turn music on'}
+            aria-pressed={prefs.music}
+            onClick={toggleMusic}
+            className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
+          >
+            {/* One glyph, struck through when off. A second speaker emoji beside
+                the mute button read as a duplicate of it; a note that is plainly
+                crossed out doesn't. State is carried by aria-pressed regardless. */}
+            <span className={prefs.music ? '' : 'line-through decoration-2 opacity-50'}>🎵</span>
+          </button>
+          <button
+            type="button"
+            aria-label="Night Tide"
+            aria-pressed={prefs.theme === 'Night'}
+            onClick={toggleTheme}
+            className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
+          >
+            {prefs.theme === 'Night' ? '🌙' : '☀️'}
+          </button>
+        </div>
+        <VolumeSlider
+          value={volume}
+          onChange={onVolumeChange}
+          muted={prefs.muted}
+          className="w-full"
+        />
       </div>
 
       <div className="flex w-full max-w-md flex-col items-center gap-6 px-6 py-10 text-center">

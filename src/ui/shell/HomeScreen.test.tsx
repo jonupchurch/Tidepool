@@ -7,6 +7,8 @@ function props(over: Partial<HomeScreenProps> = {}): HomeScreenProps {
   return {
     prefs: sampleShellPrefs,
     onPrefsChange: vi.fn(),
+    volume: 0.8,
+    onVolumeChange: vi.fn(),
     lastPlay: sampleLastPlay, // Medium / Tricky
     resume: null,
     stats: { boardsSolved: 0, creaturesFound: 0, totalCreatures: 6, featuredCreature: null, curatedSolved: 0, curatedTotal: 36 },

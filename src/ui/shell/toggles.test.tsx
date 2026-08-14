@@ -10,6 +10,8 @@ function props(over: Partial<HomeScreenProps> = {}): HomeScreenProps {
   return {
     prefs: { theme: 'Day', muted: false, music: true },
     onPrefsChange: vi.fn(),
+    volume: 0.8,
+    onVolumeChange: vi.fn(),
     lastPlay: sampleLastPlay,
     resume: null,
     stats: { boardsSolved: 0, creaturesFound: 0, totalCreatures: 6, featuredCreature: null, curatedSolved: 0, curatedTotal: 36 },

@@ -3,6 +3,7 @@
 // a single <audio> element). Respects mute/volume via a master gain. Degrades to
 // a no-op silent engine where Web Audio is unavailable (tests / SSR). Nothing in
 // core/ or game/ ever imports this — audio is a presentation concern.
+import { type BakedLoop, bakeCrossfadeLoop } from './loop'
 import { type MusicTrack, defaultTrack } from './music'
 import { type SoundId, SOUND_URLS } from './sounds'
 
@@ -69,6 +70,9 @@ class WebAudioEngine implements AudioEngine {
   private musicBuffer: AudioBuffer | null = null
   private musicSource: AudioBufferSourceNode | null = null
   private musicLoading: Promise<void> | null = null
+  /** The crossfade is baked into the buffer, so it must happen exactly once. */
+  private musicLooped = false
+  private musicLoop: BakedLoop | null = null
   /** Guards the await inside startMusic against a second concurrent start. */
   private musicStarting = false
   private musicEnabled = true
@@ -229,11 +233,46 @@ class WebAudioEngine implements AudioEngine {
       // buffer at (or below) the master's true length has been trimmed for us,
       // and re-trimming would cut real audio.
       const lp = this.track.loop
+      const padded = !!lp && this.musicBuffer.duration > lp.duration + 0.001
+      const head = padded && lp ? lp.start : 0
       let from = 0
-      if (lp && this.musicBuffer.duration > lp.duration + 0.001) {
+      if (padded && lp) {
         src.loopStart = lp.start
         src.loopEnd = lp.start + lp.duration
         from = lp.start
+      }
+
+      // A composed track (intro + outro) can't be looped end-to-end without an
+      // audible swell down and back, so loop an inner region and crossfade the
+      // seam instead. Playback still starts at 0, so the intro is heard once
+      // per session and the loop never touches either ramp. Baked once, on the
+      // buffer, so the bed stays a single source node — see loop.ts.
+      if (this.track.loopRegion && !this.musicLooped) {
+        const chans: Float32Array[] = []
+        for (let c = 0; c < this.musicBuffer.numberOfChannels; c++) {
+          chans.push(this.musicBuffer.getChannelData(c))
+        }
+        const baked = bakeCrossfadeLoop(
+          chans,
+          this.musicBuffer.sampleRate,
+          this.track.loopRegion,
+          head,
+        )
+        // A region that doesn't fit the material falls through to the whole-file
+        // loop above: worse, but never silent and never out of bounds.
+        if (baked) {
+          src.loopStart = baked.loopStart
+          src.loopEnd = baked.loopEnd
+          from = 0
+        }
+        // The bake mutates the buffer, so it must happen exactly once however
+        // many times the bed is stopped and restarted.
+        this.musicLooped = true
+        this.musicLoop = baked
+      } else if (this.musicLoop) {
+        src.loopStart = this.musicLoop.loopStart
+        src.loopEnd = this.musicLoop.loopEnd
+        from = 0
       }
 
       src.connect(this.musicGain)

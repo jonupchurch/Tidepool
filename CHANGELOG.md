@@ -4,6 +4,41 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-13 — The music no longer stops to start again
+
+### Fixed
+
+- **The ambient bed loops seamlessly.** It used to fall silent for about a
+  second every two minutes and then swell back in, which read as the music
+  stopping and restarting rather than continuing.
+
+### The part worth explaining
+
+The cause was not where the previous work looked. MP3 files carry encoder
+padding, decoders disagree about stripping it, and the loop can click as a
+result — so that had been measured carefully and handled. All of that was
+correct, and none of it was the problem.
+
+The problem was the music. "Driftwood Garden" was composed, not authored as a
+loop: it has a 3.55-second fade-in and a 1.34-second fade-out. Looping it end to
+end therefore played the fade-out, hit complete silence, and played the fade-in —
+an 86 decibel hole roughly a second wide. No amount of sample-accurate splicing
+fixes a gap that is *in the recording*.
+
+So the bed now loops an inner region that never touches either ramp. The track
+turns out to have an eight-second phrase inside a forty-second section, and the
+loop is 112 seconds — exactly fourteen phrases — chosen as the best-correlating
+pair on that grid. A four-second crossfade is baked into the buffer once, when
+it decodes, arranged so that the moment playback wraps it is hearing precisely
+the audio that followed the loop's end in the original. The join is continuous
+by construction rather than merely close, and it stays a single audio source
+with no scheduling. The opening plays once per session; the composed ending is
+never heard, which is what you want from a bed.
+
+The diagnosis is the lesson. A click and an abrupt switch are different faults —
+one is the container, the other is the composition — and treating the report as
+the former sent the first attempt to the wrong layer entirely.
+
 ## 2026-08-13 — How much, not just whether
 
 ### Added

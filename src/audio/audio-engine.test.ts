@@ -42,7 +42,10 @@ interface FakeSourceNode {
   connectedTo: unknown
 }
 
-function installFakeWebAudio({ decodedDuration = 1 }: { decodedDuration?: number } = {}) {
+function installFakeWebAudio({
+  decodedDuration = 1,
+  bufferRate = 1000,
+}: { decodedDuration?: number; bufferRate?: number } = {}) {
   const started: string[] = []
   /** Every source node created, so tests can assert loop wiring and stops. */
   const sources: FakeSourceNode[] = []
@@ -113,7 +116,19 @@ function installFakeWebAudio({ decodedDuration = 1 }: { decodedDuration?: number
     }
     async decodeAudioData(buf: ArrayBuffer) {
       await decodeGate // hold every decode until the test lets go
-      return { id: `buf${buf.byteLength}`, duration: decodedDuration }
+      // Enough of an AudioBuffer for the engine to bake a crossfaded loop into
+      // (015 follow-up). `bufferRate` is deliberately tiny — the real track is
+      // 48 kHz and over two minutes, which would be 50 MB of Float32 per test.
+      const length = Math.max(1, Math.round(decodedDuration * bufferRate))
+      const data = [new Float32Array(length), new Float32Array(length)]
+      return {
+        id: `buf${buf.byteLength}`,
+        duration: decodedDuration,
+        sampleRate: bufferRate,
+        numberOfChannels: data.length,
+        length,
+        getChannelData: (c: number) => data[c] as Float32Array,
+      }
     }
     resume() {}
   }
@@ -389,40 +404,113 @@ describe.skipIf(!hasTrack)('the ambient bed', () => {
     }
   })
 
-  it('trims container padding only when the decoder left it in place', async () => {
+  // The 014 test "trims container padding only when the decoder left it in
+  // place" lived here. Its two assertions were that a buffer decoded longer
+  // than the master gets the encoder delay located and applied, and that one
+  // decoded at the master's length is left alone. Both still hold and both are
+  // still asserted — but the shipped track now loops an inner region, so the
+  // loop points come from that and the padding is observable only as the
+  // region's offset. The two region tests immediately below make exactly those
+  // assertions in the form the code now takes; keeping the original alongside
+  // them would be the same check written twice.
+
+  // 015 follow-up — "Driftwood Garden" has a composed intro and outro, so the
+  // whole-file loop swelled down to silence and back at every wrap. The engine
+  // now loops an inner region instead. The crossfade maths is tested exactly in
+  // loop.test.ts; what these cover is the wiring, where an offset bug would
+  // otherwise hide and only show up as drift after two minutes of play.
+  describe('an inner loop region', () => {
     const track = defaultTrack()
-    if (!track?.loop) return
-    const { start, duration } = track.loop
 
-    // Decoded LONGER than the master's true length => padding is still there.
-    const padded = installFakeWebAudio({ decodedDuration: duration + 0.05 })
-    try {
-      resetAudioEngineForTests()
-      getAudioEngine().unlock()
-      padded.releaseDecode()
-      await settle()
-      const bed = padded.sources.find((s) => s.loop)
-      expect(bed?.loopStart).toBeCloseTo(start, 6)
-      expect(bed?.loopEnd).toBeCloseTo(start + duration, 6)
-    } finally {
-      padded.restore()
-      resetAudioEngineForTests()
-    }
+    it('is what the source node loops, and playback still starts at the top', async () => {
+      if (!track?.loopRegion || !track.loop) return
+      // Decoded at exactly the master's length => the decoder stripped the
+      // padding for us, so the region needs no offset.
+      const fake = installFakeWebAudio({ decodedDuration: track.loop.duration })
+      try {
+        resetAudioEngineForTests()
+        getAudioEngine().unlock()
+        fake.releaseDecode()
+        await settle()
+        const bed = fake.sources.find((s) => s.loop)
+        expect(bed?.loopStart).toBeCloseTo(track.loopRegion.start, 3)
+        expect(bed?.loopEnd).toBeCloseTo(track.loopRegion.end, 3)
+      } finally {
+        fake.restore()
+        resetAudioEngineForTests()
+      }
+    })
 
-    // Decoded AT the true length => already stripped; re-trimming would cut audio.
-    const clean = installFakeWebAudio({ decodedDuration: duration })
-    try {
-      resetAudioEngineForTests()
-      getAudioEngine().unlock()
-      clean.releaseDecode()
-      await settle()
-      const bed = clean.sources.find((s) => s.loop)
-      expect(bed?.loopStart).toBe(0)
-      expect(bed?.loopEnd).toBe(0)
-    } finally {
-      clean.restore()
-      resetAudioEngineForTests()
-    }
+    it('shifts with the container padding when the decoder left it in', async () => {
+      if (!track?.loopRegion || !track.loop) return
+      // Decoded LONGER than the master => the encoder delay is still at the
+      // head, so true-content time is offset by exactly that much. Getting this
+      // wrong moves the loop by 12 ms per lap — inaudible once, wrong forever.
+      const fake = installFakeWebAudio({ decodedDuration: track.loop.duration + 0.05 })
+      try {
+        resetAudioEngineForTests()
+        getAudioEngine().unlock()
+        fake.releaseDecode()
+        await settle()
+        const bed = fake.sources.find((s) => s.loop)
+        expect(bed?.loopStart).toBeCloseTo(track.loop.start + track.loopRegion.start, 3)
+        expect(bed?.loopEnd).toBeCloseTo(track.loop.start + track.loopRegion.end, 3)
+      } finally {
+        fake.restore()
+        resetAudioEngineForTests()
+      }
+    })
+
+    it('is baked once, however often the bed is stopped and restarted', async () => {
+      if (!track?.loopRegion || !track.loop) return
+      // The crossfade mutates the buffer in place. Applying it twice would fold
+      // the seam into itself and quietly corrupt the loop.
+      const fake = installFakeWebAudio({ decodedDuration: track.loop.duration })
+      try {
+        resetAudioEngineForTests()
+        const audio = getAudioEngine()
+        audio.unlock()
+        fake.releaseDecode()
+        await settle()
+        const first = fake.sources.find((s) => s.loop)
+        const snapshot = { start: first?.loopStart, end: first?.loopEnd }
+
+        for (let i = 0; i < 3; i++) {
+          audio.setMusicEnabled(false)
+          await settle()
+          audio.setMusicEnabled(true)
+          await settle()
+        }
+        const beds = fake.sources.filter((s) => s.loop)
+        const last = beds[beds.length - 1]
+        expect(beds.length).toBeGreaterThan(1) // it really did restart
+        expect(last?.loopStart).toBeCloseTo(snapshot.start as number, 6)
+        expect(last?.loopEnd).toBeCloseTo(snapshot.end as number, 6)
+      } finally {
+        fake.restore()
+        resetAudioEngineForTests()
+      }
+    })
+
+    it('falls back to the whole file when the region does not fit the material', async () => {
+      if (!track?.loop) return
+      // A one-second buffer cannot hold a two-minute loop region. That is a bad
+      // catalog entry, and the answer is the old behaviour — worse, but never
+      // silent and never a buffer overrun.
+      const fake = installFakeWebAudio({ decodedDuration: 1 })
+      try {
+        resetAudioEngineForTests()
+        getAudioEngine().unlock()
+        fake.releaseDecode()
+        await settle()
+        const bed = fake.sources.find((s) => s.loop)
+        expect(bed).toBeDefined()
+        expect(bed?.loopEnd).not.toBeCloseTo(track.loopRegion?.end ?? -1, 3)
+      } finally {
+        fake.restore()
+        resetAudioEngineForTests()
+      }
+    })
   })
 
   it('master mute silences without tearing the bed down', async () => {

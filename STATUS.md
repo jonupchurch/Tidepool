@@ -76,26 +76,19 @@ Build Live on the partner site. Bump the version in **both** `package.json` and
 - **Linux/Steam Deck is opportunistic**, per 009's spec. CI builds the artifacts
   on `ubuntu-22.04`; shipping them means a second depot and verifying webkit2gtk
   resolves inside the Steam Linux Runtime.
-- **"Driftwood Garden" sounds right, but the loop does not.** Jon approved the
-  music on 2026-08-13; on further listening the wrap is an audible, abrupt
-  switch. Tracked under rough edges below — the track itself is not the problem.
+- **"Driftwood Garden" is approved, and the loop is now an inner region.** Jon
+  approved the music on 2026-08-13 but found the wrap an abrupt switch. The
+  cause was the composition, not the container: measured from the WAV master the
+  track has a 3.55 s fade-in and a 1.34 s fade-out, so looping the whole file
+  fell to **complete silence for about a second** at every wrap (an 86 dB hole).
+  The engine now loops **12.54 s → 124.54 s** — 112 s, exactly 14 of the track's
+  8 s phrases — with a 4 s crossfade baked into the buffer, so the join is
+  sample-continuous and the level never drops below a normal musical minimum.
+  The intro is heard once per session; the outro is never heard, which is
+  correct for a bed. A track authored to loop needs no entry in `LOOP_REGIONS`.
 
 ## Known rough edges
 
-- **The music loop is audibly abrupt, and the MP3 padding was never the cause.**
-  Measured from the WAV master: the track has a **3.55 s fade-in** and a
-  **1.34 s fade-out**. Looping the whole file therefore dies away to near
-  silence and swells back — about five seconds of dip at every wrap. No amount
-  of sample-accurate splicing fixes that; the track was composed with an intro
-  and an outro, not written to loop. The loop-point arithmetic already in
-  `src/audio/music.ts` is correct and is not the problem.
-
-  The fix is to loop an inner region instead of the whole file, crossfading its
-  tail over its head so the seam is inaudible. Analysis of the master: the
-  music has an **8 s phrase** inside a **40 s section**, and the best-correlating
-  grid-aligned loop is **12.54 s → 124.54 s** (112 s = 14 phrases, r=0.51),
-  with ~8.8 s of usable material after the end to crossfade into. Awaiting
-  Jon's call on whether to fix it in code or regenerate a looping master.
 - `screenshot-5.png` has the mouse cursor captured in it.
 - The small and vertical capsules are now the wordmark on transparency rather
   than illustrated tiles, so those two slots are mostly empty space — most

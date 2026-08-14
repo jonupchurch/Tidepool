@@ -1,6 +1,6 @@
 [package]
 name = "tidepool"
-version = "1.0.1"
+version = "1.1.0"
 description = "A cozy hex logic puzzle."
 authors = ["Gravytraining"]
 edition = "2021"

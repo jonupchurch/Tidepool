@@ -7,7 +7,7 @@
 // habit. Bump it on a release that warrants it.
 
 /** Player-facing version. Bump alongside `package.json` (guarded by a test). */
-export const VERSION = '1.0.1'
+export const VERSION = '1.1.0'
 
 /** Who made it. */
 export const STUDIO = 'Gravytraining'

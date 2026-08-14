@@ -34,7 +34,7 @@ export interface InProgressBoardRecord {
  */
 export interface SettingsRecord {
   v: number
-  sound: { muted: boolean; volume: number; sfx?: number; ambient?: number }
+  sound: { muted: boolean; volume: number; sfx?: number; ambient?: number; music?: boolean }
   visuals: {
     /** 'Day' | 'Night' | 'Auto' — Auto follows the OS preference. */
     theme: string
@@ -149,7 +149,7 @@ export const DEFAULTS: { [N in Namespace]: () => SchemaMap[N] } = {
   }),
   settings: () => ({
     v: 1,
-    sound: { muted: false, volume: 0.8, sfx: 1, ambient: 0.5 },
+    sound: { muted: false, volume: 0.8, sfx: 1, ambient: 0.5, music: true },
     visuals: {
       theme: 'Day',
       reducedMotion: false,

@@ -16,6 +16,7 @@ import {
   nextSeed,
   toBoardParams,
 } from '@/game/board-source'
+import { getAudioEngine } from '@/audio'
 import { hydrateSettings, seedPerfectFromCurated, setSetting } from '@/game'
 import { type SaveStore, getSaveStore } from '@/platform'
 import { AboutScreen } from '@/ui/about/AboutScreen'
@@ -63,7 +64,39 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
   const prefs: ShellPrefs = {
     theme: resolveTheme(settings.visuals.theme) === 'night' ? 'Night' : 'Day',
     muted: settings.sound.muted,
+    music: settings.sound.music,
   }
+  // The audio engine is owned HERE, not by Gameplay. Sound effects only ever
+  // fire on a board, so Gameplay used to configure the engine — but the ambient
+  // bed has to survive navigation and start on the first interaction anywhere,
+  // and neither is possible from a screen that unmounts (014 FR-005/FR-006).
+  useEffect(() => {
+    const audio = getAudioEngine()
+    audio.setMuted(settings.sound.muted)
+    audio.setVolume(settings.sound.volume)
+    audio.setSfxVolume(settings.sound.sfx)
+    audio.setMusicVolume(settings.sound.ambient)
+    audio.setMusicEnabled(settings.sound.music)
+  }, [
+    settings.sound.muted,
+    settings.sound.volume,
+    settings.sound.sfx,
+    settings.sound.ambient,
+    settings.sound.music,
+  ])
+
+  // Autoplay policy: audio may only begin inside a user gesture. Any first
+  // interaction counts, so listen at the root rather than waiting for a board.
+  useEffect(() => {
+    const unlock = () => getAudioEngine().unlock()
+    const opts = { once: true, passive: true } as const
+    window.addEventListener('pointerdown', unlock, opts)
+    window.addEventListener('keydown', unlock, opts)
+    return () => {
+      window.removeEventListener('pointerdown', unlock)
+      window.removeEventListener('keydown', unlock)
+    }
+  }, [])
   useTheme(settings.visuals.theme)
   // High contrast is a second axis on top of the theme — the token sheet keys
   // off both, so either theme can be firmed up without a separate palette.
@@ -128,6 +161,7 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
   const changePrefs = useCallback((next: ShellPrefs) => {
     setSetting('visuals', 'theme', next.theme === 'Night' ? 'Night' : 'Day')
     setSetting('sound', 'muted', next.muted)
+    setSetting('sound', 'music', next.music)
   }, [])
 
   const launchGameplay = useCallback(
@@ -286,6 +320,8 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
           onNewBoard={onNewBoard}
           onRestart={onRestart}
           onHome={goHome}
+          music={prefs.music}
+          onMusicChange={(music) => setSetting('sound', 'music', music)}
         />
       )}
     </main>

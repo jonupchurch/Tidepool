@@ -4,6 +4,41 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-13 — Ambient music, and a switch to turn it off
+
+### Added
+
+- **A looping ambient bed**, "Driftwood Garden". It starts at your first
+  interaction, keeps playing across screens, and doesn't restart when you move
+  between Home, a board and the journal.
+- **A music toggle**, on Home beside the existing sound button and inside the
+  pause overlay. Music off with sound effects still on is the combination most
+  people want, so the two are separate switches — and the sound button still
+  means *everything*, so total quiet is one press.
+
+### Changed
+
+- **Sound effects have their own level.** The effects level used to be folded
+  into the master volume, which worked while there was only one channel and
+  stops working the moment there are two. Master, effects and music are now
+  three independent gains.
+
+### The part worth explaining
+
+MP3 bakes encoder delay and padding into the file, and decoders disagree about
+whether to strip it — which on a loop means a click every time it wraps, and on
+an ambient bed that's the one thing you'd notice. So the track's real geometry
+was measured rather than guessed: the WAV master gives the true length
+(134.680 s), the MP3's own header gives the padding around it (576 samples in,
+1464 out). The engine compares the decoded buffer against the true length at
+runtime and only trims if the decoder didn't already, so it behaves whichever
+way a given browser or webview happens to decide.
+
+The audio engine also moved from the gameplay screen up to the app root. Sound
+effects only ever fire on a board, so living there was fine for them; music has
+to outlive the screen, and start on any first interaction rather than a click on
+the canvas.
+
 ## 2026-08-13 — Boards you finished without a single wrong mark
 
 ### Added

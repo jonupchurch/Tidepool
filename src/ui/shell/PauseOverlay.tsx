@@ -9,9 +9,14 @@ export interface PauseOverlayProps {
   onNewBoard: () => void
   onRestart: () => void
   onHome: () => void
+  /** Ambient bed on/off. Absent = the control is hidden (older callers/tests). */
+  music?: boolean
+  onMusicChange?: (music: boolean) => void
 }
 
-const ACTIONS: readonly { label: string; key: keyof PauseOverlayProps; primary?: boolean }[] = [
+type ActionKey = 'onResume' | 'onNewBoard' | 'onRestart' | 'onHome'
+
+const ACTIONS: readonly { label: string; key: ActionKey; primary?: boolean }[] = [
   { label: 'Resume', key: 'onResume', primary: true },
   { label: 'New board', key: 'onNewBoard' },
   { label: 'Restart this board', key: 'onRestart' },
@@ -50,6 +55,19 @@ export function PauseOverlay(props: PauseOverlayProps) {
             </button>
           ))}
         </div>
+        {/* Needing quiet is usually urgent — making someone leave a board to get
+            it is a poor answer, so the music switch is reachable from here too
+            (014 US3). Same setting as Home's; changing it applies at once. */}
+        {props.onMusicChange && (
+          <button
+            type="button"
+            aria-pressed={props.music}
+            onClick={() => props.onMusicChange?.(!props.music)}
+            className="mt-4 w-full rounded-xl px-4 py-2 text-sm text-tide hover:bg-sand"
+          >
+            {props.music ? 'Music on' : 'Music off'}
+          </button>
+        )}
       </div>
     </div>
   )

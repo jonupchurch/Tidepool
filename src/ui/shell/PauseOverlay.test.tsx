@@ -69,3 +69,30 @@ describe('PauseOverlay (US4)', () => {
     expect(onResume).toHaveBeenCalledTimes(1)
   })
 })
+
+// 014 US3: needing quiet is usually urgent, so the switch is reachable without
+// abandoning the board.
+describe('PauseOverlay music switch', () => {
+  it('is absent when no handler is supplied', () => {
+    renderShell(<PauseOverlay {...props()} />)
+    expect(screen.queryByRole('button', { name: /music/i })).not.toBeInTheDocument()
+  })
+
+  it('reports its state and toggles it', () => {
+    const onMusicChange = vi.fn()
+    renderShell(<PauseOverlay {...props({ music: true, onMusicChange })} />)
+    const btn = screen.getByRole('button', { name: /music on/i })
+    expect(btn).toHaveAttribute('aria-pressed', 'true')
+    fireEvent.click(btn)
+    expect(onMusicChange).toHaveBeenCalledWith(false)
+  })
+
+  it('turns music back on from the off state', () => {
+    const onMusicChange = vi.fn()
+    renderShell(<PauseOverlay {...props({ music: false, onMusicChange })} />)
+    const btn = screen.getByRole('button', { name: /music off/i })
+    expect(btn).toHaveAttribute('aria-pressed', 'false')
+    fireEvent.click(btn)
+    expect(onMusicChange).toHaveBeenCalledWith(true)
+  })
+})

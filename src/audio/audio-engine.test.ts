@@ -38,18 +38,28 @@ interface FakeSourceNode {
   loopStart: number
   loopEnd: number
   stopped: boolean
+  /** What this node was connected to — the channel gain it feeds. */
+  connectedTo: unknown
 }
 
 function installFakeWebAudio({ decodedDuration = 1 }: { decodedDuration?: number } = {}) {
   const started: string[] = []
   /** Every source node created, so tests can assert loop wiring and stops. */
   const sources: FakeSourceNode[] = []
+  /** Every gain node created, in creation order: master, sfx, music (015).
+   *  Recorded so the *routing* can be asserted, not just the gain values —
+   *  "master" is a claim about the graph, and nothing else here checks it. */
+  const gains: FakeGain[] = []
+  /** The contexts created, so `destination` identity is available to tests. */
+  const contexts: FakeCtx[] = []
   let releaseDecode: (() => void) | null = null
   const decodeGate = new Promise<void>((r) => {
     releaseDecode = r
   })
 
   class FakeGain {
+    /** The node this gain feeds. */
+    connectedTo: unknown = null
     gain = {
       value: 1,
       cancelScheduledValues() {},
@@ -58,7 +68,9 @@ function installFakeWebAudio({ decodedDuration = 1 }: { decodedDuration?: number
         this.value = v
       },
     }
-    connect() {}
+    connect(dest: unknown) {
+      this.connectedTo = dest
+    }
   }
   class FakeSource implements FakeSourceNode {
     buffer: unknown = null
@@ -66,8 +78,11 @@ function installFakeWebAudio({ decodedDuration = 1 }: { decodedDuration?: number
     loopStart = 0
     loopEnd = 0
     stopped = false
+    connectedTo: unknown = null
     onended: (() => void) | null = null
-    connect() {}
+    connect(dest: unknown) {
+      this.connectedTo = dest
+    }
     start() {
       // Only one-shots. `loop` is set before start() for the ambient bed, and
       // the bed now also begins on unlock() — without this split it would show
@@ -83,8 +98,13 @@ function installFakeWebAudio({ decodedDuration = 1 }: { decodedDuration?: number
     state = 'running'
     currentTime = 0
     destination = {}
+    constructor() {
+      contexts.push(this)
+    }
     createGain() {
-      return new FakeGain()
+      const g = new FakeGain()
+      gains.push(g)
+      return g
     }
     createBufferSource() {
       const s = new FakeSource()
@@ -107,6 +127,8 @@ function installFakeWebAudio({ decodedDuration = 1 }: { decodedDuration?: number
   return {
     started,
     sources,
+    gains,
+    contexts,
     releaseDecode: () => releaseDecode?.(),
     restore() {
       g.AudioContext = prevCtx
@@ -189,6 +211,106 @@ describe('silent fallback (no Web Audio host)', () => {
     resetAudioEngineForTests()
     // a fresh instance after reset (identity may differ; contract is it rebuilds)
     expect(getAudioEngine()).toBeDefined()
+  })
+})
+
+// 015 — "master volume" is a claim about the SHAPE of the graph, not about a
+// number. `effectiveGain` is well covered above, but it would keep passing if
+// `musicGain` were connected straight to the destination — and the master
+// control would then quietly govern sound effects only. These tests state the
+// routing outright so that refactor fails loudly instead.
+describe('the master gain governs both channels (015)', () => {
+  it('routes effects and music through one master node', async () => {
+    const fake = installFakeWebAudio()
+    try {
+      resetAudioEngineForTests()
+      const audio = getAudioEngine()
+      audio.unlock()
+      fake.releaseDecode()
+      await settle()
+      audio.play('water')
+      await settle()
+
+      // Creation order in `ensureContext`: master, sfx, music.
+      const [master, sfx, music] = fake.gains
+      expect(fake.gains.length, 'three channels: master, sfx, music').toBe(3)
+      expect(master.connectedTo, 'master feeds the speakers').toBe(fake.contexts[0]?.destination)
+      expect(sfx.connectedTo, 'effects run through the master').toBe(master)
+      expect(music.connectedTo, 'music runs through the master too').toBe(master)
+
+      // And the sources genuinely sit on their own channel, so neither bypasses
+      // the master by connecting somewhere else.
+      const oneShot = fake.sources.find((s) => !s.loop)
+      const bed = fake.sources.find((s) => s.loop)
+      expect(oneShot?.connectedTo, 'a sound effect feeds the sfx channel').toBe(sfx)
+      expect(bed?.connectedTo, 'the ambient bed feeds the music channel').toBe(music)
+    } finally {
+      fake.restore()
+      resetAudioEngineForTests()
+    }
+  })
+
+  it('setVolume moves the master alone, so the channel balance is preserved', async () => {
+    const fake = installFakeWebAudio()
+    try {
+      resetAudioEngineForTests()
+      const audio = getAudioEngine()
+      audio.unlock()
+      fake.releaseDecode()
+      await settle()
+
+      const [master, sfx, music] = fake.gains
+      audio.setSfxVolume(0.9)
+      audio.setMusicVolume(0.4)
+      await settle()
+      expect(sfx.gain.value).toBeCloseTo(0.9, 6)
+      expect(music.gain.value).toBeCloseTo(0.4, 6)
+
+      audio.setVolume(0.25)
+      await settle()
+
+      expect(master.gain.value, 'the master takes the new level').toBeCloseTo(0.25, 6)
+      expect(sfx.gain.value, 'the effects channel is untouched').toBeCloseTo(0.9, 6)
+      expect(music.gain.value, 'the music channel is untouched').toBeCloseTo(0.4, 6)
+
+      // What the player actually hears is the product of the two — so the ratio
+      // between the channels is the same at every master level (FR-009).
+      const ratio = (sfx.gain.value * master.gain.value) / (music.gain.value * master.gain.value)
+      expect(ratio).toBeCloseTo(0.9 / 0.4, 6)
+    } finally {
+      fake.restore()
+      resetAudioEngineForTests()
+    }
+  })
+
+  it('mute and volume compose on the master without disturbing either channel', async () => {
+    const fake = installFakeWebAudio()
+    try {
+      resetAudioEngineForTests()
+      const audio = getAudioEngine()
+      audio.unlock()
+      fake.releaseDecode()
+      await settle()
+
+      const [master, sfx, music] = fake.gains
+      audio.setVolume(0.6)
+      audio.setMuted(true)
+      expect(master.gain.value, 'muted wins over the level').toBe(0)
+
+      // Mute is a separate switch (015 FR-007): a level set while muted is
+      // remembered, and unmuting restores exactly it.
+      audio.setVolume(0.35)
+      expect(master.gain.value, 'still silent while muted').toBe(0)
+      audio.setMuted(false)
+      expect(master.gain.value, 'the level chosen while muted is what returns').toBeCloseTo(0.35, 6)
+
+      // Neither channel gain moved throughout.
+      expect(sfx.gain.value).toBeCloseTo(1, 6)
+      expect(music.gain.value).toBeCloseTo(0.5, 6)
+    } finally {
+      fake.restore()
+      resetAudioEngineForTests()
+    }
   })
 })
 

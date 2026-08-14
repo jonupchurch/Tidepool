@@ -1,8 +1,9 @@
 // Line-label placement: a total must be unambiguously attributable to its own
 // row (collinear with it, outside the board) and must not overlap another
 // label. Also covers click-to-toggle hit-testing and the guide segment.
-import { lineIndex, parseKey } from '@/core'
+import { SIZE_TIERS, lineIndex, parseKey } from '@/core'
 import { hexRegion, presentSet } from '@/core/hex'
+import { DEFAULT_SHAPE, SHAPE_IDS, shapePresent, shapeSupportsSize } from '@/core/shapes'
 import { fullyClued, layoutOf } from '@/core/test-helpers'
 import { fitLayout, hexToPixel } from './layout'
 import {
@@ -410,5 +411,79 @@ describe('annotated row totals (010)', () => {
     // Boards players already have take the bare gap on every label, so their
     // layout is untouched — the same reason the seed string is append-only.
     expect(lineLabels(board, layout).every((l) => l.connectivity === undefined)).toBe(true)
+  })
+})
+
+// 012: labels on irregular boards.
+//
+// Planning this feature predicted that a concave silhouette would let a short
+// row's label land on a NEIGHBOURING row's cell. It doesn't, and the reason is
+// worth keeping: a label sits ON its own row's line, and rows of the same axis
+// lie on parallel lines 1.5 units apart in unit space — wider than a hex's
+// radius. Collinearity, chosen so a label would identify its row, also keeps it
+// clear of every cell on the board.
+//
+// These tests therefore pin an invariant rather than guard a fixed bug, and they
+// are the ones that would notice if a future anchor rule broke it.
+describe('label placement on irregular boards (012)', () => {
+  const shapes = SHAPE_IDS.filter((id) => id !== DEFAULT_SHAPE)
+
+  for (const id of shapes) {
+    for (const size of SIZE_TIERS) {
+      if (!shapeSupportsSize(id, size)) continue
+
+      it(`${id}/${size}: no label lands on a cell`, () => {
+        const present = shapePresent(size, id)
+        const water = [...present].filter((_, i) => i % 3 === 0)
+        const b = fullyClued(present, layoutOf(present, water), { withLines: true })
+        const anchors = lineAnchors(b)
+        expect(anchors.length).toBeGreaterThan(0)
+
+        const SQ3 = Math.sqrt(3)
+        const unitOf = (a: { q: number; r: number }) => ({
+          x: SQ3 * (a.q + a.r / 2),
+          y: 1.5 * a.r,
+        })
+        const cells = [...present].map((k) => unitOf(parseKey(k)))
+
+        for (const a of anchors) {
+          const u = unitOf(a.coord)
+          const nearest = Math.min(...cells.map((c) => Math.hypot(c.x - u.x, c.y - u.y)))
+          // 1.0 is a hex's centre-to-corner radius in unit space: closer than
+          // that and the label centre is literally inside a hex.
+          expect(nearest, `${id}/${size} label ${a.id} sits on a cell`).toBeGreaterThan(1)
+        }
+      })
+
+      it(`${id}/${size}: every label still identifies its own row`, () => {
+        const present = shapePresent(size, id)
+        const water = [...present].filter((_, i) => i % 3 === 0)
+        const b = fullyClued(present, layoutOf(present, water), { withLines: true })
+        const l = fitLayout(
+          b.present,
+          W,
+          H,
+          24,
+          lineAnchors(b).flatMap((a) => [a.coord, a.tip]),
+        )
+        for (const label of lineLabels(b, l)) {
+          const first = parseKey(label.cells[0])
+          const step = AXIS_STEP[label.axis]
+          const a = hexToPixel(l, first)
+          const ahead = hexToPixel(l, { q: first.q + step.q, r: first.r + step.r })
+          expect(
+            offAxis({ x: label.x, y: label.y }, a, { x: ahead.x - a.x, y: ahead.y - a.y }),
+            `${id}/${size} ${label.id} drifted off its own axis`,
+          ).toBeLessThan(0.01 * l.size)
+        }
+      })
+    }
+  }
+
+  it('a shaped board really is concave enough to matter', () => {
+    // If every silhouette were convex the tests above would be vacuous.
+    const present = shapePresent('Medium', 'crescent')
+    const hex = presentSet(hexRegion(5))
+    expect(present.size).toBeLessThan(hex.size)
   })
 })

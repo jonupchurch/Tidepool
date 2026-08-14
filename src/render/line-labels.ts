@@ -54,6 +54,28 @@ const MIN_GAP = 1.5
  * label placement.
  */
 const ANNOTATED_GAP_SCALE = 1.45
+/**
+ * How close a label centre may come to a CELL centre, in unit space (a hex's
+ * centre-to-corner radius is exactly 1 there), with a margin for the glyph.
+ *
+ * This guards an invariant that currently holds for free, and it is worth
+ * writing down WHY rather than leaving it as a mystery check.
+ *
+ * A label sits on its own row's line, one step back from that row's first cell.
+ * Nothing of its own row can be there: any cell further back along the line
+ * would sort before the "first" cell, so by construction the slot is empty. And
+ * nothing of any OTHER row can be there either — rows on the same axis lie on
+ * parallel lines whose perpendicular spacing is exactly 1.5 in unit space, wider
+ * than a hex's radius. Collinearity, chosen originally so a label would identify
+ * its row, turns out to keep labels off every cell on the board.
+ *
+ * So this never fires today, on hexagons or on the 012 silhouettes — verified by
+ * disabling it and watching the shaped-board tests still pass. It is kept as
+ * cheap insurance on a non-obvious property: it costs a few thousand distance
+ * checks per resize, and it is what would catch a future anchor rule that moved
+ * labels off-axis for readability and quietly parked one on a hex.
+ */
+const CELL_CLEARANCE = 1.15
 /** Direction-dash span, as distances from the label centre in hex-steps. */
 const TICK_NEAR = 0.32
 const TICK_FAR = 0.86
@@ -77,6 +99,11 @@ export function lineAnchors(board: Board): LineAnchor[] {
   const byId = new Map(linesOf(board.present).map((l) => [`${l.axis},${l.index}`, l]))
   const placed: LineAnchor[] = []
   const placedUnits: Array<{ x: number; y: number; gap: number }> = []
+  // Every cell centre in unit space, so a candidate anchor can be rejected for
+  // sitting on top of one. Computed once; the search below runs per label.
+  const cellUnits = [...board.present].map((k) => unit(parseKey(k)))
+  const clearOfCells = (u: { x: number; y: number }): boolean =>
+    !cellUnits.some((c) => Math.hypot(c.x - u.x, c.y - u.y) < CELL_CLEARANCE)
 
   for (const lc of board.lines) {
     const id = `${lc.axis},${lc.index}`
@@ -99,6 +126,7 @@ export function lineAnchors(board: Board): LineAnchor[] {
     // one pushes a narrow neighbour away rather than only being pushed itself.
     const myGap = lc.connectivity ? MIN_GAP * ANNOTATED_GAP_SCALE : MIN_GAP
     const free = (u: { x: number; y: number }): boolean =>
+      clearOfCells(u) &&
       !placedUnits.some((p) => Math.hypot(p.x - u.x, p.y - u.y) < Math.max(p.gap, myGap))
 
     // A row total is equally true at either end, so a crowded label moves to the
@@ -107,16 +135,32 @@ export function lineAnchors(board: Board): LineAnchor[] {
     const preferred = lc.from === 'start'
     let chosen = at(preferred, BASE_GAP)
     let u = unit(chosen.coord)
+    let found = false
+    // Best-effort fallback: the first candidate that at least isn't sitting on a
+    // cell. Crowding two labels together is ugly; putting one on top of a hex is
+    // broken, so when the search can't satisfy both, cell clearance wins.
+    let fallback: { coord: Axial; tip: Axial; cells: string[] } | null = null
+    let fallbackU = u
     outer: for (let n = 0; n <= MAX_NUDGE; n++) {
       for (const fromStart of [preferred, !preferred]) {
         const cand = at(fromStart, BASE_GAP + n * NUDGE_STEP)
         const cu = unit(cand.coord)
+        if (!clearOfCells(cu)) continue
+        if (!fallback) {
+          fallback = cand
+          fallbackU = cu
+        }
         if (free(cu)) {
           chosen = cand
           u = cu
+          found = true
           break outer
         }
       }
+    }
+    if (!found && fallback) {
+      chosen = fallback
+      u = fallbackU
     }
 
     placed.push({

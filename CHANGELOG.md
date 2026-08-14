@@ -4,6 +4,41 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-13 — Boards that aren't hexagons
+
+### Added
+
+- **A catalog of board silhouettes** — atoll, crescent, wedge, shoal — carved out
+  of the same regions the size tiers already describe. Nothing serves one yet;
+  this is the engine learning to, and the curated pack is what will use them.
+
+### The part worth explaining
+
+Almost nothing had to change. The board has always carried its topology as data
+— which cells are present is a set, and every clue, every pool, the hit-testing
+and the fit-to-window all read it rather than assuming a hexagon. So an irregular
+board turned out to be a question of how to *produce* one, not a rewrite.
+
+Shapes are predicates, not lists of cells. "Everything at least this far from the
+centre" is one line that works at every size and can be read and argued with; the
+same shape written as a table of coordinates is three tables, and a wrong cell in
+one is invisible.
+
+A shape can refuse a size rather than degrade. The carved shapes don't offer
+Small: at that radius there isn't enough left after carving to be worth playing,
+and serving a bad board to keep the catalog tidy is the wrong trade.
+
+Every silhouette is checked automatically at every size it claims — one connected
+region, no cell stranded without a neighbour, big enough to be a puzzle — and
+then actually generated and solved at every difficulty, which is the check that
+separates "the shape looks fine" from "this shape can carry a puzzle".
+
+One prediction didn't survive contact. Planning this expected concave boards to
+put a row's number on top of a neighbouring row's cell. They don't, and the
+reason is quietly elegant: a number sits *on* its own row's line, and rows lie on
+parallel lines spaced wider than a hex is round. The rule that makes a number
+identify its row also keeps it off every cell on the board.
+
 ## 2026-08-13 — Edge numbers can say how the water sits
 
 ### Added

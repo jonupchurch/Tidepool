@@ -3,6 +3,7 @@
 // Pure: no DOM, no randomness, no wall-clock.
 import type { Axial } from './hex'
 import { key, boundsOf } from './hex'
+import type { ShapeId } from './shapes'
 
 export type SizeTier = 'Small' | 'Medium' | 'Large'
 export type DifficultyTier = 'Calm' | 'Tricky' | 'Deep'
@@ -31,6 +32,13 @@ export interface BoardParams {
   size: SizeTier
   difficulty: DifficultyTier
   clues: ClueToggles
+  /**
+   * Which silhouette the board is played on (012). Optional and defaulting to
+   * the filled hexagon, and — like `clues.lineConnectivity` — it contributes to
+   * the RNG seed string ONLY when it is something other than the default, so
+   * every board that predates shapes generates byte-identically.
+   */
+  shape?: ShapeId
 }
 
 /** The hidden solution value of a present cell. */

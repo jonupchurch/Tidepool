@@ -39,7 +39,12 @@ export interface CuratedRow {
   solved: boolean
   /** Name of the creature earned on solve, or null if unsolved. */
   earnedCreature: string | null
-  /** Fewest mistakes across your runs of this board; null if never solved. */
+  /**
+   * Fewest mistakes across your runs of this board. `null` when the number is
+   * unknown — either never solved, or solved by a build from before mistakes
+   * were tracked. Those two are both "no record", and neither is evidence of a
+   * clean run; only an explicit `0` is (011 FR-008).
+   */
   errors: number | null
   locked: boolean
 }
@@ -145,7 +150,10 @@ export function manifestRows(
     earnedCreature: solved[entry.id]
       ? (creatureDef(solved[entry.id].earnedCreatureId)?.name ?? null)
       : null,
-    errors: solved[entry.id] ? (solved[entry.id].errors ?? 0) : null,
+    // `?? null`, not `?? 0`: an entry recorded before mistakes were tracked has
+    // no `errors`, and reporting that as zero would award it a clean run it was
+    // never checked for.
+    errors: solved[entry.id]?.errors ?? null,
     locked: locks.get(entry.id) ?? false,
   }))
 }

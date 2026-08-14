@@ -62,6 +62,12 @@ export interface StatsRecord {
   boardsSolved: number
   poolsFilled: number
   creaturesFound: number
+  /** Boards finished without a wrong mark ever being placed (011). */
+  boardsPerfect: number
+  /** Whether the one-time backfill of `boardsPerfect` from curated progress has
+   *  run. Bookkeeping, not a stat — see `seedPerfectFromCurated` for why it is a
+   *  flag here rather than a step in the v1 → v2 migration. */
+  perfectSeeded: boolean
 }
 
 /** Owned by feature 004 (Board modes / curated). */
@@ -121,7 +127,7 @@ export const CURRENT_VERSION: Record<Namespace, number> = {
   inProgressBoard: 1,
   settings: 1,
   journal: 1,
-  stats: 1,
+  stats: 2,
   curatedProgress: 1,
   onboarding: 1,
   shellPrefs: 1,
@@ -157,7 +163,14 @@ export const DEFAULTS: { [N in Namespace]: () => SchemaMap[N] } = {
     play: { defaultSize: 'Small', defaultDifficulty: 'Calm', stopwatch: false },
   }),
   journal: () => ({ v: 1, discoveries: {} }),
-  stats: () => ({ v: 1, boardsSolved: 0, poolsFilled: 0, creaturesFound: 0 }),
+  stats: () => ({
+    v: 2,
+    boardsSolved: 0,
+    poolsFilled: 0,
+    creaturesFound: 0,
+    boardsPerfect: 0,
+    perfectSeeded: false,
+  }),
   curatedProgress: () => ({ v: 1, solved: {} }),
   onboarding: () => ({ v: 1, completed: false, seen: false, helpDismissed: false }),
   shellPrefs: () => ({ v: 1, theme: 'Day', muted: false }),
@@ -191,7 +204,12 @@ export const VALIDATORS: { [N in Namespace]: (x: unknown) => boolean } = {
     typeof x.v === 'number' &&
     typeof x.boardsSolved === 'number' &&
     typeof x.poolsFilled === 'number' &&
-    typeof x.creaturesFound === 'number',
+    typeof x.creaturesFound === 'number' &&
+    // `perfectSeeded` is deliberately NOT required. It is bookkeeping, and every
+    // v2 record this app writes carries it; demanding it would mean an imported
+    // or hand-edited blob loses a player's whole lifetime history to recover a
+    // flag whose worst failure is re-counting a backfill once.
+    typeof x.boardsPerfect === 'number',
   curatedProgress: (x) => isObj(x) && typeof x.v === 'number' && isObj(x.solved),
   onboarding: (x) =>
     isObj(x) && typeof x.v === 'number' && typeof x.completed === 'boolean' && typeof x.seen === 'boolean',

@@ -92,7 +92,14 @@ describe('shell-store: home stats', () => {
   })
 
   it('reflects solved boards and the newest creature', async () => {
-    const stats: StatsRecord = { v: 1, boardsSolved: 12, poolsFilled: 40, creaturesFound: 2 }
+    const stats: StatsRecord = {
+      v: 2,
+      boardsSolved: 12,
+      poolsFilled: 40,
+      creaturesFound: 2,
+      boardsPerfect: 5,
+      perfectSeeded: true,
+    }
     const journal: JournalRecord = {
       v: 1,
       discoveries: {

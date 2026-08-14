@@ -36,6 +36,47 @@ describe('CuratedScreen (US2)', () => {
     expect(tally()).toBe('1/3')
   })
 
+  // 011 FR-006: a board finished clean is marked, not merely un-flagged.
+  it('marks a board whose best run had zero mistakes as clean', () => {
+    render(
+      <CuratedScreen
+        groups={grouped({ 'reef-2': { earnedCreatureId: 'crab', errors: 0 } })}
+        onSelect={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    )
+    expect(
+      screen.getByRole('button', { name: /Quiet Reef.*finished clean/i }),
+    ).toBeInTheDocument()
+    // Distinguished by glyph, not only by the absence of the coral ring.
+    expect(screen.getByText(/✨/)).toBeInTheDocument()
+  })
+
+  it('does not mark a fumbled board clean, however it was finished', () => {
+    render(
+      <CuratedScreen
+        groups={grouped({ 'reef-2': { earnedCreatureId: 'crab', errors: 2 } })}
+        onSelect={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    )
+    expect(screen.queryByText(/✨/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Quiet Reef.*2 mistakes/i })).toBeInTheDocument()
+  })
+
+  it('does not claim a board solved before mistakes were tracked was clean', () => {
+    // No `errors` at all = an older build recorded it. Absence of evidence is
+    // not evidence of a clean run.
+    render(
+      <CuratedScreen
+        groups={grouped({ 'reef-2': { earnedCreatureId: 'crab' } })}
+        onSelect={vi.fn()}
+        onBack={vi.fn()}
+      />,
+    )
+    expect(screen.queryByText(/✨/)).not.toBeInTheDocument()
+  })
+
   it('selecting a tile emits its BoardRequest', () => {
     const onSelect = vi.fn()
     render(<CuratedScreen groups={grouped()} onSelect={onSelect} onBack={vi.fn()} />)

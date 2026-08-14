@@ -41,6 +41,12 @@ export type {
   JournalStats,
   JournalView,
 } from './journal'
-export { loadDiscoveries, loadStats, saveDiscoveries, saveStats } from './journal-store'
+export {
+  loadDiscoveries,
+  loadStats,
+  saveDiscoveries,
+  saveStats,
+  seedPerfectFromCurated,
+} from './journal-store'
 export { cellInforms, lineInforms } from './highlight'
 export { loadBoard } from './board-loader'

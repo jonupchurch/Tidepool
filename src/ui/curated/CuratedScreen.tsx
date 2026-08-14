@@ -188,11 +188,15 @@ function HexTile({
       ? 'bg-tide text-foam'
       : 'bg-foam text-deep-pool hover:bg-tide-fill'
   const flawed = (row.errors ?? 0) > 0
+  // Clean = solved with a best run of zero mistakes (011 FR-006). `errors` is
+  // null until solved and undefined for boards finished before mistakes were
+  // tracked, so this deliberately requires an explicit zero.
+  const clean = solved && row.errors === 0
   const label = locked
     ? `${entry.name}, locked`
     : `${entry.name}, ${entry.size} ${entry.difficulty}${solved ? ', solved' : ''}${
-        flawed ? `, ${row.errors} mistakes` : ''
-      }`
+        clean ? ', finished clean' : ''
+      }${flawed ? `, ${row.errors} mistakes` : ''}`
 
   return (
     <div
@@ -230,7 +234,10 @@ function HexTile({
               be readable against the solved tile's fill. */}
           {solved && earnedCreature && (
             <span className="line-clamp-2 font-display text-[1.1cqw] wrap-anywhere">
-              ✓ {earnedCreature}
+              {/* A clean board earns its own glyph rather than just lacking the
+                  coral ring — distinguishable without relying on colour, which
+                  is the bar 006 set for every state on the board. */}
+              {clean ? '✨' : '✓'} {earnedCreature}
             </span>
           )}
         </span>

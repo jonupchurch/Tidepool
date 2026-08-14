@@ -18,6 +18,26 @@ export interface JournalStats {
   boardsSolved: number
   poolsFilled: number
   creaturesFound: number
+  /** Boards finished without a wrong mark ever being placed (011). */
+  boardsPerfect: number
+}
+
+/** One curated entry's stored progress — the shape `curatedProgress.solved` holds. */
+interface SolvedEntry {
+  earnedCreatureId: string
+  errors?: number
+}
+
+/**
+ * How many curated entries were solved with a provably clean best run. Pure, so
+ * the backfill's arithmetic is testable without a store.
+ *
+ * An entry with no `errors` at all was solved before mistakes were tracked; it
+ * is NOT counted. The game would rather under-report than award a perfect it
+ * has no evidence for (FR-008).
+ */
+export function countCleanCurated(solved: Record<string, SolvedEntry>): number {
+  return Object.values(solved).filter((e) => e.errors === 0).length
 }
 
 export type JournalFilter = 'all' | 'found' | 'missing'
@@ -88,8 +108,21 @@ export async function recordDiscovery(store: SaveStore, creatureId: string, seed
   })
 }
 
-/** Bump the lifetime boards-solved total (on board completion). */
-export async function recordBoardSolved(store: SaveStore): Promise<void> {
+/**
+ * Bump the lifetime boards-solved total (on board completion), and the perfect
+ * total when the board was finished without a wrong mark ever being placed.
+ *
+ * `perfect` comes from the session's running error tally, which counts a wrong
+ * mark at the moment it is placed — so undoing one does not launder it (FR-003).
+ */
+export async function recordBoardSolved(
+  store: SaveStore,
+  { perfect = false }: { perfect?: boolean } = {},
+): Promise<void> {
   const stats = await loadStats(store)
-  await saveStats(store, { ...stats, boardsSolved: stats.boardsSolved + 1 })
+  await saveStats(store, {
+    ...stats,
+    boardsSolved: stats.boardsSolved + 1,
+    boardsPerfect: stats.boardsPerfect + (perfect ? 1 : 0),
+  })
 }

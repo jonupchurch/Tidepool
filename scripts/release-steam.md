@@ -34,12 +34,30 @@ these scripts.
 ## Every release
 
 ```bash
-# 1. Bump BOTH version fields — they are separate files and drift silently.
-#    package.json  "version"        1.0.1 -> 1.0.2
-#    src-tauri/tauri.conf.json  "version"   likewise
+# 1. Bump the version in ALL FIVE places (see the table below), then:
+npm run test          # the version-parity tests fail if you missed one
 # 2. Commit, so the build description points at a real tree.
+npm run release:steam -- --preview --user <account>   # dry run first
 npm run release:steam -- --user <account>
 ```
+
+### The five version sites
+
+They are separate files in three languages and they drift silently. You do not
+have to remember them — `ui/about/about.test.ts` pins every one to
+`package.json`, so a missed site is a failing test rather than a shipped
+inconsistency. Bump them, then run the suite.
+
+| File | Field |
+|---|---|
+| `package.json` | `"version"` — the one the others are compared against |
+| `src-tauri/tauri.conf.json` | `"version"` — the installer and bundle |
+| `src-tauri/Cargo.toml` | `version` under `[package]` — the exe's file properties |
+| `src/ui/about/about.ts` | `VERSION` — what the About screen shows a player |
+| `src/platform/schemas.ts` | `APP_VERSION` — stamped into exported saves |
+
+The last two are the ones worth caring about in a bug report: a save that claims
+it was written by the wrong build is useless for diagnosing anything.
 
 Then **partner site → Builds → Set Build Live** on the branch you want. The
 upload deliberately goes live on nothing (`"setlive" ""`), so promotion is

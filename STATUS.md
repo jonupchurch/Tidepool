@@ -53,8 +53,11 @@ All on the Steamworks partner site:
 - Store art and pricing: **done.**
 
 Uploading a new build is `npm run release:steam -- --user <account>`, then Set
-Build Live on the partner site. Bump the version in **both** `package.json` and
-`src-tauri/tauri.conf.json` — they drift silently.
+Build Live on the partner site. Bump the version in **all five** places first —
+`package.json`, `src-tauri/tauri.conf.json`, `src-tauri/Cargo.toml`,
+`src/ui/about/about.ts` and `src/platform/schemas.ts`. They drift silently, but
+`npm run test` pins them to each other, so a missed one fails the suite rather
+than shipping. Full runbook: `scripts/release-steam.md`.
 
 ## Decisions on record
 

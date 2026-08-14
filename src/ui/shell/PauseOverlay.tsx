@@ -3,6 +3,7 @@
 // and a reassurance line. The scrim covers the canvas, freezing input. Fade is
 // gated by prefers-reduced-motion (Tailwind motion-reduce variant).
 import { useEffect, useState } from 'react'
+import { VolumeSlider } from './VolumeSlider'
 
 export interface PauseOverlayProps {
   onResume: () => void
@@ -12,6 +13,12 @@ export interface PauseOverlayProps {
   /** Ambient bed on/off. Absent = the control is hidden (older callers/tests). */
   music?: boolean
   onMusicChange?: (music: boolean) => void
+  /** Master level, 0..1. Absent = hidden, same contract as `music` above (015). */
+  volume?: number
+  onVolumeChange?: (volume: number) => void
+  /** Master mute, for presentation only — the slider dims and says "muted"
+   *  rather than looking live. Pause has no mute switch of its own. */
+  muted?: boolean
 }
 
 type ActionKey = 'onResume' | 'onNewBoard' | 'onRestart' | 'onHome'
@@ -57,7 +64,8 @@ export function PauseOverlay(props: PauseOverlayProps) {
         </div>
         {/* Needing quiet is usually urgent — making someone leave a board to get
             it is a poor answer, so the music switch is reachable from here too
-            (014 US3). Same setting as Home's; changing it applies at once. */}
+            (014 US3). Same setting as Home's; changing it applies at once. The
+            volume slider is here for exactly the same reason (015 US2). */}
         {props.onMusicChange && (
           <button
             type="button"
@@ -67,6 +75,19 @@ export function PauseOverlay(props: PauseOverlayProps) {
           >
             {props.music ? 'Music on' : 'Music off'}
           </button>
+        )}
+        {props.onVolumeChange && (
+          <div className="mt-2 flex items-center gap-3 px-4">
+            <span aria-hidden className="text-sm text-tide">
+              Volume
+            </span>
+            <VolumeSlider
+              value={props.volume ?? 0}
+              onChange={props.onVolumeChange}
+              muted={props.muted}
+              className="min-w-0 flex-1"
+            />
+          </div>
         )}
       </div>
     </div>

@@ -81,6 +81,67 @@
     background-color: var(--color-sand);
     color: var(--color-ink);
   }
+
+}
+
+/* The volume slider (feature 015). A native <input type="range"> is the right
+   structure — keyboard, touch and the slider ARIA contract come free — but it
+   cannot be themed by `accent-color` alone: Chromium paints the *unfilled*
+   track a fixed #3b3b3b no matter what `color-scheme` says (measured in both
+   themes and under a dark OS, not assumed), and a charcoal bar is wrong on the
+   daylight palette.
+
+   So the appearance is stripped and the track rebuilt from the tokens: tide
+   behind the thumb, driftwood ahead of it. Both are themed, so this follows
+   Day/Night with no second rule. `--tp-range-pct` is set inline by the
+   component — the filled portion is the one part CSS can't derive on its own. */
+.tp-range {
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.tp-range::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    to right,
+    var(--color-tide) var(--tp-range-pct, 50%),
+    var(--color-driftwood) var(--tp-range-pct, 50%)
+  );
+}
+.tp-range::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -5px; /* centres the 16px thumb on the 6px track */
+  border-radius: 9999px;
+  background: var(--color-tide);
+  border: 2px solid var(--color-foam);
+}
+.tp-range::-moz-range-track {
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--color-driftwood);
+}
+.tp-range::-moz-range-progress {
+  height: 6px;
+  border-radius: 9999px;
+  background: var(--color-tide);
+}
+.tp-range::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--color-foam);
+  border-radius: 9999px;
+  background: var(--color-tide);
+}
+/* Stripping the appearance also strips the focus ring, and this control has to
+   stay keyboard-operable (015 US3). */
+.tp-range:focus-visible {
+  outline: 2px solid var(--color-tide);
+  outline-offset: 3px;
 }
 
 /* Calm screen transitions (feature 003). Applied via motion-safe:* so

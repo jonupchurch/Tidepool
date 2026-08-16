@@ -4,6 +4,64 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-16 — The Endless tide grows shores
+
+### Added
+
+- **Generated boards can be played on the named silhouettes.** A Shore picker
+  on Home offers the same four shapes the curated coastline uses — Atoll,
+  Crescent, Wedge, Shoal — plus **Any**, which lets the seed choose so a run
+  varies board to board and still reproduces exactly.
+- **Generated Deep boards can carry `{n}` / `-n-` on their edge numbers**, via
+  an Edge hints switch. Until now those annotations only ever appeared on
+  curated boards.
+- **The board label became a shareable token.** It names the shore and the
+  hints, and seed entry reads the whole thing back — including the `·` it
+  separates with, so a pasted label reproduces the board it describes.
+
+### Fixed
+
+- **Curated "Next board" served the wrong board.** Chaining from one curated
+  entry to the next dropped the next entry's clue set and silhouette, so a
+  page-two board arrived as a plain hexagon with default clues — a different
+  board from the one the Curated screen launches for that same entry, and the
+  solve was recorded against it.
+- **Starting a board cleared the stopwatch setting.** Writing the last-used
+  size/difficulty rebuilt the whole `play` settings group from scratch, taking
+  `stopwatch` with it every time.
+
+### The part worth explaining
+
+Nothing in the engine changed. `generateBoard` has accepted a `shape` and a
+`lineConnectivity` toggle since features 012 and 010 — only the curated manifest
+ever asked for them, so every Endless board was a filled hexagon with plain
+totals. This feature is the selection layer that was missing, and it is
+deliberately conservative in two places.
+
+First, both inputs are opt-in and default to what the game already served. A
+seed is a promise, and the promise is kept by the same mechanism the engine
+already uses: neither input reaches the RNG seed string unless it is something
+other than the default. `board-request.test.ts` checks that with no options the
+shell produces byte-identical boards at every seed, size and tier, and both that
+guard and the Deep gate below were confirmed by breaking them on purpose.
+
+Second, the hints switch is offered only at Deep — and gated there in code, not
+merely hidden in the UI. This was measured rather than assumed: reduction offers
+every annotation for removal and drops the ones the tier's technique set cannot
+use, and `line-connectivity` is a Deep-only technique. Across five seeds at three
+sizes, Tricky produced 222 line clues with **zero** annotations and Calm produced
+no line clues at all. Below Deep the switch would have changed which board a seed
+makes, in exchange for annotations that reduction then strips anyway.
+
+Worth knowing as a player: annotations are sparse by nature — the generator
+yields none to three per Deep board, because reduction removes any the board can
+be solved without. That has always been true of the curated Deep boards too.
+
+Shores stay a Medium and Large affair. No silhouette in the catalog claims a
+radius-3 board, so on Small the picker is shown disabled with the reason rather
+than hidden — Small is the default size, and a control that vanished there would
+mean nothing on Home ever mentions shores at all.
+
 ## 2026-08-13 — The music no longer stops to start again
 
 ### Fixed

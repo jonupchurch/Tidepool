@@ -8,6 +8,7 @@ import type { BoardParams } from '@/core'
 import {
   type BoardRequest,
   type CuratedRow,
+  DEFAULT_SHORE,
   getCuratedRows,
   groupRows,
   pagesOf,
@@ -107,7 +108,12 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
       settings.visuals.highContrast ? 'on' : 'off',
     )
   }, [settings.visuals.highContrast])
-  const [lastPlay, setLastPlay] = useState<LastPlay>({ size: 'Small', difficulty: 'Calm' })
+  const [lastPlay, setLastPlay] = useState<LastPlay>({
+    size: 'Small',
+    difficulty: 'Calm',
+    shore: DEFAULT_SHORE,
+    edgeHints: false,
+  })
   const [resume, setResume] = useState<ResumeSnapshot | null>(null)
   const [stats, setStats] = useState<HomeStats>(DEFAULT_STATS)
   const [paused, setPaused] = useState(false)
@@ -184,12 +190,26 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
     [],
   )
 
+  /**
+   * `selection` is the *choice* behind the board, which `params` cannot carry:
+   * they hold a resolved silhouette, and `Any` resolving to `atoll` is
+   * indistinguishable from the player having picked `atoll`. "Next board" has to
+   * know which it was in order to keep varying, so Home hands the choice up.
+   * Callers with no picker (seed entry, the tutorial, Pause) omit it and keep
+   * whatever is already stored.
+   */
   const onPlay = useCallback(
-    (params: BoardParams) => {
-      void persistLastPlay(store, { size: params.size, difficulty: params.difficulty })
+    (params: BoardParams, selection?: LastPlay) => {
+      const next = selection ?? {
+        ...lastPlay,
+        size: params.size,
+        difficulty: params.difficulty,
+      }
+      setLastPlay(next)
+      void persistLastPlay(store, next)
       launchGameplay(params, false)
     },
-    [store, launchGameplay],
+    [store, launchGameplay, lastPlay],
   )
 
   // Curated: launch the entry's exact board, tagged so completion records it.
@@ -217,9 +237,18 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
 
   // "Next board" advances the deterministic Endless stream (004); the same seed
   // always yields the same next board, so a stream is reproducible/shareable.
+  //
+  // Rebuilt from the stored choice rather than `{...cur, seed}` (016): under
+  // `Any` the shore is derived per seed, so carrying the previous board's
+  // resolved shape forward would pin an entire run to whatever the first board
+  // happened to land on.
   const nextBoard = useCallback(
-    (cur: BoardParams): BoardParams => ({ ...cur, seed: nextSeed(cur.seed) }),
-    [],
+    (cur: BoardParams): BoardParams =>
+      boardRequest(nextSeed(cur.seed), cur.size, cur.difficulty, {
+        shore: lastPlay.shore,
+        edgeHints: lastPlay.edgeHints,
+      }),
+    [lastPlay.shore, lastPlay.edgeHints],
   )
 
   /**
@@ -238,7 +267,17 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
         navigate('Curated')
         return
       }
-      const request = { seed: next.seed, size: next.size, difficulty: next.difficulty }
+      // The entry's own `clues`/`shape` come with it. Without them a manifest
+      // v3 entry chained into via "Next board" was served as a plain hexagon
+      // with default clues — a different board from the one the Curated screen
+      // launches for that same entry, and it recorded the solve against it.
+      const request: BoardRequest = {
+        seed: next.seed,
+        size: next.size,
+        difficulty: next.difficulty,
+        ...(next.clues ? { clues: next.clues } : {}),
+        ...(next.shape ? { shape: next.shape } : {}),
+      }
       launchGameplay(toBoardParams(request), false, next.id)
       return
     }
@@ -246,8 +285,18 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
   }, [curatedId, currentParams, launchGameplay, nextBoard, navigate])
 
   // Pause actions — the board stays saved throughout; Resume returns to it.
+  //
+  // Carries the shore choice like every other endless constructor: "New board"
+  // is a *fresh board at your settings*, and serving a plain hexagon here while
+  // Home still shows the shore you picked reads as the setting being ignored.
   const onNewBoard = useCallback(
-    () => onPlay(boardRequest(freshSeed(), lastPlay.size, lastPlay.difficulty)),
+    () =>
+      onPlay(
+        boardRequest(freshSeed(), lastPlay.size, lastPlay.difficulty, {
+          shore: lastPlay.shore,
+          edgeHints: lastPlay.edgeHints,
+        }),
+      ),
     [onPlay, lastPlay],
   )
   const onRestart = useCallback(() => {

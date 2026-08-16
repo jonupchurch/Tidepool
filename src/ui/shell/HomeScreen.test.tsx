@@ -92,7 +92,7 @@ describe('HomeScreen (US1)', () => {
     renderShell(
       <HomeScreen
         {...props({
-          lastPlay: { size: 'Small', difficulty: 'Calm' },
+          lastPlay: { size: 'Small', difficulty: 'Calm', shore: 'hex', edgeHints: false },
           resume: null,
           stats: { boardsSolved: 0, creaturesFound: 0, totalCreatures: 6, featuredCreature: null, curatedSolved: 0, curatedTotal: 36 },
           onPlay,

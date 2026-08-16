@@ -48,7 +48,16 @@ export interface SettingsRecord {
   controls: { swapMarkButtons: boolean; tapToCycle?: boolean; confirmBeforeClear?: boolean }
   /** Comfort aids — framed as comfort, never "easy mode" (FR-005). */
   comfort?: { hoverHighlight?: boolean; mistakeNudge?: boolean; lineHelper?: boolean }
-  play: { defaultSize: string; defaultDifficulty: string; stopwatch?: boolean }
+  /** `defaultShore` / `edgeHints` are the 016 Endless variety choices. Optional
+   *  like `stopwatch`, so a record written before they existed still loads and
+   *  still resolves to the hexagon with plain totals. */
+  play: {
+    defaultSize: string
+    defaultDifficulty: string
+    stopwatch?: boolean
+    defaultShore?: string
+    edgeHints?: boolean
+  }
 }
 
 /** Owned by feature 005 (Shore journal). */
@@ -160,7 +169,13 @@ export const DEFAULTS: { [N in Namespace]: () => SchemaMap[N] } = {
     },
     controls: { swapMarkButtons: false, tapToCycle: false, confirmBeforeClear: false },
     comfort: { hoverHighlight: true, mistakeNudge: true, lineHelper: false },
-    play: { defaultSize: 'Small', defaultDifficulty: 'Calm', stopwatch: false },
+    play: {
+      defaultSize: 'Small',
+      defaultDifficulty: 'Calm',
+      stopwatch: false,
+      defaultShore: 'hex',
+      edgeHints: false,
+    },
   }),
   journal: () => ({ v: 1, discoveries: {} }),
   stats: () => ({

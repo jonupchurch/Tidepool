@@ -63,12 +63,18 @@ describe('endless boards (T011)', () => {
 
 describe('endless prefs', () => {
   it('defaults to Small / Calm on a cold store', async () => {
-    expect(await loadEndlessPrefs(makeFakeStore())).toEqual({ size: 'Small', difficulty: 'Calm' })
+    expect(await loadEndlessPrefs(makeFakeStore())).toEqual({
+      size: 'Small',
+      difficulty: 'Calm',
+      shore: 'hex',
+      edgeHints: false,
+    })
   })
 
   it('round-trips the last size/difficulty', async () => {
     const store = makeFakeStore()
-    await saveEndlessPrefs(store, { size: 'Large', difficulty: 'Deep' })
-    expect(await loadEndlessPrefs(store)).toEqual({ size: 'Large', difficulty: 'Deep' })
+    const prefs = { size: 'Large', difficulty: 'Deep', shore: 'atoll', edgeHints: true } as const
+    await saveEndlessPrefs(store, prefs)
+    expect(await loadEndlessPrefs(store)).toEqual(prefs)
   })
 })

@@ -3,6 +3,7 @@
 // reads from persistence, and the launch descriptor handed to Gameplay.
 // Pure types only — no runtime, no DOM.
 import type { BoardParams, DifficultyTier, SizeTier } from '@/core'
+import type { ShoreChoice } from '@/game/board-source'
 
 /** Every top-level view the shell can show. Only Home/Gameplay/Splash are fully
  *  built in this feature; Curated/Journal/Settings/Tutorial render warm
@@ -33,10 +34,14 @@ export interface ShellPrefs {
   music: boolean
 }
 
-/** The size/difficulty a fresh Play uses — the "last-used" board request. */
+/** The selection a fresh Play uses — the "last-used" board request. */
 export interface LastPlay {
   size: SizeTier
   difficulty: DifficultyTier
+  /** Silhouette choice (016) — `hex` by default, `Any` derives from the seed. */
+  shore: ShoreChoice
+  /** `{n}` / `-n-` on row totals (016). Only bites at Deep. */
+  edgeHints: boolean
 }
 
 /** Home's summary of an in-progress board (read from persistence 008). Present

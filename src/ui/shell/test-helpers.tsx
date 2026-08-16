@@ -38,7 +38,7 @@ export function makeFakeStore(seed: Partial<Record<Namespace, unknown>> = {}): S
   }
 }
 
-export const sampleShellPrefs: ShellPrefs = { theme: 'Day', muted: false, music: true }
+export const sampleShellPrefs: ShellPrefs = { theme: 'Day', muted: false, music: true, effects: true }
 
 export const sampleLastPlay: LastPlay = {
   size: 'Medium',

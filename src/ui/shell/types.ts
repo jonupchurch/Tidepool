@@ -32,6 +32,8 @@ export interface ShellPrefs {
   muted: boolean
   /** The ambient bed alone, independent of `muted` (014). */
   music: boolean
+  /** The sound effects alone, independent of `muted` and of `music` (017). */
+  effects: boolean
 }
 
 /** The selection a fresh Play uses — the "last-used" board request. */

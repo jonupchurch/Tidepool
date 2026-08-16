@@ -67,6 +67,7 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
     theme: resolveTheme(settings.visuals.theme) === 'night' ? 'Night' : 'Day',
     muted: settings.sound.muted,
     music: settings.sound.music,
+    effects: settings.sound.effects,
   }
   // The audio engine is owned HERE, not by Gameplay. Sound effects only ever
   // fire on a board, so Gameplay used to configure the engine — but the ambient
@@ -77,12 +78,14 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
     audio.setMuted(settings.sound.muted)
     audio.setVolume(settings.sound.volume)
     audio.setSfxVolume(settings.sound.sfx)
+    audio.setSfxEnabled(settings.sound.effects)
     audio.setMusicVolume(settings.sound.ambient)
     audio.setMusicEnabled(settings.sound.music)
   }, [
     settings.sound.muted,
     settings.sound.volume,
     settings.sound.sfx,
+    settings.sound.effects,
     settings.sound.ambient,
     settings.sound.music,
   ])
@@ -169,6 +172,7 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
     setSetting('visuals', 'theme', next.theme === 'Night' ? 'Night' : 'Day')
     setSetting('sound', 'muted', next.muted)
     setSetting('sound', 'music', next.music)
+    setSetting('sound', 'effects', next.effects)
   }, [])
 
   // Volume gets its own setter rather than a `ShellPrefs` field (015 FR-010).
@@ -381,6 +385,8 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
           onHome={goHome}
           music={prefs.music}
           onMusicChange={(music) => setSetting('sound', 'music', music)}
+          effects={prefs.effects}
+          onEffectsChange={(effects) => setSetting('sound', 'effects', effects)}
           volume={settings.sound.volume}
           onVolumeChange={changeVolume}
           muted={prefs.muted}

@@ -539,3 +539,102 @@ describe.skipIf(!hasTrack)('the ambient bed', () => {
     }
   })
 })
+
+// ── The effects switch (017) ─────────────────────────────────────────────────
+//
+// The gap this closes: mute silenced everything and the music switch silenced
+// the bed, so "music on, marks silent" — a quiet room where you still want the
+// company of the bed — was the one combination the game could not express.
+describe('the effects switch', () => {
+  it('silences the effects channel without touching the music', async () => {
+    const fake = installFakeWebAudio()
+    try {
+      resetAudioEngineForTests()
+      const audio = getAudioEngine()
+      audio.unlock()
+      fake.releaseDecode()
+      await settle()
+
+      const [master, sfx, music] = fake.gains
+      audio.setSfxVolume(0.9)
+      audio.setMusicVolume(0.4)
+      await settle()
+
+      audio.setSfxEnabled(false)
+      await settle()
+      expect(sfx.gain.value, 'the effects channel is silent').toBeCloseTo(0, 6)
+      expect(music.gain.value, 'the bed plays on').toBeCloseTo(0.4, 6)
+      expect(master.gain.value, 'the master is untouched').toBeGreaterThan(0)
+    } finally {
+      fake.restore()
+    }
+  })
+
+  it('restores the level it had, not a default', async () => {
+    const fake = installFakeWebAudio()
+    try {
+      resetAudioEngineForTests()
+      const audio = getAudioEngine()
+      audio.unlock()
+      fake.releaseDecode()
+      await settle()
+
+      const sfx = fake.gains[1]
+      audio.setSfxVolume(0.35)
+      audio.setSfxEnabled(false)
+      audio.setSfxEnabled(true)
+      await settle()
+      // The switch is not a level. Coming back on at 1.0 would quietly discard
+      // a level the player chose.
+      expect(sfx.gain.value).toBeCloseTo(0.35, 6)
+    } finally {
+      fake.restore()
+    }
+  })
+
+  it('keeps the level while off, so a change made off still lands on', async () => {
+    const fake = installFakeWebAudio()
+    try {
+      resetAudioEngineForTests()
+      const audio = getAudioEngine()
+      audio.unlock()
+      fake.releaseDecode()
+      await settle()
+
+      const sfx = fake.gains[1]
+      audio.setSfxEnabled(false)
+      audio.setSfxVolume(0.6)
+      await settle()
+      expect(sfx.gain.value, 'still silent while switched off').toBeCloseTo(0, 6)
+
+      audio.setSfxEnabled(true)
+      await settle()
+      expect(sfx.gain.value).toBeCloseTo(0.6, 6)
+    } finally {
+      fake.restore()
+    }
+  })
+
+  it('plays nothing through the effects channel while off', async () => {
+    const fake = installFakeWebAudio()
+    try {
+      resetAudioEngineForTests()
+      const audio = getAudioEngine()
+      audio.unlock()
+      fake.releaseDecode()
+      await settle()
+
+      audio.setSfxEnabled(false)
+      await settle()
+      const before = fake.started.length
+      audio.play('water')
+      await settle()
+      // Silent by gain is enough, but not starting the source at all is the
+      // honest reading of "off" and costs nothing.
+      expect(fake.gains[1].gain.value).toBeCloseTo(0, 6)
+      expect(fake.started.length).toBe(before)
+    } finally {
+      fake.restore()
+    }
+  })
+})

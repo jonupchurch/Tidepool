@@ -14,7 +14,7 @@ import { makeFakeStore, renderShell, sampleLastPlay } from './test-helpers'
 
 function homeProps(over: Partial<HomeScreenProps> = {}): HomeScreenProps {
   return {
-    prefs: { theme: 'Day', muted: false, music: true },
+    prefs: { theme: 'Day', muted: false, music: true, effects: true },
     onPrefsChange: vi.fn(),
     volume: 0.8,
     onVolumeChange: vi.fn(),
@@ -58,7 +58,7 @@ describe('the volume control on Home', () => {
   })
 
   it('reflects mute without being disabled by it', () => {
-    renderShell(<HomeScreen {...homeProps({ prefs: { theme: 'Day', muted: true, music: true }, volume: 0.5 })} />)
+    renderShell(<HomeScreen {...homeProps({ prefs: { theme: 'Day', muted: true, music: true, effects: true }, volume: 0.5 })} />)
     const slider = screen.getByRole('slider', { name: /volume/i })
     expect(slider).toHaveAttribute('aria-valuetext', '50%, muted')
     expect(slider).toBeEnabled()

@@ -8,7 +8,7 @@ import { makeFakeStore, renderShell, sampleLastPlay } from './test-helpers'
 
 function props(over: Partial<HomeScreenProps> = {}): HomeScreenProps {
   return {
-    prefs: { theme: 'Day', muted: false, music: true },
+    prefs: { theme: 'Day', muted: false, music: true, effects: true },
     onPrefsChange: vi.fn(),
     volume: 0.8,
     onVolumeChange: vi.fn(),
@@ -27,18 +27,18 @@ describe('Home toggles (US5)', () => {
     const onPrefsChange = vi.fn()
     renderShell(<HomeScreen {...props({ onPrefsChange })} />)
     fireEvent.click(screen.getByRole('button', { name: /mute/i }))
-    expect(onPrefsChange).toHaveBeenCalledWith({ theme: 'Day', muted: true, music: true })
+    expect(onPrefsChange).toHaveBeenCalledWith({ theme: 'Day', muted: true, music: true, effects: true })
   })
 
   it('the Day/Night toggle flips to Night', () => {
     const onPrefsChange = vi.fn()
     renderShell(<HomeScreen {...props({ onPrefsChange })} />)
     fireEvent.click(screen.getByRole('button', { name: /night/i }))
-    expect(onPrefsChange).toHaveBeenCalledWith({ theme: 'Night', muted: false, music: true })
+    expect(onPrefsChange).toHaveBeenCalledWith({ theme: 'Night', muted: false, music: true, effects: true })
   })
 
   it('reflects the current prefs as pressed', () => {
-    renderShell(<HomeScreen {...props({ prefs: { theme: 'Night', muted: true, music: true } })} />)
+    renderShell(<HomeScreen {...props({ prefs: { theme: 'Night', muted: true, music: true, effects: true } })} />)
     expect(screen.getByRole('button', { name: /night/i })).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('button', { name: /mute/i })).toHaveAttribute('aria-pressed', 'true')
   })
@@ -49,11 +49,11 @@ describe('Home toggles (US5)', () => {
     const onPrefsChange = vi.fn()
     renderShell(<HomeScreen {...props({ onPrefsChange })} />)
     fireEvent.click(screen.getByRole('button', { name: /turn music off/i }))
-    expect(onPrefsChange).toHaveBeenCalledWith({ theme: 'Day', muted: false, music: false })
+    expect(onPrefsChange).toHaveBeenCalledWith({ theme: 'Day', muted: false, music: false, effects: true })
   })
 
   it('the music toggle reports its own state, not the mute state', () => {
-    renderShell(<HomeScreen {...props({ prefs: { theme: 'Day', muted: true, music: false } })} />)
+    renderShell(<HomeScreen {...props({ prefs: { theme: 'Day', muted: true, music: false, effects: true } })} />)
     const music = screen.getByRole('button', { name: /turn music on/i })
     expect(music).toHaveAttribute('aria-pressed', 'false')
     expect(screen.getByRole('button', { name: /unmute/i })).toHaveAttribute('aria-pressed', 'true')

@@ -77,6 +77,7 @@ export function HomeScreen({
 
   const toggleMute = () => onPrefsChange({ ...prefs, muted: !prefs.muted })
   const toggleMusic = () => onPrefsChange({ ...prefs, music: !prefs.music })
+  const toggleEffects = () => onPrefsChange({ ...prefs, effects: !prefs.effects })
   const toggleTheme = () => onPrefsChange({ ...prefs, theme: prefs.theme === 'Night' ? 'Day' : 'Night' })
 
   // Reflect the persisted last-used selection whenever it (re)loads.
@@ -130,6 +131,21 @@ export function HomeScreen({
                 the mute button read as a duplicate of it; a note that is plainly
                 crossed out doesn't. State is carried by aria-pressed regardless. */}
             <span className={prefs.music ? '' : 'line-through decoration-2 opacity-50'}>🎵</span>
+          </button>
+          {/* The effects switch, the mirror of the music one (017). Mute is the
+              master; these two say *which* channel. Without this, "the bed but
+              no marks" — a quiet room where you still want the company of the
+              music — was the one thing the switches couldn't express. */}
+          <button
+            type="button"
+            aria-label={prefs.effects ? 'Turn sound effects off' : 'Turn sound effects on'}
+            aria-pressed={prefs.effects}
+            onClick={toggleEffects}
+            className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
+          >
+            {/* A drop, not a second speaker: the effects *are* the marks landing
+                in the water, and 🔊 already belongs to the master switch. */}
+            <span className={prefs.effects ? '' : 'line-through decoration-2 opacity-50'}>💧</span>
           </button>
           <button
             type="button"

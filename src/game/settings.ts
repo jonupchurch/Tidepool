@@ -18,7 +18,17 @@ export const THEME_CHOICES: readonly ThemeChoice[] = ['Day', 'Night', 'Auto']
 export interface Settings {
   /** `muted` is the master switch (everything). `music` is the ambient bed
    *  alone, so "quiet room, but still hear my marks land" is one press. */
-  sound: { muted: boolean; volume: number; sfx: number; ambient: number; music: boolean }
+  /** `muted` is the master. `music` and `effects` are the two channels' own
+   *  switches, each with its own level (`ambient` / `sfx`) — so "the bed, but
+   *  no marks" and "the marks, but no bed" are both sayable (017). */
+  sound: {
+    muted: boolean
+    volume: number
+    sfx: number
+    ambient: number
+    music: boolean
+    effects: boolean
+  }
   visuals: {
     theme: ThemeChoice
     reducedMotion: boolean
@@ -42,7 +52,7 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  sound: { muted: false, volume: 0.8, sfx: 1, ambient: 0.5, music: true },
+  sound: { muted: false, volume: 0.8, sfx: 1, ambient: 0.5, music: true, effects: true },
   visuals: {
     theme: 'Day',
     reducedMotion: false,
@@ -102,6 +112,7 @@ export function resolveSettings(raw: unknown): Settings {
       sfx: num(sound.sfx, d.sound.sfx, 0, 1),
       ambient: num(sound.ambient, d.sound.ambient, 0, 1),
       music: bool(sound.music, d.sound.music),
+      effects: bool(sound.effects, d.sound.effects),
     },
     visuals: {
       theme: choice(visuals.theme, THEME_CHOICES, d.visuals.theme),

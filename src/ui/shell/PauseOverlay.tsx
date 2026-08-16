@@ -13,6 +13,9 @@ export interface PauseOverlayProps {
   /** Ambient bed on/off. Absent = the control is hidden (older callers/tests). */
   music?: boolean
   onMusicChange?: (music: boolean) => void
+  /** The effects switch (017). Absent = hidden, same contract as `music`. */
+  effects?: boolean
+  onEffectsChange?: (effects: boolean) => void
   /** Master level, 0..1. Absent = hidden, same contract as `music` above (015). */
   volume?: number
   onVolumeChange?: (volume: number) => void
@@ -74,6 +77,19 @@ export function PauseOverlay(props: PauseOverlayProps) {
             className="mt-4 w-full rounded-xl px-4 py-2 text-sm text-tide hover:bg-sand"
           >
             {props.music ? 'Music on' : 'Music off'}
+          </button>
+        )}
+        {/* The effects switch sits beside the music one for the same reason it
+            exists at all: the two channels are independently silenceable, and
+            the moment you want that is usually mid-board (017). */}
+        {props.onEffectsChange && (
+          <button
+            type="button"
+            aria-pressed={props.effects}
+            onClick={() => props.onEffectsChange?.(!props.effects)}
+            className="mt-1 w-full rounded-xl px-4 py-2 text-sm text-tide hover:bg-sand"
+          >
+            {props.effects ? 'Sound effects on' : 'Sound effects off'}
           </button>
         )}
         {props.onVolumeChange && (

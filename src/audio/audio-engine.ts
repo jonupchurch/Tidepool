@@ -20,6 +20,10 @@ export interface AudioEngine {
   setVolume(volume: number): void
   /** Level for the sound-effect channel alone, 0..1. */
   setSfxVolume(volume: number): void
+  /** Turn the sound effects on/off, independently of the bed (017). The mirror
+   *  of `setMusicEnabled`: without it, "music on, marks silent" was the one
+   *  combination the game could not express — mute took the bed with it. */
+  setSfxEnabled(enabled: boolean): void
   /** Turn the ambient bed on/off, independently of the sound effects. */
   setMusicEnabled(enabled: boolean): void
   /** Level for the music channel alone, 0..1. */
@@ -54,6 +58,9 @@ class WebAudioEngine implements AudioEngine {
    *  other (014 FR-011). */
   private sfxGain: GainNode | null = null
   private sfxVolume = 1
+  /** The switch, kept apart from `sfxVolume` so toggling off and back on
+   *  restores the level the player chose rather than a default. */
+  private sfxEnabled = true
   private buffers = new Map<SoundId, AudioBuffer | null>()
   private muted = false
   private volume = 0.8
@@ -135,7 +142,9 @@ class WebAudioEngine implements AudioEngine {
   }
 
   play(id: SoundId): void {
-    if (this.muted) return
+    // Two switches can silence an effect, and both mean "don't play it" rather
+    // than "play it at zero" — the gain gate below is the belt to this braces.
+    if (this.muted || !this.sfxEnabled) return
     const ctx = this.ensureContext()
     if (!ctx || !this.master) return
     const buf = this.buffers.get(id)
@@ -182,7 +191,18 @@ class WebAudioEngine implements AudioEngine {
 
   setSfxVolume(volume: number): void {
     this.sfxVolume = Math.max(0, Math.min(1, volume))
-    if (this.sfxGain) this.sfxGain.gain.value = this.sfxVolume
+    this.applySfxGain()
+  }
+
+  setSfxEnabled(enabled: boolean): void {
+    this.sfxEnabled = enabled
+    this.applySfxGain()
+  }
+
+  /** The channel's audible level: its own level, gated by its own switch. A
+   *  level set while switched off is remembered and lands when it comes back. */
+  private applySfxGain(): void {
+    if (this.sfxGain) this.sfxGain.gain.value = this.sfxEnabled ? this.sfxVolume : 0
   }
 
   setMusicEnabled(enabled: boolean): void {
@@ -325,6 +345,7 @@ const SILENT: AudioEngine = {
   setMuted() {},
   setVolume() {},
   setSfxVolume() {},
+  setSfxEnabled() {},
   setMusicEnabled() {},
   setMusicVolume() {},
 }

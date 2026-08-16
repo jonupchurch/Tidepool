@@ -22,6 +22,17 @@ export type { EndlessStream } from './endless'
 export { parseSeedEntry } from './seed-entry'
 export type { SeedEntryResult } from './seed-entry'
 export {
+  ANY_SHORE,
+  DEFAULT_SHORE,
+  edgeHintsApply,
+  endlessClues,
+  isShoreChoice,
+  resolveShore,
+  shoreName,
+  shoresFor,
+} from './shore'
+export type { ShoreChoice } from './shore'
+export {
   loadCuratedPack,
   manifestRows,
   markCuratedSolved,

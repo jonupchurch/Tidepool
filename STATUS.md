@@ -4,10 +4,10 @@ _Snapshot; updated each work session. Last updated: 2026-08-16._
 
 ## Current phase
 
-**Shipping.** All sixteen features are built and merged.
+**Shipping.** All seventeen features are built and merged.
 
 **Live on `default`: build 24766362 (`Tidepool 1.2.0`)** — uploaded and promoted
-2026-08-16, tested working. Players have every feature through 016.
+2026-08-16, tested working. Players have every feature through 016; **017 is merged but not yet released.**
 
 Release history: 1.0.1 (24479382) → 1.1.0 (24743146, features 010–015) → 1.2.0
 (24766362, feature 016 + three bug fixes).
@@ -18,7 +18,7 @@ on its own — promotion is always a separate step on the partner site
 
 ## Built
 
-Features 001–016, in build order. 001–015 were each specced and planned via
+Features 001–017, in build order. 001–015 were each specced and planned via
 Spec-Kit before implementation; 016 was scoped with a mini-spec and written up
 afterwards. Per-feature detail is in `CHANGELOG.md`; this is the index.
 
@@ -40,6 +40,7 @@ afterwards. Per-feature detail is in `CHANGELOG.md`; this is the index.
 | 014 | Ambient music | music channel, its own switch, measured loop points |
 | 015 | Master volume | one level for both channels, on Home and Pause |
 | 016 | Varied shores | the Endless tide gains the silhouettes and the `{n}`/`-n-` edge numbers |
+| 017 | Effects switch | the two sound channels are independently silenceable |
 
 Plus, since: all 12 creature portraits, audio, the About screen, the curated hex
 map, HiDPI rendering, a root error boundary, 29 achievements, and the SteamPipe

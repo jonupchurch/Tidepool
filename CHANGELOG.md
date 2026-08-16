@@ -4,6 +4,43 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-16 — Music without the marks
+
+### Added
+
+- **A switch for the sound effects**, on Home beside the music note and in the
+  Pause overlay beside the music switch. The two channels are now independently
+  silenceable: you can keep the ambient bed for company while the marks land
+  silently.
+
+### The part worth explaining
+
+Reported as: you can turn off all sound, which stops the music too, or turn
+sound on and shut the music off — but you cannot have music with no sound
+effects. Correct, and the cause was narrower than it looked.
+
+The settings model has carried an `sfx` level since feature 014, and the audio
+engine has had `setSfxVolume` to apply it. But **there is no Settings screen in
+the game**, and nothing else ever wrote that field, so it sat at its default
+forever. The only sound controls that actually exist are the master mute, the
+music switch, and the master volume slider — which between them cannot express
+"the bed, but no marks".
+
+The fix follows the shape music already had rather than inventing one: a channel
+gets a *switch* and a *level*. Music has both (`music` + `ambient`); the effects
+had only a level, so they now have both too, with `setSfxEnabled` mirroring
+`setMusicEnabled`.
+
+Two details worth keeping: the switch is stored apart from the level, so
+toggling off and back on restores the level you chose instead of snapping to
+full; and the switch is honoured before a sound is started, not by playing it at
+zero volume. The choice persists as an optional field, so a save written before
+this loads with the effects on rather than silently muting them.
+
+Verified by reading the live Web Audio gain nodes in the browser rather than the
+switch's own state: the effects channel goes to zero while the music channel
+keeps playing and the master is untouched.
+
 ## 2026-08-16 — The Endless tide grows shores
 
 ### Added

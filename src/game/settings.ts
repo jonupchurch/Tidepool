@@ -7,6 +7,9 @@
 import type { DifficultyTier, SizeTier } from '@/core'
 import { DIFFICULTY_TIERS, SIZE_TIERS } from '@/core'
 import type { SettingsRecord } from '@/platform'
+// Straight at the module, not the `board-source` barrel: settings only needs the
+// shore vocabulary, and the barrel drags in the curated manifest with it.
+import { DEFAULT_SHORE, type ShoreChoice, isShoreChoice } from './board-source/shore'
 
 /** Daylight, the designed Night Tide dark palette, or follow the OS. */
 export type ThemeChoice = 'Day' | 'Night' | 'Auto'
@@ -27,7 +30,15 @@ export interface Settings {
   controls: { swapMarkButtons: boolean; tapToCycle: boolean; confirmBeforeClear: boolean }
   /** Comfort aids — framed as comfort, never "easy mode" (FR-005). */
   comfort: { hoverHighlight: boolean; mistakeNudge: boolean; lineHelper: boolean }
-  play: { defaultSize: SizeTier; defaultDifficulty: DifficultyTier; stopwatch: boolean }
+  /** `defaultShore` / `edgeHints` are the Endless variety choices (016). They
+   *  are play *defaults*, not board state — a curated entry names its own. */
+  play: {
+    defaultSize: SizeTier
+    defaultDifficulty: DifficultyTier
+    stopwatch: boolean
+    defaultShore: ShoreChoice
+    edgeHints: boolean
+  }
 }
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -42,7 +53,15 @@ export const DEFAULT_SETTINGS: Settings = {
   },
   controls: { swapMarkButtons: false, tapToCycle: false, confirmBeforeClear: false },
   comfort: { hoverHighlight: true, mistakeNudge: true, lineHelper: false },
-  play: { defaultSize: 'Small', defaultDifficulty: 'Calm', stopwatch: false },
+  play: {
+    defaultSize: 'Small',
+    defaultDifficulty: 'Calm',
+    stopwatch: false,
+    // The filled hexagon with plain totals — what every Endless board was
+    // before 016, so an untouched install plays exactly as it did.
+    defaultShore: DEFAULT_SHORE,
+    edgeHints: false,
+  },
 }
 
 const isObj = (x: unknown): x is Record<string, unknown> => typeof x === 'object' && x !== null
@@ -106,6 +125,10 @@ export function resolveSettings(raw: unknown): Settings {
       defaultSize: choice(play.defaultSize, SIZE_TIERS, d.play.defaultSize),
       defaultDifficulty: choice(play.defaultDifficulty, DIFFICULTY_TIERS, d.play.defaultDifficulty),
       stopwatch: bool(play.stopwatch, d.play.stopwatch),
+      // Validated, not trusted: an unknown shore id falls back to the hexagon
+      // rather than reaching `generateBoard`, which refuses it outright.
+      defaultShore: isShoreChoice(play.defaultShore) ? play.defaultShore : d.play.defaultShore,
+      edgeHints: bool(play.edgeHints, d.play.edgeHints),
     },
   }
 }

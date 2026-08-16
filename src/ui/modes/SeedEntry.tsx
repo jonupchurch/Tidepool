@@ -2,11 +2,10 @@
 // Invalid input shows a gentle inline message and loads nothing (SC-005). The
 // seed carries the current size/difficulty unless the token overrides them.
 import { useState } from 'react'
-import type { DifficultyTier, SizeTier } from '@/core'
-import { type BoardRequest, parseSeedEntry } from '@/game/board-source'
+import { type BoardRequest, type SeedEntryPrefs, parseSeedEntry } from '@/game/board-source'
 
 export interface SeedEntryProps {
-  currentPrefs: { size: SizeTier; difficulty: DifficultyTier }
+  currentPrefs: SeedEntryPrefs
   onSubmit: (request: BoardRequest) => void
 }
 
@@ -29,7 +28,9 @@ export function SeedEntry({ currentPrefs, onSubmit }: SeedEntryProps) {
       <label htmlFor="seed" className="font-display text-deep-pool">
         Enter a seed
       </label>
-      <p className="mb-2 text-xs text-tide">Jump to a friend’s exact board.</p>
+      <p className="mb-2 text-xs text-tide">
+        Jump to a friend’s exact board — paste the whole label to match its shore too.
+      </p>
       <div className="flex gap-2">
         <input
           id="seed"

@@ -56,13 +56,19 @@ describe('shell-store: resume snapshot', () => {
 describe('shell-store: last play', () => {
   it('defaults to Small / Calm', async () => {
     const store = makeFakeStore()
-    expect(await getLastPlay(store)).toEqual({ size: 'Small', difficulty: 'Calm' })
+    expect(await getLastPlay(store)).toEqual({
+      size: 'Small',
+      difficulty: 'Calm',
+      shore: 'hex',
+      edgeHints: false,
+    })
   })
 
   it('round-trips the last-used size/difficulty', async () => {
     const store = makeFakeStore()
-    await setLastPlay(store, { size: 'Large', difficulty: 'Deep' })
-    expect(await getLastPlay(store)).toEqual({ size: 'Large', difficulty: 'Deep' })
+    const last = { size: 'Large', difficulty: 'Deep', shore: 'Any', edgeHints: true } as const
+    await setLastPlay(store, last)
+    expect(await getLastPlay(store)).toEqual(last)
   })
 
   it('preserves other settings when writing last play', async () => {
@@ -71,13 +77,28 @@ describe('shell-store: last play', () => {
       sound: { muted: true, volume: 0.5 },
       visuals: { theme: 'Night', reducedMotion: true, textScale: 1, colorblind: false },
       controls: { swapMarkButtons: true },
-      play: { defaultSize: 'Small', defaultDifficulty: 'Calm' },
+      play: { defaultSize: 'Small', defaultDifficulty: 'Calm', stopwatch: true },
     }
     const store = makeFakeStore({ settings })
-    await setLastPlay(store, { size: 'Medium', difficulty: 'Tricky' })
+    await setLastPlay(store, {
+      size: 'Medium',
+      difficulty: 'Tricky',
+      shore: 'crescent',
+      edgeHints: false,
+    })
     const back = await store.get<SettingsRecord>('tp:v1:settings')
     expect(back?.controls.swapMarkButtons).toBe(true)
-    expect(back?.play).toEqual({ defaultSize: 'Medium', defaultDifficulty: 'Tricky' })
+    expect(back?.play).toEqual({
+      defaultSize: 'Medium',
+      defaultDifficulty: 'Tricky',
+      // `stopwatch` is owned by Settings (006) and is not the shell's to clear.
+      // This used to rebuild `play` from scratch, so every Play silently reset
+      // it — and would have reset the shore fields on the very press that set
+      // them.
+      stopwatch: true,
+      defaultShore: 'crescent',
+      edgeHints: false,
+    })
   })
 })
 

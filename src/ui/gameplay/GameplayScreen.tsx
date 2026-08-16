@@ -27,6 +27,7 @@ import {
 import { DEFAULTS, getSaveStore, loadRecord, saveRecord } from '@/platform'
 import { getAudioEngine } from '@/audio'
 import { useEffectiveSettings } from '@/ui/settings/useSettings'
+import { boardLabel } from './board-label'
 import { CompletePanel } from './CompletePanel'
 import { HowToPlay, HowToPlayTab } from './HowToPlay'
 import { PoolToast } from './PoolToast'
@@ -355,7 +356,7 @@ export function GameplayScreen({
         renderer = createBoardRenderer(canvas, board)
       } catch {
         // No 2D context (e.g. jsdom / very old browsers) — chrome still works.
-        setLabel(`${board.params.seed} · ${board.params.size} · ${board.params.difficulty}`)
+        setLabel(boardLabel(board.params))
         syncChrome()
         setLoading(false)
         return
@@ -402,7 +403,7 @@ export function GameplayScreen({
         }
       }
 
-      setLabel(`${board.params.seed} · ${board.params.size} · ${board.params.difficulty}`)
+      setLabel(boardLabel(board.params))
       hoveredRef.current = null
       highlightRef.current = new Set()
       guidesRef.current = new Set()

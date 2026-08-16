@@ -6,7 +6,7 @@
 import type { DifficultyTier, SizeTier } from '@/core'
 import { DIFFICULTY_TIERS, SIZE_TIERS } from '@/core'
 import { CREATURES, creatureDef } from '@/game'
-import { loadCuratedPack } from '@/game/board-source'
+import { DEFAULT_SHORE, isShoreChoice, loadCuratedPack } from '@/game/board-source'
 import { type SaveStore, loadRecord, saveRecord } from '@/platform'
 import type { HomeStats, LastPlay, ResumeSnapshot, StoredShellPrefs, Theme } from './types'
 
@@ -31,14 +31,31 @@ export async function saveShellPrefs(store: SaveStore, prefs: StoredShellPrefs):
 
 export async function getLastPlay(store: SaveStore): Promise<LastPlay> {
   const s = await loadRecord(store, 'settings')
-  return { size: asSize(s.play.defaultSize), difficulty: asDifficulty(s.play.defaultDifficulty) }
+  return {
+    size: asSize(s.play.defaultSize),
+    difficulty: asDifficulty(s.play.defaultDifficulty),
+    // Coerced rather than trusted: an unknown shore would reach `generateBoard`,
+    // which refuses a shape its catalog doesn't claim.
+    shore: isShoreChoice(s.play.defaultShore) ? s.play.defaultShore : DEFAULT_SHORE,
+    edgeHints: s.play.edgeHints === true,
+  }
 }
 
 export async function setLastPlay(store: SaveStore, lastPlay: LastPlay): Promise<void> {
   const s = await loadRecord(store, 'settings')
   await saveRecord(store, 'settings', {
     ...s,
-    play: { defaultSize: lastPlay.size, defaultDifficulty: lastPlay.difficulty },
+    // Spread `s.play`, don't rebuild it. This wrote a bare three-field object
+    // and so silently dropped `stopwatch` on every Play — a setting owned by
+    // 006 that the shell has no business clearing. With the 016 shore fields
+    // it would have dropped those too, on the very press that sets them.
+    play: {
+      ...s.play,
+      defaultSize: lastPlay.size,
+      defaultDifficulty: lastPlay.difficulty,
+      defaultShore: lastPlay.shore,
+      edgeHints: lastPlay.edgeHints,
+    },
   })
 }
 

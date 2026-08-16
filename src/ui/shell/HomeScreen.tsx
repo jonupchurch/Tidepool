@@ -4,8 +4,15 @@
 // renders these controls; the board-*source* behavior belongs to feature 004.
 import { useEffect, useState } from 'react'
 import type { BoardParams, DifficultyTier, SizeTier } from '@/core'
-import { DIFFICULTY_TIERS, SIZE_TIERS } from '@/core'
-import { toBoardParams } from '@/game/board-source'
+import { DEFAULT_SHAPE, DIFFICULTY_TIERS, SIZE_TIERS } from '@/core'
+import {
+  type ShoreChoice,
+  edgeHintsApply,
+  isShoreChoice,
+  shoreName,
+  shoresFor,
+  toBoardParams,
+} from '@/game/board-source'
 import { SeedEntry } from '@/ui/modes/SeedEntry'
 import { ResumeCard } from './ResumeCard'
 import { VolumeSlider } from './VolumeSlider'
@@ -23,13 +30,19 @@ export interface HomeScreenProps {
   lastPlay: LastPlay
   resume: ResumeSnapshot | null
   stats: HomeStats
-  /** Start a fresh board from the given request. */
-  onPlay: (params: BoardParams) => void
+  /** Start a fresh board from the given request. The second argument is the
+   *  *selection* behind it — `params` carries a resolved silhouette, which
+   *  can't tell `Any` apart from a shore the player named. */
+  onPlay: (params: BoardParams, selection?: LastPlay) => void
   /** Restore the saved in-progress board. */
   onResume: () => void
   /** Go to a secondary screen (Curated / Journal / Settings / Tutorial). */
   onNavigate: (screen: Screen) => void
 }
+
+/** What the Shore row shows where no silhouette fits — the hexagon, alone and
+ *  inert, so the control is still discoverable at the default Small size. */
+const SHORE_PLACEHOLDER: readonly string[] = [DEFAULT_SHAPE]
 
 const SECONDARY: readonly { label: string; screen: Screen }[] = [
   { label: 'Shore journal', screen: 'Journal' },
@@ -51,6 +64,16 @@ export function HomeScreen({
 }: HomeScreenProps) {
   const [size, setSize] = useState<SizeTier>(lastPlay.size)
   const [difficulty, setDifficulty] = useState<DifficultyTier>(lastPlay.difficulty)
+  const [shore, setShore] = useState<ShoreChoice>(lastPlay.shore)
+  const [edgeHints, setEdgeHints] = useState<boolean>(lastPlay.edgeHints)
+
+  // Which choices this size can actually carry, and whether the hints toggle
+  // does anything at this tier. Both stay *offered* when they don't apply —
+  // disabled with a reason reads as a rule of the game; a control that vanishes
+  // reads as a bug, and nothing on Home would ever mention shores on Small.
+  const shoreOptions = shoresFor(size)
+  const shoreAvailable = shoreOptions.length > 1
+  const hintsAvailable = edgeHintsApply(difficulty)
 
   const toggleMute = () => onPrefsChange({ ...prefs, muted: !prefs.muted })
   const toggleMusic = () => onPrefsChange({ ...prefs, music: !prefs.music })
@@ -60,9 +83,16 @@ export function HomeScreen({
   useEffect(() => {
     setSize(lastPlay.size)
     setDifficulty(lastPlay.difficulty)
-  }, [lastPlay.size, lastPlay.difficulty])
+    setShore(lastPlay.shore)
+    setEdgeHints(lastPlay.edgeHints)
+  }, [lastPlay.size, lastPlay.difficulty, lastPlay.shore, lastPlay.edgeHints])
 
-  const play = () => onPlay(boardRequest(freshSeed(), size, difficulty))
+  // The *held* choice survives a trip through a size that can't carry it, so
+  // Medium → Small → Medium comes back to the shore you picked. Only what the
+  // board is generated with is coerced (`resolveShore`), and only there.
+  const selection: LastPlay = { size, difficulty, shore, edgeHints }
+  const play = () =>
+    onPlay(boardRequest(freshSeed(), size, difficulty, { shore, edgeHints }), selection)
 
   return (
     <div className="relative grid h-full w-full place-items-center overflow-y-auto bg-sand text-ink">
@@ -160,7 +190,7 @@ export function HomeScreen({
           </span>
         </button>
 
-        {/* Endless tide — size + difficulty pickers. */}
+        {/* Endless tide — size, difficulty, and the 016 variety choices. */}
         <section className="w-full rounded-2xl bg-foam/70 p-4" aria-label="Endless tide">
           <h2 className="mb-3 font-display text-deep-pool">Endless tide</h2>
           <Segmented
@@ -175,11 +205,36 @@ export function HomeScreen({
             value={difficulty}
             onChange={(v) => setDifficulty(v as DifficultyTier)}
           />
+          {/* Shore — the silhouette the board is carved from. `Any` lets the
+              seed choose, so a run varies board to board and still reproduces. */}
+          <Segmented
+            legend="Shore"
+            options={shoreAvailable ? shoreOptions : SHORE_PLACEHOLDER}
+            value={shoreAvailable ? shore : DEFAULT_SHAPE}
+            labelOf={(v) => (isShoreChoice(v) ? shoreName(v) : v)}
+            disabled={!shoreAvailable}
+            note={shoreAvailable ? undefined : 'Shores need a Medium or Large tide.'}
+            onChange={(v) => isShoreChoice(v) && setShore(v)}
+          />
+          {/* Edge hints — `{n}` / `-n-` on the row totals. Offered only at Deep,
+              because reduction strips every annotation the lower tiers'
+              technique sets can't use; see `edgeHintsApply`. */}
+          <Switch
+            legend="Edge hints"
+            caption={
+              hintsAvailable
+                ? 'Row totals may show {n} or -n- — one run of water, or more than one.'
+                : 'Deep tides only — gentler tides solve without them.'
+            }
+            checked={hintsAvailable && edgeHints}
+            disabled={!hintsAvailable}
+            onChange={setEdgeHints}
+          />
         </section>
 
         {/* Enter a seed — jump to a friend's exact board (004 seed-entry). */}
         <SeedEntry
-          currentPrefs={{ size, difficulty }}
+          currentPrefs={{ size, difficulty, shore, edgeHints }}
           onSubmit={(request) => onPlay(toBoardParams(request))}
         />
 
@@ -220,22 +275,37 @@ export function HomeScreen({
   )
 }
 
-/** A small segmented single-select control (size / difficulty). */
+/**
+ * A small segmented single-select control (size / difficulty / shore).
+ *
+ * Wraps rather than dividing the row evenly: with six shores, `flex-1` squeezed
+ * every label to an ellipsis. `basis` keeps the three-item rows looking as they
+ * always have while letting a longer set fall onto a second line.
+ */
 function Segmented({
   legend,
   options,
   value,
   onChange,
+  labelOf = (v) => v,
+  disabled = false,
+  note,
 }: {
   legend: string
   options: readonly string[]
   value: string
   onChange: (value: string) => void
+  /** Display text for an option value (shore ids are not player-facing). */
+  labelOf?: (value: string) => string
+  /** Offered but inert — the choice doesn't apply at the current selection. */
+  disabled?: boolean
+  /** Why it's inert. Shown under the row, so the rule is visible where it bites. */
+  note?: string
 }) {
   return (
     <div className="mb-3 last:mb-0">
       <div className="mb-1 text-xs uppercase tracking-wide text-rock">{legend}</div>
-      <div className="flex gap-2">
+      <div className={`flex flex-wrap gap-2 ${disabled ? 'opacity-50' : ''}`}>
         {options.map((opt) => {
           const active = opt === value
           return (
@@ -243,16 +313,60 @@ function Segmented({
               key={opt}
               type="button"
               aria-pressed={active}
+              disabled={disabled}
               onClick={() => onChange(opt)}
-              className={`flex-1 rounded-lg px-3 py-2 text-sm transition-colors ${
+              className={`min-w-20 flex-1 basis-24 rounded-lg px-3 py-2 text-sm transition-colors ${
                 active ? 'bg-tide text-foam' : 'bg-sand text-deep-pool hover:bg-driftwood'
-              }`}
+              } ${disabled ? 'cursor-not-allowed hover:bg-sand' : ''}`}
             >
-              {opt}
+              {labelOf(opt)}
             </button>
           )
         })}
       </div>
+      {note && <p className="mt-1 text-xs text-rock">{note}</p>}
+    </div>
+  )
+}
+
+/** An on/off control with a caption — for a choice that isn't one-of-several. */
+function Switch({
+  legend,
+  caption,
+  checked,
+  onChange,
+  disabled = false,
+}: {
+  legend: string
+  caption: string
+  checked: boolean
+  onChange: (checked: boolean) => void
+  disabled?: boolean
+}) {
+  return (
+    <div className={`mb-3 last:mb-0 ${disabled ? 'opacity-50' : ''}`}>
+      <div className="mb-1 text-xs uppercase tracking-wide text-rock">{legend}</div>
+      <button
+        type="button"
+        role="switch"
+        aria-checked={checked}
+        aria-label={legend}
+        disabled={disabled}
+        onClick={() => onChange(!checked)}
+        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-sm transition-colors ${
+          checked ? 'bg-tide text-foam' : 'bg-sand text-deep-pool'
+        } ${disabled ? 'cursor-not-allowed' : 'hover:bg-driftwood hover:text-deep-pool'}`}
+      >
+        <span
+          aria-hidden
+          className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${
+            checked ? 'border-foam/60 bg-foam/20' : 'border-driftwood bg-foam'
+          }`}
+        >
+          {checked ? '✓' : ''}
+        </span>
+        <span className="min-w-0 flex-1">{caption}</span>
+      </button>
     </div>
   )
 }

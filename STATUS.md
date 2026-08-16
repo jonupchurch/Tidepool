@@ -80,6 +80,14 @@ than shipping. Full runbook: `scripts/release-steam.md`.
   and is the current behaviour; the alternative is a ~180 MB fixed runtime
   staged beside the exe. The failure mode on a machine without it is silent.
   Options and costs are in `scripts/release-steam.md`.
+- **No Settings screen; the switches are the settings.** Feature 006 shipped its
+  *model* — `resolveSettings`, the persisted record, live application — but never
+  a screen, so `sound.ambient` and `sound.sfx` are levels nothing can reach and
+  several comfort/control fields are likewise unreachable. Surfaced 2026-08-16
+  when the effects switch (017) was added. Jon's call: **the pair of channel
+  switches plus the master volume slider is enough**; balancing the two channels
+  against each other is not worth a screen. Revisit only if a player asks for it.
+
 - **Code signing stays deferred** pending a CA. Not needed for Steam — the
   client writes depot files without a Mark-of-the-Web tag, so SmartScreen never
   fires. It only matters for direct downloads.

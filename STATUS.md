@@ -6,21 +6,15 @@ _Snapshot; updated each work session. Last updated: 2026-08-16._
 
 **Shipping.** All sixteen features are built and merged.
 
-**Live on `default`: build 24743146 (`Tidepool 1.1.0`)** — promoted after its
-2026-08-14 upload, so players have features 010–015.
+**Live on `default`: build 24766362 (`Tidepool 1.2.0`)** — uploaded and promoted
+2026-08-16, tested working. Players have every feature through 016.
 
-**`Tidepool 1.2.0` was UPLOADED on 2026-08-16 as build 24766362, and is NOT
-live.** 8.0 MB, one file, description `Tidepool 1.2.0 (a9ddeeb)`. It carries
-feature 016 and three bug fixes.
+Release history: 1.0.1 (24479382) → 1.1.0 (24743146, features 010–015) → 1.2.0
+(24766362, feature 016 + three bug fixes).
 
-Promote it from the partner site (Builds → Set Build Live) when you've tested
-it. `setlive` is deliberately empty in the VDF, so an upload never reaches
-players on its own — until you promote it, the live build stays 24743146
-(`Tidepool 1.1.0`).
-
-To test the uploaded build before promoting: set the `default` branch's build
-for your own account only, or install from the local installer at
-`src-tauri/target/release/bundle/nsis/Tidepool_1.2.0_x64-setup.exe`.
+`setlive` is deliberately empty in the VDF, so an upload never reaches players
+on its own — promotion is always a separate step on the partner site
+(Builds → Set Build Live).
 
 ## Built
 

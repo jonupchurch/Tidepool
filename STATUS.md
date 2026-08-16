@@ -19,8 +19,8 @@ on its own — promotion is always a separate step on the partner site
 ## Built
 
 Features 001–017, in build order. 001–015 were each specced and planned via
-Spec-Kit before implementation; 016 was scoped with a mini-spec and written up
-afterwards. Per-feature detail is in `CHANGELOG.md`; this is the index.
+Spec-Kit before implementation; 016 and 017 were scoped with a mini-spec, and
+016 was written up afterwards. Per-feature detail is in `CHANGELOG.md`; this is the index.
 
 | | Feature | |
 |---|---|---|
@@ -44,7 +44,7 @@ afterwards. Per-feature detail is in `CHANGELOG.md`; this is the index.
 
 Plus, since: all 12 creature portraits, audio, the About screen, the curated hex
 map, HiDPI rendering, a root error boundary, 29 achievements, and the SteamPipe
-release pipeline. **823 unit tests + 32 e2e green.**
+release pipeline. **916 unit tests + 42 e2e green.**
 
 ## Release — what's left
 

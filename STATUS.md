@@ -6,11 +6,16 @@ _Snapshot; updated each work session. Last updated: 2026-08-16._
 
 **Shipping.** All seventeen features are built and merged.
 
-**Live on `default`: build 24766362 (`Tidepool 1.2.0`)** — uploaded and promoted
-2026-08-16, tested working. Players have every feature through 016; **017 is merged but not yet released.**
+**Live on `default`: build 24766362 (`Tidepool 1.2.0`)** — every feature
+through 016.
+
+**`Tidepool 1.2.1` was UPLOADED 2026-08-16 as build 24766604 and is NOT live.**
+8.0 MB, description `Tidepool 1.2.1 (0320d54)`; it adds feature 017, the sound
+effects switch. Promote it from the partner site (Builds → Set Build Live).
 
 Release history: 1.0.1 (24479382) → 1.1.0 (24743146, features 010–015) → 1.2.0
-(24766362, feature 016 + three bug fixes).
+(24766362, feature 016 + three bug fixes) → 1.2.1 (24766604, feature 017,
+uploaded not live).
 
 `setlive` is deliberately empty in the VDF, so an upload never reaches players
 on its own — promotion is always a separate step on the partner site

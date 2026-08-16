@@ -285,8 +285,18 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
   }, [curatedId, currentParams, launchGameplay, nextBoard, navigate])
 
   // Pause actions — the board stays saved throughout; Resume returns to it.
+  //
+  // Carries the shore choice like every other endless constructor: "New board"
+  // is a *fresh board at your settings*, and serving a plain hexagon here while
+  // Home still shows the shore you picked reads as the setting being ignored.
   const onNewBoard = useCallback(
-    () => onPlay(boardRequest(freshSeed(), lastPlay.size, lastPlay.difficulty)),
+    () =>
+      onPlay(
+        boardRequest(freshSeed(), lastPlay.size, lastPlay.difficulty, {
+          shore: lastPlay.shore,
+          edgeHints: lastPlay.edgeHints,
+        }),
+      ),
     [onPlay, lastPlay],
   )
   const onRestart = useCallback(() => {

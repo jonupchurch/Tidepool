@@ -102,3 +102,27 @@ test('Shore stays offered but inert on Small, where nothing fits', async ({ page
   await expect(page.getByText(/Medium or Large/i)).toBeVisible()
   await expect(page.getByRole('button', { name: /^Atoll$/ })).toHaveCount(0)
 })
+
+/**
+ * "New board" from Pause is a separate constructor from "Next board", and it was
+ * the one path that forgot the selection — it served a plain hexagon while Home
+ * still showed (and still stored) the shore you picked.
+ */
+test('New board from Pause keeps the shore you chose', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: /^Large$/ }).click()
+  await page.getByRole('button', { name: /^Deep$/ }).click()
+  await page.getByRole('button', { name: /^Atoll$/ }).click()
+  await page.getByRole('button', { name: /^play$/i }).click()
+
+  const first = await readHook(page)
+  expect(first.shape).toBe('atoll')
+
+  await page.getByRole('button', { name: /pause|menu/i }).first().click()
+  await page.getByRole('button', { name: /new board/i }).click()
+
+  await expect.poll(async () => (await readHook(page)).seed).not.toBe(first.seed)
+  const next = await readHook(page)
+  expect(next.shape).toBe('atoll')
+  expect(next.cells).toBe(first.cells)
+})

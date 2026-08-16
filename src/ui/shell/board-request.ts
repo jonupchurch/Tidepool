@@ -2,7 +2,7 @@
 // Board-*source* behavior (curated sets, endless progression) belongs to feature
 // 004; the shell only assembles a request. UI layer — Math.random is fine here
 // (the engine stays deterministic per seed).
-import type { BoardParams, ClueToggles, DifficultyTier, SizeTier } from '@/core'
+import type { BoardParams, DifficultyTier, SizeTier } from '@/core'
 import {
   DEFAULT_SHORE,
   type ShoreChoice,
@@ -11,8 +11,9 @@ import {
   shapeField,
 } from '@/game/board-source'
 
-/** Default clue set for shell-launched boards (both signature clue types on). */
-export const DEFAULT_CLUES: ClueToggles = { connectivity: true, lineTotals: true }
+// The clue-set default moved to `endlessClues` in board-source, which is the one
+// place that knows when a toggle actually bites. A second `DEFAULT_CLUES` here
+// was left over from before that and was nobody's source of truth.
 
 /** A fresh, readable seed for a new board, e.g. `TIDE-1Q9F`. */
 export function freshSeed(): string {

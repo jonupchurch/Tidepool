@@ -9,18 +9,18 @@ _Snapshot; updated each work session. Last updated: 2026-08-16._
 **Live on `default`: build 24743146 (`Tidepool 1.1.0`)** — promoted after its
 2026-08-14 upload, so players have features 010–015.
 
-**`Tidepool 1.2.0` is BUILT AND STAGED, not uploaded.** `steam/content/windows/`
-holds the 1.2.0 exe (8.0 MB, description `Tidepool 1.2.0 (0b6e69a)`); it carries
-feature 016 and three bug fixes. The upload is run by hand — see
-`scripts/release-steam.md`:
+**`Tidepool 1.2.0` was UPLOADED on 2026-08-16 as build 24766362, and is NOT
+live.** 8.0 MB, one file, description `Tidepool 1.2.0 (a9ddeeb)`. It carries
+feature 016 and three bug fixes.
 
-```bash
-npm run release:steam -- --skip-build --preview --user <account>   # dry run
-npm run release:steam -- --skip-build --user <account>             # upload
-```
+Promote it from the partner site (Builds → Set Build Live) when you've tested
+it. `setlive` is deliberately empty in the VDF, so an upload never reaches
+players on its own — until you promote it, the live build stays 24743146
+(`Tidepool 1.1.0`).
 
-Then promote from the partner site (Builds → Set Build Live). `setlive` is
-deliberately empty in the VDF, so an upload never reaches players on its own.
+To test the uploaded build before promoting: set the `default` branch's build
+for your own account only, or install from the local installer at
+`src-tauri/target/release/bundle/nsis/Tidepool_1.2.0_x64-setup.exe`.
 
 ## Built
 

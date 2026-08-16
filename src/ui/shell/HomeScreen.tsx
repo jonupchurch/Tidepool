@@ -94,6 +94,13 @@ export function HomeScreen({
   const play = () =>
     onPlay(boardRequest(freshSeed(), size, difficulty, { shore, edgeHints }), selection)
 
+  const summary = [
+    size,
+    difficulty,
+    ...(shoreAvailable && shore !== DEFAULT_SHAPE ? [shoreName(shore)] : []),
+    ...(hintsAvailable && edgeHints ? ['hints'] : []),
+  ].join(' · ')
+
   return (
     <div className="relative grid h-full w-full place-items-center overflow-y-auto bg-sand text-ink">
       {/* Global toggles (US5) — mute + music + Day/Night Tide. Mute is the
@@ -159,9 +166,10 @@ export function HomeScreen({
           className="flex w-full flex-col items-center rounded-2xl bg-tide px-6 py-4 text-foam shadow-sm transition-colors hover:bg-deep-pool"
         >
           <span className="font-display text-2xl">Play</span>
-          <span className="text-sm text-foam/80">
-            {size} · {difficulty}
-          </span>
+          {/* Summarises the whole selection, by the same rule the board label
+              uses: only what differs from the plain board is named, so the
+              common case stays "Small · Calm". */}
+          <span className="text-sm text-foam/80">{summary}</span>
         </button>
 
         {/* Curated shores — a primary destination alongside Play, not a

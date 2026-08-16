@@ -373,6 +373,11 @@ export function GameplayScreen({
         ;(window as unknown as { __TIDEPOOLS__?: unknown }).__TIDEPOOLS__ = {
           ready: true,
           seed: board.params.seed,
+          // The board's identity beyond its seed (016). `present` is the honest
+          // read on a silhouette — an atoll and a hexagon of the same size tier
+          // differ by cell count, which no amount of label-reading proves.
+          shape: board.params.shape ?? 'hex',
+          cells: board.present.size,
           lastSave: Promise.resolve(),
           // Getters, not snapshots: the board re-lays out whenever the pane
           // resizes (the how-to rail appearing, a window resize), so cached
@@ -386,7 +391,14 @@ export function GameplayScreen({
           solution,
           get lineLabels() {
             const r = rendererRef.current
-            return (r?.lineLabels ?? []).map((l) => ({ id: l.id, x: l.x, y: l.y, total: l.total }))
+            return (r?.lineLabels ?? []).map((l) => ({
+              id: l.id,
+              x: l.x,
+              y: l.y,
+              total: l.total,
+              // What the label actually prints: `{n}` / `-n-` / plain (016).
+              connectivity: l.connectivity ?? null,
+            }))
           },
           guides: () => [...guidesRef.current].sort(),
           doneLines: () => [...doneLinesRef.current].sort(),

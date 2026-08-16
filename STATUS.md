@@ -1,10 +1,10 @@
 # Tidepool — Status
 
-_Snapshot; updated each work session. Last updated: 2026-08-13._
+_Snapshot; updated each work session. Last updated: 2026-08-16._
 
 ## Current phase
 
-**Shipping.** All fifteen features are built and merged. **Build 24743146
+**Shipping.** All sixteen features are built and merged. **Build 24743146
 (`Tidepool 1.1.0`) was uploaded on 2026-08-14 and is NOT yet live** — it carries
 features 010–015. Promote it from the partner site (Builds → Set Build Live)
 when you're ready; `setlive` is deliberately empty, so an upload never reaches
@@ -15,8 +15,9 @@ which contains none of 010–015.
 
 ## Built
 
-Features 001–015, in build order, each specced and planned via Spec-Kit before
-implementation. Per-feature detail is in `CHANGELOG.md`; this is the index.
+Features 001–016, in build order. 001–015 were each specced and planned via
+Spec-Kit before implementation; 016 was scoped with a mini-spec and written up
+afterwards. Per-feature detail is in `CHANGELOG.md`; this is the index.
 
 | | Feature | |
 |---|---|---|
@@ -35,6 +36,7 @@ implementation. Per-feature detail is in `CHANGELOG.md`; this is the index.
 | 013 | Curated page two | 36 more boards, found by a re-runnable search |
 | 014 | Ambient music | music channel, its own switch, measured loop points |
 | 015 | Master volume | one level for both channels, on Home and Pause |
+| 016 | Varied shores | the Endless tide gains the silhouettes and the `{n}`/`-n-` edge numbers |
 
 Plus, since: all 12 creature portraits, audio, the About screen, the curated hex
 map, HiDPI rendering, a root error boundary, 29 achievements, and the SteamPipe

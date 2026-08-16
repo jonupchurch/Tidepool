@@ -122,3 +122,26 @@ describe('Home — the Edge hints switch', () => {
     )
   })
 })
+
+describe('Home — the Play summary', () => {
+  it('names only size and difficulty for a plain board', () => {
+    renderShell(<HomeScreen {...props(small)} />)
+    expect(screen.getByRole('button', { name: /^play$/i })).toHaveTextContent('Small · Calm')
+  })
+
+  it('names the shore and the hints once they are on', () => {
+    renderShell(<HomeScreen {...props({ ...medium, shore: 'Any', edgeHints: true })} />)
+    expect(screen.getByRole('button', { name: /^play$/i })).toHaveTextContent(
+      'Medium · Deep · Any · hints',
+    )
+  })
+
+  // The summary must describe the board that will actually be served, not the
+  // stored preference — otherwise it promises a shore that Small can't carry.
+  it('drops what the current size and tier cannot deliver', () => {
+    renderShell(
+      <HomeScreen {...props({ size: 'Small', difficulty: 'Calm', shore: 'wedge', edgeHints: true })} />,
+    )
+    expect(screen.getByRole('button', { name: /^play$/i })).toHaveTextContent('Small · Calm')
+  })
+})

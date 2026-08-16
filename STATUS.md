@@ -4,14 +4,23 @@ _Snapshot; updated each work session. Last updated: 2026-08-16._
 
 ## Current phase
 
-**Shipping.** All sixteen features are built and merged. **Build 24743146
-(`Tidepool 1.1.0`) was uploaded on 2026-08-14 and is NOT yet live** — it carries
-features 010–015. Promote it from the partner site (Builds → Set Build Live)
-when you're ready; `setlive` is deliberately empty, so an upload never reaches
-players on its own.
+**Shipping.** All sixteen features are built and merged.
 
-Until then the live build on `default` is still **24479382 (`Tidepool 1.0.1`)**,
-which contains none of 010–015.
+**Live on `default`: build 24743146 (`Tidepool 1.1.0`)** — promoted after its
+2026-08-14 upload, so players have features 010–015.
+
+**`Tidepool 1.2.0` is BUILT AND STAGED, not uploaded.** `steam/content/windows/`
+holds the 1.2.0 exe (8.0 MB, description `Tidepool 1.2.0 (0b6e69a)`); it carries
+feature 016 and three bug fixes. The upload is run by hand — see
+`scripts/release-steam.md`:
+
+```bash
+npm run release:steam -- --skip-build --preview --user <account>   # dry run
+npm run release:steam -- --skip-build --user <account>             # upload
+```
+
+Then promote from the partner site (Builds → Set Build Live). `setlive` is
+deliberately empty in the VDF, so an upload never reaches players on its own.
 
 ## Built
 

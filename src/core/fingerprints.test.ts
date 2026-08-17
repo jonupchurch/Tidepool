@@ -13,6 +13,21 @@
 // occasionally correct, but it is never incidental — the fix is almost always to
 // make your change opt-in (a new clue toggle or shape appends to the seed string
 // only when enabled) rather than to update the table.
+//
+// ── The table is in two halves, and they are not equally negotiable ───────────
+//
+// **The 44 rows without `evenOdd`** describe boards that have shipped. They must
+// stay green through any change, and a failure among them is never to be
+// recaptured — it means a change leaked out of its opt-in gate and reached boards
+// that players hold. These are the rows that make a large refactor reviewable:
+// they are unaffected by any mechanic added since, so if they move, the mechanic
+// is not as opt-in as its author believed.
+//
+// **The 5 `evenOdd` rows** describe a mechanic (018) that is built but has never
+// been released, so no player holds one of those seeds. A feature that changes
+// what those boards look like is therefore allowed to recapture them — see the
+// note beside those rows for the one time that has actually happened, and why it
+// is a record rather than a precedent.
 import { createHash } from 'node:crypto'
 import type { BoardParams, ClueToggles, DifficultyTier, SizeTier } from './board'
 import { generateBoard } from './generate'

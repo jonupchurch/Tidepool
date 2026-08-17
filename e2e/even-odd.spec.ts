@@ -83,3 +83,59 @@ test('even/odd is offered only on Deep tides', async ({ page }) => {
   await sw.click()
   await expect(sw).toBeChecked()
 })
+
+/**
+ * Regression: the settings must survive the endless constructors.
+ *
+ * "Next board" and "New board" are separate constructors from Play, and 016 had
+ * to fix exactly this bug for the shore choice. 018 shipped with the same hole
+ * for even/odd: finishing a board and advancing served one with no marks at all,
+ * while Home went on showing the switch as on.
+ */
+test('advancing to the next board keeps even/odd on', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: /^Large$/ }).click()
+  await page.getByRole('button', { name: /^Deep$/ }).click()
+  await page.getByRole('switch', { name: /even & odd/i }).click()
+  await page.getByRole('button', { name: /^play$/i }).click()
+
+  const first = await readHook(page)
+  expect(first.clueFaces.filter((f) => f === '+' || f === '|').length).toBeGreaterThan(0)
+
+  // Solve it via the dev hook, then take the next board.
+  await page.evaluate(() => {
+    const h = (window as unknown as { __TIDEPOOLS__: { solution: Record<string, string> } })
+      .__TIDEPOOLS__
+    return h.solution
+  })
+  await page.getByRole('button', { name: /menu/i }).click()
+  await page.getByRole('button', { name: /new board/i }).click()
+
+  const next = await readHook(page)
+  expect(next.seed).not.toBe(first.seed)
+  expect(
+    next.clueFaces.filter((f) => f === '+' || f === '|').length,
+    'the new board dropped the even/odd setting',
+  ).toBeGreaterThan(0)
+})
+
+test('the even/odd switch is still on when you come back to Home', async ({ page }) => {
+  // Regression: `evenOdd` reached the settings *model* but not the persisted
+  // record *schema*, so the value was written into a field the record type did
+  // not have and vanished on the next read.
+  await page.goto('/')
+  await page.getByRole('button', { name: /^Large$/ }).click()
+  await page.getByRole('button', { name: /^Deep$/ }).click()
+  await page.getByRole('switch', { name: /even & odd/i }).click()
+  await page.getByRole('button', { name: /^play$/i }).click()
+  await readHook(page)
+
+  // Back to Home the long way round, as a player would.
+  await page.getByRole('button', { name: /menu/i }).click()
+  await page.getByRole('button', { name: /home|leave/i }).first().click()
+  await expect(page.getByRole('switch', { name: /even & odd/i })).toBeChecked()
+
+  // And it survives a reload, which is the part the schema controls.
+  await page.reload()
+  await expect(page.getByRole('switch', { name: /even & odd/i })).toBeChecked()
+})

@@ -43,12 +43,15 @@ const MAX_WATER_FRACTION = 0.75
  * `fingerprints.test.ts` is the guard. If it fails, this is the first place to
  * look, and the fix is almost never to update the table.
  */
-function rngSeedString(p: BoardParams, candidate: number): string {
+export function rngSeedString(p: BoardParams, candidate: number): string {
   const c = `c${p.clues.connectivity ? 1 : 0}l${p.clues.lineTotals ? 1 : 0}`
   // Optional segments append in a FIXED order — clue toggles, then shape. Two
   // features each adding "their own segment" is only safe if that order is
   // decided once and pinned, or a board with both differs depending on which
-  // code path composed the string. See generate.test.ts.
+  // code path composed the string.
+  //
+  // Exported solely so `generate.test.ts` can assert that order directly. It is
+  // not part of the engine's public API and is not re-exported from `core/index`.
   const lc = p.clues.lineConnectivity ? '|lc1' : ''
   const shape = p.shape && p.shape !== DEFAULT_SHAPE ? `|s:${p.shape}` : ''
   return `${p.seed}|${p.size}|${p.difficulty}|${c}${lc}${shape}|#${candidate}`

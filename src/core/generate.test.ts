@@ -1,13 +1,65 @@
 // Generation edge cases (T020): param validation, size extremes, no degenerate
 // (all-water / all-rock) boards.
-import type { BoardParams } from './board'
-import { generateBoard } from './generate'
+import type { BoardParams, ClueToggles } from './board'
+import { generateBoard, rngSeedString } from './generate'
 import { solve } from './solver'
 
 const base: Omit<BoardParams, 'size' | 'difficulty'> = {
   seed: 'EDGE-0001',
   clues: { connectivity: true, lineTotals: true },
 }
+
+// ── The RNG seed string's segment order (Principle XI) ───────────────────────
+//
+// `rngSeedString` composes optional segments in a fixed order, and its comment
+// has always said so. Until 018 nothing asserted it: a reordering would keep
+// every other test green while silently regenerating every board that composes
+// two optional mechanics. `fingerprints.test.ts` now catches that too, by hash;
+// this catches it by name, so the failure says what actually broke.
+describe('rngSeedString segment order', () => {
+  const BASE_CLUES: ClueToggles = { connectivity: true, lineTotals: true }
+  const p = (clues: ClueToggles, shape?: BoardParams['shape']): BoardParams => ({
+    seed: 'COVE-0001',
+    size: 'Medium',
+    difficulty: 'Calm',
+    clues,
+    ...(shape ? { shape } : {}),
+  })
+
+  it('omits every optional segment by default', () => {
+    expect(rngSeedString(p(BASE_CLUES), 3)).toBe('COVE-0001|Medium|Calm|c1l1|#3')
+  })
+
+  it('encodes the two always-present clue toggles', () => {
+    expect(rngSeedString(p({ connectivity: false, lineTotals: false }), 0)).toBe(
+      'COVE-0001|Medium|Calm|c0l0|#0',
+    )
+  })
+
+  it('appends row annotations after the clue toggles', () => {
+    expect(rngSeedString(p({ ...BASE_CLUES, lineConnectivity: true }), 3)).toBe(
+      'COVE-0001|Medium|Calm|c1l1|lc1|#3',
+    )
+  })
+
+  it('appends a non-default shape last', () => {
+    expect(rngSeedString(p(BASE_CLUES, 'atoll'), 3)).toBe(
+      'COVE-0001|Medium|Calm|c1l1|s:atoll|#3',
+    )
+  })
+
+  it('leaves the default shape out entirely', () => {
+    expect(rngSeedString(p(BASE_CLUES, 'hex'), 3)).toBe(rngSeedString(p(BASE_CLUES), 3))
+  })
+
+  it('orders clue toggles BEFORE shape when both are present', () => {
+    // The assertion the comment in generate.ts has always promised. If this
+    // fails, every board composing two optional mechanics has just moved.
+    expect(rngSeedString(p({ ...BASE_CLUES, lineConnectivity: true }, 'atoll'), 3)).toBe(
+      'COVE-0001|Medium|Calm|c1l1|lc1|s:atoll|#3',
+    )
+  })
+})
 
 describe('generateBoard validation', () => {
   it('throws on unknown size', () => {

@@ -45,9 +45,9 @@ priority order.
 feature can regenerate every board in existence if it goes wrong, and 010's own
 first commit was "freeze board fingerprints before touching the generator".
 
-- [ ] T001 Record the baseline: run `npm test`, `npm run typecheck` and `npm run validate:curated`, and note the passing test count in the commit message. Confirm `src/core/fingerprints.test.ts` is green before any edit.
-- [ ] T002 Widen the `FROZEN` table in `src/core/fingerprints.test.ts` so each row carries its own clue set and optional shape — its `fingerprint()` helper currently hardcodes `{ connectivity: true, lineTotals: true }`. All 36 existing rows MUST keep their existing expected hashes unchanged; this is a pure refactor of the harness, not of the data.
-- [ ] T003 Add the missing seed-string order assertion in `src/core/generate.test.ts`. `rngSeedString` is module-private in `src/core/generate.ts`, so export it for test use. Assert the composed string for: no optional segments, `lineConnectivity` only, shape only, and `lineConnectivity` + shape. Then correct the comment at `src/core/generate.ts:50-51`, which currently claims this order is "pinned … See `generate.test.ts`" — no such assertion exists anywhere in `src/` today.
+- [X] T001 Record the baseline: run `npm test`, `npm run typecheck` and `npm run validate:curated`, and note the passing test count in the commit message. Confirm `src/core/fingerprints.test.ts` is green before any edit.
+- [X] T002 Widen the `FROZEN` table in `src/core/fingerprints.test.ts` so each row carries its own clue set and optional shape — its `fingerprint()` helper currently hardcodes `{ connectivity: true, lineTotals: true }`. All 36 existing rows MUST keep their existing expected hashes unchanged; this is a pure refactor of the harness, not of the data.
+- [X] T003 Add the missing seed-string order assertion in `src/core/generate.test.ts`. `rngSeedString` is module-private in `src/core/generate.ts`, so export it for test use. Assert the composed string for: no optional segments, `lineConnectivity` only, shape only, and `lineConnectivity` + shape. Then correct the comment at `src/core/generate.ts:50-51`, which currently claims this order is "pinned … See `generate.test.ts`" — no such assertion exists anywhere in `src/` today.
 
 **Checkpoint**: guards green, no behaviour changed. Commit here.
 

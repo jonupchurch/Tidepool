@@ -169,7 +169,9 @@ extends it rather than building it.
 ### Functional Requirements
 
 - **FR-001**: A revealed stone MUST be able to show the parity of its water
-  neighbours — `E` for even, `O` for odd — **in place of** its exact count.
+  neighbours — `+` for even, `|` for odd — **in place of** its exact count. The
+  mark MUST NOT be mistakable for a digit the game already shows (see
+  Assumptions for why the original `E`/`O` was dropped).
 - **FR-002**: Even/odd MUST be opt-in, and MUST apply only at Deep.
 - **FR-003**: The parity deduction MUST be inert on any board carrying no parity
   clue. Strengthening the solver for every board would change which clues
@@ -234,9 +236,21 @@ extends it rather than building it.
 - **Density is left wherever reduction lands it** — roughly a third of clues at
   Deep. That is dense enough to be noticeable and possibly dense enough to feel
   mushy; it is a tuning question that wants play-testing, not a guess now.
-- **The glyphs are the letters `E` and `O`.** They sit in the same tile face the
-  numerals use, so legibility in the existing numeral font stack needs a look
-  during implementation.
+  *Resolved during implementation:* rendered on a real Large Deep board it reads
+  as texture rather than mush, and no cap was added. Two things brought the
+  number down on the way: reduction now refuses to weaken a clue whose value is
+  doing no work, which took density from 44% to 35.1%.
+- ~~**The glyphs are the letters `E` and `O`.**~~ **Superseded during
+  implementation: the marks are `+` (even) and `|` (odd).** The letters were
+  built first and then looked at, which is what the assumption asked for. In
+  Bricolage Grotesque at 700 weight, `O` and `0` are near-indistinguishable at
+  26px — the smallest cells a Large board uses — and `0` is a clue value the
+  game really shows. Strokes replace them, and carry the meaning rather than
+  merely avoiding the collision: **one stroke for odd, two crossed for even**,
+  which is the "things pair up, or one is left over" that parity is taught with.
+  Neither mark collides with a digit, nor with the `{}`/`--` framing already in
+  use. A lone `|` renders lighter than the digits around it, so parity marks are
+  drawn at heavier weight and slightly larger; also settled by eye.
 - **Weakening runs as a pass after existing reduction**, not as extra items in
   reduction's seeded removal shuffle. Adding items to that shuffle would reorder
   removals; a separate pass leaves the existing order untouched, which is the

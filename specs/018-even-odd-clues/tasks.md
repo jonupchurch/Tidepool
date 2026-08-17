@@ -94,9 +94,9 @@ deterministic. No user story can begin until this is complete.
 **Independent test**: Load a Deep board generated with even/odd on; confirm at
 least one `E` and one `O` tile render, and that the board completes guess-free.
 
-- [ ] T018 [US1] Give parity glyphs a distinct visual treatment where the clue face is drawn in `src/render/board-renderer.ts` — it hardcodes `palette.deepPool` and `700 ${size * 0.9}px DISPLAY_FONT` for every clue. A stone with no water neighbours already renders `0`, so `O` must not read as a zero. Add a palette token in `src/render/palette.ts` if a colour is the answer. This is **not** a `cell-style.ts` change; that module styles the tile, never the numeral.
-- [ ] T019 [P] [US1] Unit-test the clue-face text for all five forms (`n`, `{n}`, `-n-`, `E`, `O`). `clueText` is module-private and `src/render/` has no `board-renderer.test.ts` — only `board-renderer.perf.test.ts` — so export `clueText` and add a new `src/render/board-renderer.test.ts`, following how `line-labels.ts` exposes its pure helpers for `line-labels.test.ts`.
-- [ ] T020 [US1] Verify by looking, not reasoning: render a Large Deep even/odd board at the smallest cell size in both themes and confirm `O` is unambiguous against `0`. If letter forms cannot be made to read, fall back to a glyph pair sharing no shape with a digit and record the change in the plan.
+- [X] T018 [US1] Give parity glyphs a distinct visual treatment where the clue face is drawn in `src/render/board-renderer.ts` — it hardcodes `palette.deepPool` and `700 ${size * 0.9}px DISPLAY_FONT` for every clue. A stone with no water neighbours already renders `0`, so `O` must not read as a zero. Add a palette token in `src/render/palette.ts` if a colour is the answer. This is **not** a `cell-style.ts` change; that module styles the tile, never the numeral.
+- [X] T019 [P] [US1] Unit-test the clue-face text for all five forms (`n`, `{n}`, `-n-`, `E`, `O`). `clueText` is module-private and `src/render/` has no `board-renderer.test.ts` — only `board-renderer.perf.test.ts` — so export `clueText` and add a new `src/render/board-renderer.test.ts`, following how `line-labels.ts` exposes its pure helpers for `line-labels.test.ts`.
+- [X] T020 [US1] Verify by looking, not reasoning: render a Large Deep even/odd board at the smallest cell size in both themes and confirm `O` is unambiguous against `0`. If letter forms cannot be made to read, fall back to a glyph pair sharing no shape with a digit and record the change in the plan.
 - [ ] T021 [P] [US1] Playwright e2e in `e2e/even-odd.spec.ts`: launch a Deep even/odd board via the existing dev hook, assert both glyph forms appear, and complete the board.
 - [ ] T022 [P] [US1] Confirm FR-011 by test rather than assumption: marking, locking, mistake handling and perfect-solve tracking read the hidden solution and not the clues, so add a `src/game/session.test.ts` case on an even/odd board asserting identical behaviour.
 
@@ -131,8 +131,8 @@ forms are.
 **Independent test**: Open How to play; the E/O forms appear beside `n`, `{n}`
 and `-n-`.
 
-- [ ] T029 [US3] Add the two forms to `CLUE_FORMS` in `src/ui/gameplay/how-to-play-content.tsx`, in the existing voice (the neighbours read "water tiles touching this hex", "that water is all in one run").
-- [ ] T030 [P] [US3] Update `e2e/how-to-play.spec.ts` for the new entries — 010 touched this same file when it added the `{n}`/`-n-` row.
+- [X] T029 [US3] Add the two forms to `CLUE_FORMS` in `src/ui/gameplay/how-to-play-content.tsx`, in the existing voice (the neighbours read "water tiles touching this hex", "that water is all in one run").
+- [X] T030 [P] [US3] Update `e2e/how-to-play.spec.ts` for the new entries — 010 touched this same file when it added the `{n}`/`-n-` row.
 
 ---
 
@@ -152,7 +152,7 @@ same board.
 ## Phase 7: Polish & Cross-Cutting Concerns
 
 - [ ] T034 [P] Extend `src/core/perf.test.ts` to cover Large/Deep with `evenOdd` on, inside the existing 2000 ms budget (SC-006).
-- [ ] T035 Review density by eye on a real Large Deep board: ~⅓ of clues showing E/O may read as mush. The spec names tuning as a non-goal, so the outcome here is a recorded judgement (and a follow-up feature if needed), not a code change smuggled into this slice.
+- [X] T035 Review density by eye on a real Large Deep board: ~⅓ of clues showing E/O may read as mush. The spec names tuning as a non-goal, so the outcome here is a recorded judgement (and a follow-up feature if needed), not a code change smuggled into this slice.
 - [ ] T036 [P] Update `CHANGELOG.md` (dated entry, newest first, with a "part worth explaining" section) and `STATUS.md` test counts.
 - [ ] T037 Full verification per Principle V: `npm test`, `npm run typecheck`, `npm run build`, `npm run test:e2e`, `npm run validate:curated` — and confirm the curated pack revalidates **unchanged**.
 - [ ] T038 Read back the whole diff for scope creep and leftovers; confirm no probe script or debug logging survives.

@@ -278,7 +278,15 @@ measurement was taken against the already-minimal board.
 Note the `allowed` set must contain `parity` for any weakening to survive, which
 is another reason the Deep gate matters.
 
-### Rendering: `O` is not `0`
+### Rendering: `O` is not `0` — and in this font, it very nearly is
+
+> **Settled by looking.** Rendered against the digits in Bricolage Grotesque at
+> 700 weight, `O` and `0` are near-indistinguishable at 26px. The marks are now
+> `+` (even) and `|` (odd) — one stroke for odd, two crossed for even, which is
+> also the mnemonic the How to play page uses. `|` was checked against `1`
+> specifically: the font gives `1` a pronounced flag, so they do not collide,
+> which contradicted the prediction below. A lone `|` does render lighter than
+> its neighbours, so parity marks draw at 800 weight and 1.15× size.
 
 `clueText()` gains two returns. The real work is that **a clue of `0` already
 exists** — a stone with no water neighbours renders `0` — so an `O` glyph sits on

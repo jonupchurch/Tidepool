@@ -29,7 +29,9 @@ async function readHook(page: Page): Promise<TestHook> {
 /**
  * A fixed seed, deliberately. Which clues reduction can weaken depends on the
  * board, so a random `freshSeed()` would make this flaky about the very thing it
- * checks. CORAL-4417 Large/Deep carries 5 `+` and 9 `|`.
+ * checks. CORAL-4417 Large/Deep carries 4 `+` and 9 `|` — and, usefully for the
+ * assertion below, two plain `0` clues, since a count of zero is never allowed
+ * to become a `+`.
  */
 test('even/odd puts + and | on the stones of a Deep board', async ({ page }) => {
   await page.goto('/')
@@ -48,6 +50,10 @@ test('even/odd puts + and | on the stones of a Deep board', async ({ page }) => 
   // No clue face is a bare digit that could be confused with a parity mark.
   expect(hook.clueFaces).not.toContain('O')
   expect(hook.clueFaces).not.toContain('E')
+  // A zero is shown as a zero, never dressed up as `+`. Zero is even, so the
+  // mark would be correct and misleading: a player reads "even" as two-four-or-
+  // six and would wrongly conclude at least two neighbours are water.
+  expect(hook.clueFaces).toContain('0')
 
   await expect(page.getByText(/CORAL-4417 · Large · Deep · evenodd/)).toBeVisible()
 })

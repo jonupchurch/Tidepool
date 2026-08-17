@@ -105,22 +105,31 @@ export function parityOf(count: number): Parity {
 }
 
 /**
- * Whether showing parity instead of the count actually withholds anything
- * (018 FR-006).
+ * Whether a clue may be shown as parity instead of a count (018 FR-006).
  *
- * With 0 present neighbours the count is always 0, so `E` says nothing at all.
- * With exactly 1, the parity pins the count exactly — `E` means 0 water, `O`
- * means 1 — so it is the same clue written more strangely. From 2 upwards the
- * parity genuinely admits more than one count and the clue is weaker than the
- * number it replaces, which is the point of the mechanic.
+ * Two separate reasons to refuse, and they are not the same kind of reason.
  *
- * Note this asks a different question from `connectivityInformative`, which
- * decides whether an annotation *distinguishes arrangements*. Parity is never
- * uninformative about the layout; it is only ever uninformative because it
+ * **It would withhold nothing.** With 0 present neighbours the count is always
+ * 0, so the mark is unconditional. With exactly 1, the parity pins the count
+ * exactly — even means 0 water, odd means 1 — so it is the same clue written
+ * more strangely. From 2 upwards parity genuinely admits more than one count.
+ *
+ * **It would mislead.** Zero is even, so a `+` over a count of 0 is
+ * mathematically correct and a trap in practice: nobody reads "an even number
+ * of water tiles" and thinks *none*. A player ruling zero out would conclude at
+ * least two neighbours are water, which is false — a wrong deduction reached by
+ * sound-looking reasoning, which is precisely what this game promises cannot
+ * happen. Measured before the rule went in: 2 of 126 parity clues across 18
+ * boards hid a zero, so refusing them costs 1.6% of the mechanic and buys back
+ * the rule "an even mark means two, four or six".
+ *
+ * Note the first reason asks a different question from `connectivityInformative`,
+ * which decides whether an annotation *distinguishes arrangements*. Parity is
+ * never uninformative about the layout; it is only ever uninformative because it
  * failed to hide anything.
  */
-export function parityInformative(presentNeighbors: number): boolean {
-  return presentNeighbors >= 2
+export function canShowParity(presentNeighbors: number, count: number): boolean {
+  return presentNeighbors >= 2 && count > 0
 }
 
 /** Total water among a set of present cell keys. */

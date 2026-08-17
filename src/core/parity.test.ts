@@ -15,7 +15,7 @@ import type { SolveCtx } from './techniques'
 import { generateBoard } from './generate'
 import { isParityClue } from './board'
 import type { DifficultyTier, SizeTier } from './board'
-import { presentNeighborCount } from './clues'
+import { presentNeighborCount, waterNeighborCount } from './clues'
 import { serializeBoard } from './serialize'
 import { solve } from './solver'
 
@@ -158,8 +158,28 @@ describe('generating with evenOdd on', () => {
       for (const [k, cell] of board.cells) {
         if (!cell.clue || !isParityClue(cell.clue)) continue
         // With fewer than two present neighbours, parity pins the count exactly,
-        // so `E`/`O` would be the number in disguise rather than weaker than it.
+        // so the mark would be the number in disguise rather than weaker than it.
         expect(presentNeighborCount(cell.coord, board.present), `${seed} ${k}`).toBeGreaterThanOrEqual(2)
+      }
+    }
+  })
+
+  it('never hides a count of zero behind an even mark (FR-006)', () => {
+    // Zero is even, so `+` would be mathematically right and practically a trap:
+    // a player who reads "even" as two-four-or-six — which is how people read it
+    // — would conclude at least two neighbours are water and be wrong. The whole
+    // promise is that sound reasoning gets you there, so these are refused.
+    for (const seed of seeds) {
+      for (const size of ['Medium', 'Large'] as SizeTier[]) {
+        const board = generateBoard({ seed, size, difficulty: 'Deep', clues })
+        const layout = new Map([...board.cells].map(([k, c]) => [k, c.state]))
+        for (const [k, cell] of board.cells) {
+          if (!cell.clue || !isParityClue(cell.clue)) continue
+          expect(
+            waterNeighborCount(cell.coord, layout, board.present),
+            `${seed} ${size} ${k} shows "${cell.clue.parity}" over a true count of 0`,
+          ).toBeGreaterThan(0)
+        }
       }
     }
   })

@@ -42,6 +42,13 @@ losing its number. And about a quarter of the parity clues were decorative: the
 board solved with the clue's value stripped out entirely. Reduction now checks
 both, which took the density from 44% of clues to 35%.
 
+One edge got closed on the way: a stone with no water at all never becomes a
+`+`. Zero is even, so the mark would be mathematically right and a trap —
+nobody reads "an even number of water tiles" and thinks *none*, and a player
+ruling zero out would conclude at least two neighbours are water and be wrong.
+That is a wrong answer reached by sound reasoning, which is the one thing the
+game must never do. It costs 1.6% of the marks; zeros stay zeros.
+
 The marks were going to be `E` and `O` until they were rendered and looked at.
 In the board font, `O` and the digit `0` are near-identical at the size a Large
 board uses — and `0` is a real clue value. Strokes carry the meaning better

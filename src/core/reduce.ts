@@ -4,7 +4,7 @@
 // breaks unique guess-free solvability (spec FR-008, SC-003).
 import type { Board, Cell, LineClue, Technique } from './board'
 import { isParityClue, makeBoard } from './board'
-import { parityInformative, parityOf, presentNeighborCount } from './clues'
+import { canShowParity, parityOf, presentNeighborCount } from './clues'
 import type { Rng } from './rng'
 import { shuffle } from './rng'
 import { ALL_TECHNIQUES, techniqueSolves } from './solver'
@@ -126,10 +126,10 @@ function weakenToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>):
     const cell = work.cells.get(k)!
     const saved = cell.clue
     if (!saved || isParityClue(saved)) continue
-    // Only weaken where parity actually withholds something (FR-006): with
-    // fewer than two present neighbours it pins the count exactly, so `E`/`O`
-    // would be the number in disguise.
-    if (!parityInformative(presentNeighborCount(cell.coord, work.present))) continue
+    // Only weaken where parity both withholds something and does not mislead
+    // (FR-006) — see `canShowParity`. In particular a count of zero never
+    // becomes a mark: zero is even, but nobody reads `+` as "none".
+    if (!canShowParity(presentNeighborCount(cell.coord, work.present), saved.count)) continue
 
     // Is the clue's VALUE doing any work, or is the board carried by the bare
     // fact that this cell is a revealed rock? Strip the clue while leaving the

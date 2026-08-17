@@ -150,8 +150,10 @@ extends it rather than building it.
 ### Edge Cases
 
 - **A stone with fewer than two neighbours.** With one neighbour, parity pins the
-  count exactly, so `E`/`O` is just a stranger way of writing the number; with
+  count exactly, so a mark is just a stranger way of writing the number; with
   none it says nothing at all. Neither may be weakened (FR-006).
+- **A stone with no water at all.** Zero is even, so `+` would be correct and
+  misleading — see FR-006. Zeros keep their number.
 - **A stale preference at the wrong tier.** Even/odd left on while the player
   drops to Calm must not change the Calm board — gated in code, not only in the
   UI (FR-004), the same trap feature 016 documented for edge hints.
@@ -182,7 +184,14 @@ extends it rather than building it.
   board to the one it produced before this feature — including every shipped
   curated board and every in-progress save.
 - **FR-006**: A clue MUST only be weakened to parity where parity is genuinely
-  weaker than the count, i.e. the stone has at least two present neighbours.
+  weaker than the count — the stone has at least two present neighbours — and
+  where the mark cannot mislead. Specifically, **a count of zero MUST NOT be
+  shown as an even mark.** Zero is even, so the mark would be correct and a
+  trap: a player reads "an even number of water tiles" as two, four or six, and
+  ruling zero out would let them conclude at least two neighbours are water,
+  which is false. A wrong answer reached by sound reasoning is the one failure
+  this game's guess-free promise cannot tolerate. Measured cost: 2 of 126
+  parity clues across 18 boards.
 - **FR-007**: Every served even/odd board MUST be verified uniquely solvable and
   guess-free before it is served, by the same oracle every other board passes.
   This includes the independent solution counter, which MUST understand parity —

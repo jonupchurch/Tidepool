@@ -1,6 +1,6 @@
 // PlaySession (T009/T016/T020/T024/T026/T035): marking, pool reward, board
 // completion, undo/redo, serialize/restore, edge cases.
-import { generateBoard } from '@/core'
+import { generateBoard, isParityClue } from '@/core'
 import { PlaySession } from './session'
 import {
   firstGiven,
@@ -360,5 +360,51 @@ describe('progress counters + gentle-flag (UX feedback)', () => {
     s.applyMark(rock, 'rock')
     s.applyMark(water, 'water')
     expect(s.mistakeCells().size).toBe(0)
+  })
+})
+
+describe('an even/odd board plays identically (018 FR-011)', () => {
+  // Marking, locking, mistakes and completion all read the hidden solution, not
+  // the clues — so a stone showing `+` instead of `4` must change nothing about
+  // how the board plays. Asserted rather than assumed, because "it reads the
+  // solution" is exactly the kind of claim that quietly stops being true.
+  const board = generateBoard({
+    seed: 'CORAL-4417',
+    size: 'Medium',
+    difficulty: 'Deep',
+    clues: { connectivity: true, lineTotals: true, evenOdd: true },
+  })
+
+  it('has parity clues to begin with (otherwise this test proves nothing)', () => {
+    expect([...board.cells.values()].filter((c) => c.clue && isParityClue(c.clue)).length)
+      .toBeGreaterThan(0)
+  })
+
+  it('locks a correct mark and keeps a wrong one correctable', () => {
+    const session = new PlaySession(board)
+    const water = waterCells(board)[0]
+    session.applyMark(water, 'water')
+    expect(session.isLocked(water)).toBe(true)
+
+    const rock = firstHiddenRock(board)
+    session.applyMark(rock, 'water') // wrong on purpose
+    expect(session.errorsMade).toBe(1)
+    expect(session.isLocked(rock)).toBe(false)
+    session.applyMark(rock, 'rock')
+    expect(session.isLocked(rock)).toBe(true)
+  })
+
+  it('completes when every cell is marked, parity clues and all', () => {
+    const session = new PlaySession(board)
+    solveSession(session)
+    expect(session.isComplete).toBe(true)
+    expect(session.errorsMade).toBe(0) // a clean solve is still "perfect"
+  })
+
+  it('never treats a parity clue cell as something the player must mark', () => {
+    const session = new PlaySession(board)
+    for (const [k, cell] of board.cells) {
+      if (cell.clue && isParityClue(cell.clue)) expect(session.isGiven(k)).toBe(true)
+    }
   })
 })

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
+import { boardLabel } from '@/ui/gameplay/board-label'
+import { boardRequest } from '@/ui/shell/board-request'
 import { parseSeedEntry } from './seed-entry'
+import { toBoardParams } from './request'
 
 const prefs = { size: 'Small', difficulty: 'Calm' } as const
 
@@ -40,6 +43,42 @@ describe('parseSeedEntry (total, SC-003 / SC-005)', () => {
       const r = parseSeedEntry(input, prefs)
       expect(r.ok).toBe(false)
     }
+  })
+
+  it('reads the evenodd token, and its off-switch (018)', () => {
+    const on = parseSeedEntry('KELP-0007 Large Deep evenodd', prefs)
+    expect(on.ok && on.request.clues?.evenOdd).toBe(true)
+    // `even-odd` too, the way `no-hints` accompanies `nohints`.
+    const dashed = parseSeedEntry('KELP-0007 Large Deep even-odd', prefs)
+    expect(dashed.ok && dashed.request.clues?.evenOdd).toBe(true)
+    // ...and a token can turn OFF a preference that is currently on, which
+    // silence alone cannot express.
+    const off = parseSeedEntry('KELP-0007 Large Deep noevenodd', {
+      ...prefs,
+      evenOdd: true,
+    })
+    expect(off.ok && off.request.clues?.evenOdd).toBeUndefined()
+  })
+
+  it('round-trips a board label back to the same board (018 FR-009)', () => {
+    // The label is the shareable token, so anything that changes which board a
+    // seed makes has to survive the trip out and back.
+    for (const opts of [
+      { edgeHints: false, evenOdd: true },
+      { edgeHints: true, evenOdd: true },
+      { edgeHints: true, evenOdd: false },
+    ]) {
+      const params = boardRequest('KELP-0007', 'Large', 'Deep', opts)
+      const label = boardLabel(params)
+      const parsed = parseSeedEntry(label, prefs)
+      expect(parsed.ok, label).toBe(true)
+      expect(parsed.ok && toBoardParams(parsed.request), label).toEqual(params)
+    }
+  })
+
+  it('leaves the evenodd token out of a label that does not need it', () => {
+    const params = boardRequest('KELP-0007', 'Large', 'Deep')
+    expect(boardLabel(params)).not.toMatch(/evenodd/)
   })
 
   it('never throws (total function)', () => {

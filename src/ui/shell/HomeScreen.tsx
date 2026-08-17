@@ -8,6 +8,7 @@ import { DEFAULT_SHAPE, DIFFICULTY_TIERS, SIZE_TIERS } from '@/core'
 import {
   type ShoreChoice,
   edgeHintsApply,
+  evenOddApply,
   isShoreChoice,
   shoreName,
   shoresFor,
@@ -66,6 +67,7 @@ export function HomeScreen({
   const [difficulty, setDifficulty] = useState<DifficultyTier>(lastPlay.difficulty)
   const [shore, setShore] = useState<ShoreChoice>(lastPlay.shore)
   const [edgeHints, setEdgeHints] = useState<boolean>(lastPlay.edgeHints)
+  const [evenOdd, setEvenOdd] = useState<boolean>(lastPlay.evenOdd ?? false)
 
   // Which choices this size can actually carry, and whether the hints toggle
   // does anything at this tier. Both stay *offered* when they don't apply —
@@ -74,6 +76,7 @@ export function HomeScreen({
   const shoreOptions = shoresFor(size)
   const shoreAvailable = shoreOptions.length > 1
   const hintsAvailable = edgeHintsApply(difficulty)
+  const evenOddAvailable = evenOddApply(difficulty)
 
   const toggleMute = () => onPrefsChange({ ...prefs, muted: !prefs.muted })
   const toggleMusic = () => onPrefsChange({ ...prefs, music: !prefs.music })
@@ -86,20 +89,25 @@ export function HomeScreen({
     setDifficulty(lastPlay.difficulty)
     setShore(lastPlay.shore)
     setEdgeHints(lastPlay.edgeHints)
-  }, [lastPlay.size, lastPlay.difficulty, lastPlay.shore, lastPlay.edgeHints])
+    setEvenOdd(lastPlay.evenOdd ?? false)
+  }, [lastPlay.size, lastPlay.difficulty, lastPlay.shore, lastPlay.edgeHints, lastPlay.evenOdd])
 
   // The *held* choice survives a trip through a size that can't carry it, so
   // Medium → Small → Medium comes back to the shore you picked. Only what the
   // board is generated with is coerced (`resolveShore`), and only there.
-  const selection: LastPlay = { size, difficulty, shore, edgeHints }
+  const selection: LastPlay = { size, difficulty, shore, edgeHints, evenOdd }
   const play = () =>
-    onPlay(boardRequest(freshSeed(), size, difficulty, { shore, edgeHints }), selection)
+    onPlay(boardRequest(freshSeed(), size, difficulty, { shore, edgeHints, evenOdd }), selection)
 
   const summary = [
     size,
     difficulty,
     ...(shoreAvailable && shore !== DEFAULT_SHAPE ? [shoreName(shore)] : []),
     ...(hintsAvailable && edgeHints ? ['hints'] : []),
+    // `evenodd`, not `even/odd` — the same word the board label prints. The
+    // token parser splits on `/`, so the prettier form would quietly degrade to
+    // two ignored tokens if this summary were ever pasted after a seed.
+    ...(evenOddAvailable && evenOdd ? ['evenodd'] : []),
   ].join(' · ')
 
   return (
@@ -254,11 +262,25 @@ export function HomeScreen({
             disabled={!hintsAvailable}
             onChange={setEdgeHints}
           />
+          {/* Even/odd — `+` / `|` in place of a stone's count. Deep only, and
+              for the same reason as edge hints: `parity` is in Deep's technique
+              set alone, so reduction can only ever weaken a clue there. */}
+          <Switch
+            legend="Even & odd"
+            caption={
+              evenOddAvailable
+                ? 'Some stones show + or | instead of a number — an even or odd count of water.'
+                : 'Deep tides only — gentler tides keep their numbers.'
+            }
+            checked={evenOddAvailable && evenOdd}
+            disabled={!evenOddAvailable}
+            onChange={setEvenOdd}
+          />
         </section>
 
         {/* Enter a seed — jump to a friend's exact board (004 seed-entry). */}
         <SeedEntry
-          currentPrefs={{ size, difficulty, shore, edgeHints }}
+          currentPrefs={{ size, difficulty, shore, edgeHints, evenOdd }}
           onSubmit={(request) => onPlay(toBoardParams(request))}
         />
 

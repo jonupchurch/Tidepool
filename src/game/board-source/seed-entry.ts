@@ -25,6 +25,8 @@ export interface SeedEntryPrefs {
   /** 016. Absent = the hexagon, so a caller that predates shores still compiles. */
   shore?: ShoreChoice
   edgeHints?: boolean
+  /** 018. Absent = off, so a caller that predates parity clues still compiles. */
+  evenOdd?: boolean
 }
 
 const eq = (a: string, b: string) => a.toLowerCase() === b.toLowerCase()
@@ -57,6 +59,19 @@ function matchHints(tok: string): boolean | null {
 }
 
 /**
+ * `evenodd` / `noevenodd` (018), mirroring `matchHints`.
+ *
+ * One word, necessarily: `parseSeedEntry` splits tokens on `/` among other
+ * separators, so an `even/odd` token would arrive as two and could never round-
+ * trip. `even-odd` is accepted as well, the way `no-hints` is.
+ */
+function matchEvenOdd(tok: string): boolean | null {
+  if (eq(tok, 'evenodd') || eq(tok, 'even-odd')) return true
+  if (eq(tok, 'noevenodd') || eq(tok, 'no-even-odd')) return false
+  return null
+}
+
+/**
  * Parse a seed token (+ optional overrides) into a launchable request. Total —
  * invalid input yields `{ ok: false, reason }`, never a throw. Tokens are
  * separated by spaces, commas, slashes, or the `·` the board label uses (so the
@@ -79,6 +94,7 @@ export function parseSeedEntry(input: string, currentPrefs: SeedEntryPrefs): See
   let difficulty = currentPrefs.difficulty
   let shore = currentPrefs.shore ?? DEFAULT_SHORE
   let edgeHints = currentPrefs.edgeHints ?? false
+  let evenOdd = currentPrefs.evenOdd ?? false
 
   for (const tok of parts.slice(1)) {
     const s = matchSize(tok)
@@ -97,13 +113,18 @@ export function parseSeedEntry(input: string, currentPrefs: SeedEntryPrefs): See
       continue
     }
     const h = matchHints(tok)
-    if (h !== null) edgeHints = h
+    if (h !== null) {
+      edgeHints = h
+      continue
+    }
+    const eo = matchEvenOdd(tok)
+    if (eo !== null) evenOdd = eo
     // Unknown trailing tokens are ignored — the seed still loads its board.
   }
 
   // Resolved LAST, once every token has been read: a shore is only valid
   // against the final size, and `Any` derives from the seed.
-  const clues = endlessClues(difficulty, edgeHints)
+  const clues = endlessClues(difficulty, edgeHints, evenOdd)
   return {
     ok: true,
     request: {
@@ -112,7 +133,7 @@ export function parseSeedEntry(input: string, currentPrefs: SeedEntryPrefs): See
       difficulty,
       // Only what differs from the default is stated, so a token naming neither
       // produces the exact board it always has.
-      ...(clues.lineConnectivity ? { clues } : {}),
+      ...(clues.lineConnectivity || clues.evenOdd ? { clues } : {}),
       ...shapeField(resolveShore(shore, seed, size)),
     },
   }

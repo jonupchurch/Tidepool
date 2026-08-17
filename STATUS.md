@@ -49,7 +49,7 @@ Spec-Kit before implementation; 016 and 017 were scoped with a mini-spec, and
 
 Plus, since: all 12 creature portraits, audio, the About screen, the curated hex
 map, HiDPI rendering, a root error boundary, 29 achievements, and the SteamPipe
-release pipeline. **916 unit tests + 42 e2e green.**
+release pipeline. **986 unit tests + 45 e2e green.**
 
 ## Release — what's left
 

@@ -26,6 +26,8 @@ export function freshSeed(): string {
 export interface ShoreOpts {
   shore?: ShoreChoice
   edgeHints?: boolean
+  /** `+` / `|` parity clues (018). Deep-only; `endlessClues` holds the gate. */
+  evenOdd?: boolean
 }
 
 /**
@@ -39,12 +41,12 @@ export function boardRequest(
   difficulty: DifficultyTier,
   opts: ShoreOpts = {},
 ): BoardParams {
-  const { shore = DEFAULT_SHORE, edgeHints = false } = opts
+  const { shore = DEFAULT_SHORE, edgeHints = false, evenOdd = false } = opts
   return {
     seed,
     size,
     difficulty,
-    clues: endlessClues(difficulty, edgeHints),
+    clues: endlessClues(difficulty, edgeHints, evenOdd),
     ...shapeField(resolveShore(shore, seed, size)),
   }
 }

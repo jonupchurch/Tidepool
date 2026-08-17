@@ -4,6 +4,49 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-17 — Stones that keep the number to themselves
+
+### Added
+
+- **Even & odd clues** on the deepest tides. Some stones now show `+` or `|`
+  instead of a count: an even or an odd number of water tiles beside them,
+  without saying how many. A new switch on Home, off by default, offered only on
+  Deep. The mark travels in the shareable board label as `evenodd`, so a friend
+  who pastes your token gets the identical board.
+
+### The part worth explaining
+
+This is the first clue in the game that says *less* than the one it replaces,
+and that inverts how generation has always worked. Row annotations and
+silhouettes *added* information and let reduction strip whatever a tier could
+not use. Parity instead takes information away from a clue that reduction has
+already proved necessary — so it cannot be stamped on during generation, or the
+fully-clued board would stop being uniquely solvable and every candidate would
+be thrown out. It runs as a second pass after reduction instead, weakening only
+the clues the board can still be solved without.
+
+The technique the solver learned is deliberately the small one: a parity clue
+with a single unsettled neighbour left forces that neighbour. The obvious
+stronger rule — subtracting two overlapping clues and reading the parity of the
+difference — was measured across 284 clues on 15 boards and accounted for
+exactly one of the 98 that could carry a parity form. Not worth its cost, and
+quietly dangerous: it wants to read the parity of ordinary counting clues too,
+which would have made the solver stronger on *every* board, changed which clues
+reduction keeps, and silently regenerated every board in existence. A player who
+spots the subtraction just solves faster, which is a fine thing to be true.
+
+Two things only measurement caught. Parity clues appeared on Calm and Tricky
+boards even though the technique is Deep-only — because weakening leaves the
+cell revealed, so a clue kept for the bare fact that it is a stone survives
+losing its number. And about a quarter of the parity clues were decorative: the
+board solved with the clue's value stripped out entirely. Reduction now checks
+both, which took the density from 44% of clues to 35%.
+
+The marks were going to be `E` and `O` until they were rendered and looked at.
+In the board font, `O` and the digit `0` are near-identical at the size a Large
+board uses — and `0` is a real clue value. Strokes carry the meaning better
+anyway: one stroke for odd, two crossed for even, the way parity gets taught.
+
 ## 2026-08-16 — Music without the marks
 
 ### Added

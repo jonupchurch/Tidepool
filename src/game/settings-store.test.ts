@@ -111,4 +111,12 @@ describe('settings store', () => {
     expect(() => setSetting('sound', 'muted', true)).not.toThrow()
     expect(getSettings().sound.muted).toBe(true)
   })
+
+  it('validates play.evenOdd like any other switch (018)', () => {
+    expect(resolveSettings({ play: { evenOdd: true } }).play.evenOdd).toBe(true)
+    // Absent or garbage falls back to the default, so an install that predates
+    // 018 — or a hand-edited file — still loads.
+    expect(resolveSettings({}).play.evenOdd).toBe(false)
+    expect(resolveSettings({ play: { evenOdd: 'yes' } }).play.evenOdd).toBe(false)
+  })
 })

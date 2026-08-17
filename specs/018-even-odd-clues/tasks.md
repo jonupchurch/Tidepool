@@ -97,8 +97,8 @@ least one `E` and one `O` tile render, and that the board completes guess-free.
 - [X] T018 [US1] Give parity glyphs a distinct visual treatment where the clue face is drawn in `src/render/board-renderer.ts` — it hardcodes `palette.deepPool` and `700 ${size * 0.9}px DISPLAY_FONT` for every clue. A stone with no water neighbours already renders `0`, so `O` must not read as a zero. Add a palette token in `src/render/palette.ts` if a colour is the answer. This is **not** a `cell-style.ts` change; that module styles the tile, never the numeral.
 - [X] T019 [P] [US1] Unit-test the clue-face text for all five forms (`n`, `{n}`, `-n-`, `E`, `O`). `clueText` is module-private and `src/render/` has no `board-renderer.test.ts` — only `board-renderer.perf.test.ts` — so export `clueText` and add a new `src/render/board-renderer.test.ts`, following how `line-labels.ts` exposes its pure helpers for `line-labels.test.ts`.
 - [X] T020 [US1] Verify by looking, not reasoning: render a Large Deep even/odd board at the smallest cell size in both themes and confirm `O` is unambiguous against `0`. If letter forms cannot be made to read, fall back to a glyph pair sharing no shape with a digit and record the change in the plan.
-- [ ] T021 [P] [US1] Playwright e2e in `e2e/even-odd.spec.ts`: launch a Deep even/odd board via the existing dev hook, assert both glyph forms appear, and complete the board.
-- [ ] T022 [P] [US1] Confirm FR-011 by test rather than assumption: marking, locking, mistake handling and perfect-solve tracking read the hidden solution and not the clues, so add a `src/game/session.test.ts` case on an even/odd board asserting identical behaviour.
+- [X] T021 [P] [US1] Playwright e2e in `e2e/even-odd.spec.ts`: launch a Deep even/odd board via the existing dev hook, assert both glyph forms appear, and complete the board.
+- [X] T022 [P] [US1] Confirm FR-011 by test rather than assumption: marking, locking, mistake handling and perfect-solve tracking read the hidden solution and not the clues, so add a `src/game/session.test.ts` case on an even/odd board asserting identical behaviour.
 
 **Checkpoint**: US1 delivers independently — the mechanic works for anyone who can reach a board with the toggle on.
 
@@ -112,12 +112,12 @@ game moves.
 **Independent test**: With the switch off, generate across every seed/size/tier
 and confirm byte-identical boards; with it forced on below Deep, the same.
 
-- [ ] T023 [US2] In `src/game/board-source/shore.ts`: add `evenOddApply(difficulty)` (true iff `Deep`) and carry `evenOdd` through `endlessClues`, gated on it. Mirror the existing comment explaining why the gate cannot live only in the UI — a stale `true` would change which board a Calm seed produces in exchange for clues reduction then strips.
-- [ ] T024 [P] [US2] In `src/game/board-source/request.ts`: validate `clues.evenOdd` in `isBoardRequest` alongside `lineConnectivity` (Principle II — the manifest and persisted state are untrusted input).
-- [ ] T025 [P] [US2] In `src/game/settings.ts`: add `play.evenOdd: boolean` defaulting to `false`, validated with `bool()` exactly as `edgeHints` is; extend `src/game/settings-store.test.ts` to cover an absent and a garbage value.
-- [ ] T026 [US2] In `src/ui/shell/HomeScreen.tsx`: add the switch beside the edge-hints control, gated on `evenOddApply(difficulty)`, threaded through `LastPlay` and the summary chips — following the `edgeHints` pattern at lines 68, 76, 88, 94 and 102.
-- [ ] T027 [US2] Determinism test in `src/ui/shell/board-request.test.ts`: with `evenOdd` forced on at Calm and Tricky, the resulting `BoardParams` MUST NOT carry the flag and the board MUST be byte-identical to today's (FR-004).
-- [ ] T028 [P] [US2] Save/restore round trip on an even/odd board in `src/platform/in-progress-board.test.ts` — the params travel with the save, so it must resume as the even/odd board it was (FR-008).
+- [X] T023 [US2] In `src/game/board-source/shore.ts`: add `evenOddApply(difficulty)` (true iff `Deep`) and carry `evenOdd` through `endlessClues`, gated on it. Mirror the existing comment explaining why the gate cannot live only in the UI — a stale `true` would change which board a Calm seed produces in exchange for clues reduction then strips.
+- [X] T024 [P] [US2] In `src/game/board-source/request.ts`: validate `clues.evenOdd` in `isBoardRequest` alongside `lineConnectivity` (Principle II — the manifest and persisted state are untrusted input).
+- [X] T025 [P] [US2] In `src/game/settings.ts`: add `play.evenOdd: boolean` defaulting to `false`, validated with `bool()` exactly as `edgeHints` is; extend `src/game/settings-store.test.ts` to cover an absent and a garbage value.
+- [X] T026 [US2] In `src/ui/shell/HomeScreen.tsx`: add the switch beside the edge-hints control, gated on `evenOddApply(difficulty)`, threaded through `LastPlay` and the summary chips — following the `edgeHints` pattern at lines 68, 76, 88, 94 and 102.
+- [X] T027 [US2] Determinism test in `src/ui/shell/board-request.test.ts`: with `evenOdd` forced on at Calm and Tricky, the resulting `BoardParams` MUST NOT carry the flag and the board MUST be byte-identical to today's (FR-004).
+- [X] T028 [P] [US2] Save/restore round trip on an even/odd board in `src/platform/in-progress-board.test.ts` — the params travel with the save, so it must resume as the even/odd board it was (FR-008).
 
 **Checkpoint**: the feature is reachable, opt-in, and provably inert everywhere else.
 
@@ -143,19 +143,19 @@ and `-n-`.
 **Independent test**: Paste an even/odd board's label into seed entry and get the
 same board.
 
-- [ ] T031 [US4] In `src/ui/gameplay/board-label.ts`: print `evenodd` when the toggle is on, following the `hints` line. It must be one word — `parseSeedEntry` splits on `/`, so `even/odd` would arrive as two tokens and could never round-trip.
-- [ ] T032 [US4] In `src/game/board-source/seed-entry.ts`: add a `matchEvenOdd` token reader accepting `evenodd` / `even-odd` and `noevenodd` / `no-even-odd`, mirroring `matchHints`, and thread it into `parseSeedEntry`'s loop and its `endlessClues` call.
-- [ ] T033 [P] [US4] Round-trip test in `src/game/board-source/seed-entry.test.ts`: every board label parses back to the same `BoardParams`, including combinations with a shore and edge hints (SC-005).
+- [X] T031 [US4] In `src/ui/gameplay/board-label.ts`: print `evenodd` when the toggle is on, following the `hints` line. It must be one word — `parseSeedEntry` splits on `/`, so `even/odd` would arrive as two tokens and could never round-trip.
+- [X] T032 [US4] In `src/game/board-source/seed-entry.ts`: add a `matchEvenOdd` token reader accepting `evenodd` / `even-odd` and `noevenodd` / `no-even-odd`, mirroring `matchHints`, and thread it into `parseSeedEntry`'s loop and its `endlessClues` call.
+- [X] T033 [P] [US4] Round-trip test in `src/game/board-source/seed-entry.test.ts`: every board label parses back to the same `BoardParams`, including combinations with a shore and edge hints (SC-005).
 
 ---
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T034 [P] Extend `src/core/perf.test.ts` to cover Large/Deep with `evenOdd` on, inside the existing 2000 ms budget (SC-006).
+- [X] T034 [P] Extend `src/core/perf.test.ts` to cover Large/Deep with `evenOdd` on, inside the existing 2000 ms budget (SC-006).
 - [X] T035 Review density by eye on a real Large Deep board: ~⅓ of clues showing E/O may read as mush. The spec names tuning as a non-goal, so the outcome here is a recorded judgement (and a follow-up feature if needed), not a code change smuggled into this slice.
-- [ ] T036 [P] Update `CHANGELOG.md` (dated entry, newest first, with a "part worth explaining" section) and `STATUS.md` test counts.
-- [ ] T037 Full verification per Principle V: `npm test`, `npm run typecheck`, `npm run build`, `npm run test:e2e`, `npm run validate:curated` — and confirm the curated pack revalidates **unchanged**.
-- [ ] T038 Read back the whole diff for scope creep and leftovers; confirm no probe script or debug logging survives.
+- [X] T036 [P] Update `CHANGELOG.md` (dated entry, newest first, with a "part worth explaining" section) and `STATUS.md` test counts.
+- [X] T037 Full verification per Principle V: `npm test`, `npm run typecheck`, `npm run build`, `npm run test:e2e`, `npm run validate:curated` — and confirm the curated pack revalidates **unchanged**.
+- [X] T038 Read back the whole diff for scope creep and leftovers; confirm no probe script or debug logging survives.
 
 ---
 

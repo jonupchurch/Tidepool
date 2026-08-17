@@ -5,6 +5,8 @@ import {
   connectivityInformative,
   connectivityOf,
   lineTotal,
+  parityInformative,
+  parityOf,
   presentNeighborCount,
   ringWater,
   waterNeighborCount,
@@ -81,6 +83,29 @@ describe('adjacency clues', () => {
   it('omits connectivity when not requested', () => {
     const twoAdj = layoutOf(present, [originNeighbours[0], originNeighbours[1]])
     expect(adjacencyClue({ q: 0, r: 0 }, twoAdj, present, false)).toEqual({ count: 2 })
+  })
+})
+
+describe('parity (018)', () => {
+  it('reads a count as even or odd', () => {
+    expect(parityOf(0)).toBe('even')
+    expect(parityOf(1)).toBe('odd')
+    expect(parityOf(4)).toBe('even')
+    expect(parityOf(5)).toBe('odd')
+  })
+
+  it('withholds nothing below two present neighbours', () => {
+    // 0 neighbours: the count is always 0, so `E` is unconditional.
+    expect(parityInformative(0)).toBe(false)
+    // 1 neighbour: parity pins the count exactly (E = 0 water, O = 1), so the
+    // clue is the number in disguise rather than a weaker form of it.
+    expect(parityInformative(1)).toBe(false)
+  })
+
+  it('withholds something from two neighbours upward', () => {
+    // 2 neighbours and `E` admits both 0 and 2 — genuinely weaker than a count.
+    expect(parityInformative(2)).toBe(true)
+    expect(parityInformative(6)).toBe(true)
   })
 })
 

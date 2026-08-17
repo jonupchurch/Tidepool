@@ -46,4 +46,16 @@ describe('allowedTechniquesFor', () => {
     expect(d.has('line-total')).toBe(true)
     expect(d.has('subset-overlap')).toBe(false)
   })
+
+  it('parity is Deep-only (018)', () => {
+    // Reduction gates the weakening pass on this set, so it is what actually
+    // keeps `E`/`O` off Calm and Tricky boards — not merely the UI.
+    expect(allowedTechniquesFor('Deep').has('parity')).toBe(true)
+    expect(allowedTechniquesFor('Calm').has('parity')).toBe(false)
+    expect(allowedTechniquesFor('Tricky').has('parity')).toBe(false)
+  })
+
+  it('rates a board needing parity as Deep', () => {
+    expect(rateDifficulty(['forced-count', 'parity'], 1)).toBe('Deep')
+  })
 })

@@ -1,7 +1,7 @@
 // test-helpers.ts — fixture builders + an ASCII board dump for tests. Not part
 // of the public engine surface; imported only by *.test.ts.
 import type { Board, BoardParams, Cell, LineClue } from './board'
-import { makeBoard } from './board'
+import { isParityClue, makeBoard } from './board'
 import { type Layout, adjacencyClue, lineTotal } from './clues'
 import { key, linesOf, parseKey } from './hex'
 
@@ -87,7 +87,9 @@ export function dumpBoard(board: Board): string {
         continue
       }
       if (cell.state === 'water') row += 'W '
-      else row += cell.given ? `${cell.clue?.count ?? '#'} ` : 'r '
+      else if (!cell.given || !cell.clue) row += cell.given ? '# ' : 'r '
+      else if (isParityClue(cell.clue)) row += `${cell.clue.parity === 'even' ? 'E' : 'O'} `
+      else row += `${cell.clue.count} `
     }
     lines.push(row)
   }

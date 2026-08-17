@@ -1,7 +1,7 @@
 // clues.ts — compute clue values from a full water/rock layout: adjacency
 // counts, local (Hexcells-style) connectivity from the fixed neighbour ring,
 // and line/edge totals. Pure functions of the layout + present set.
-import type { AdjacencyClue, CellState, Connectivity } from './board'
+import type { CellState, Connectivity, CountClue, Parity } from './board'
 import type { Axial } from './hex'
 import { DIRECTIONS, key } from './hex'
 
@@ -77,13 +77,17 @@ export function connectivityInformative(
 /**
  * The adjacency clue for a (rock) cell. When `withConnectivity` and the count
  * is in the informative range, the `{}`/`--` annotation is attached.
+ *
+ * Returns a `CountClue` specifically, not the wider `AdjacencyClue` union:
+ * generation always computes the exact count, and a clue only becomes a parity
+ * clue later, in reduction, where the board is re-verified without the number.
  */
 export function adjacencyClue(
   coord: Axial,
   layout: Layout,
   present: Set<string>,
   withConnectivity: boolean,
-): AdjacencyClue {
+): CountClue {
   const count = waterNeighborCount(coord, layout, present)
   if (withConnectivity) {
     const pn = presentNeighborCount(coord, present)
@@ -92,6 +96,31 @@ export function adjacencyClue(
     }
   }
   return { count }
+}
+
+// ── Parity: `E` / `O` in place of a count (018) ──────────────────────────────
+
+export function parityOf(count: number): Parity {
+  return count % 2 === 0 ? 'even' : 'odd'
+}
+
+/**
+ * Whether showing parity instead of the count actually withholds anything
+ * (018 FR-006).
+ *
+ * With 0 present neighbours the count is always 0, so `E` says nothing at all.
+ * With exactly 1, the parity pins the count exactly — `E` means 0 water, `O`
+ * means 1 — so it is the same clue written more strangely. From 2 upwards the
+ * parity genuinely admits more than one count and the clue is weaker than the
+ * number it replaces, which is the point of the mechanic.
+ *
+ * Note this asks a different question from `connectivityInformative`, which
+ * decides whether an annotation *distinguishes arrangements*. Parity is never
+ * uninformative about the layout; it is only ever uninformative because it
+ * failed to hide anything.
+ */
+export function parityInformative(presentNeighbors: number): boolean {
+  return presentNeighbors >= 2
 }
 
 /** Total water among a set of present cell keys. */

@@ -4,7 +4,7 @@
 // totals in the margins, an optional hover highlight, and revealed-pool
 // creatures. Behind an interface so it stays swappable to WebGL later.
 import type { AdjacencyClue, Board } from '@/core'
-import { key, parseKey } from '@/core'
+import { isParityClue, key, parseKey } from '@/core'
 import type { Mark, Pool } from '@/game'
 import { cellStyle } from './cell-style'
 import { type HexLayout, fitLayout, hexToPixel, hitTest } from './layout'
@@ -53,7 +53,10 @@ export interface BoardRenderer {
 // concrete family stack so clue numerals render at the intended size.
 const DISPLAY_FONT = '"Bricolage Grotesque", "Nunito", system-ui, sans-serif'
 
-function clueText(clue: AdjacencyClue): string {
+export function clueText(clue: AdjacencyClue): string {
+  // A parity clue withholds the number entirely (018) — `E` for an even count of
+  // water neighbours, `O` for an odd one.
+  if (isParityClue(clue)) return clue.parity === 'even' ? 'E' : 'O'
   if (clue.connectivity === 'connected') return `{${clue.count}}`
   if (clue.connectivity === 'split') return `-${clue.count}-`
   return `${clue.count}`

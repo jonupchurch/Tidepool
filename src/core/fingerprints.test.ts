@@ -23,6 +23,10 @@ import type { ShapeId } from './shapes'
 const BASE_CLUES: ClueToggles = { connectivity: true, lineTotals: true }
 /** Base plus 010's `{n}` / `-n-` row annotations. */
 const LC_CLUES: ClueToggles = { ...BASE_CLUES, lineConnectivity: true }
+/** Base plus 018's `E` / `O` parity clues. */
+const EO_CLUES: ClueToggles = { ...BASE_CLUES, evenOdd: true }
+/** Both optional clue mechanics at once — the pair the segment order governs. */
+const LC_EO_CLUES: ClueToggles = { ...BASE_CLUES, lineConnectivity: true, evenOdd: true }
 
 /**
  * `[seed, size, difficulty, sha256(serializeBoard(...)) first 16 hex chars, extra?]`
@@ -93,6 +97,13 @@ const FROZEN: ReadonlyArray<FrozenRow> = [
   // Both at once — the composition the segment ORDER governs.
   ['KELP-0007', 'Large', 'Deep', '9f63eb297479de52', { clues: LC_CLUES, shape: 'shoal' }],
   ['FOAM-0002', 'Medium', 'Deep', '09cf8d32890285cb', { clues: LC_CLUES, shape: 'atoll' }],
+
+  // Parity clues (018) — captured as the mechanic shipped.
+  ['KELP-0007', 'Large', 'Deep', '9c78b51f0753415b', { clues: EO_CLUES }],
+  ['CORAL-4417', 'Medium', 'Deep', 'e1266b7de9356fe2', { clues: EO_CLUES }],
+  ['TIDE-1234', 'Small', 'Deep', 'fad2434821935512', { clues: EO_CLUES }],
+  ['KELP-0007', 'Large', 'Deep', '5a0193b922aa700a', { clues: LC_EO_CLUES }],
+  ['FOAM-0002', 'Medium', 'Deep', '401dfbbd2882252f', { clues: LC_EO_CLUES, shape: 'atoll' }],
 ]
 
 function fingerprint(p: BoardParams): string {
@@ -117,6 +128,7 @@ function labelOf(row: FrozenRow): string {
   const [seed, size, difficulty, , extra] = row
   const parts: string[] = []
   if (extra?.clues?.lineConnectivity) parts.push('lineConnectivity')
+  if (extra?.clues?.evenOdd) parts.push('evenOdd')
   if (extra?.shape) parts.push(extra.shape)
   return `${seed} ${size}/${difficulty}${parts.length ? ` (${parts.join(' + ')})` : ''}`
 }

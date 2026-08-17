@@ -42,6 +42,18 @@ describe('rngSeedString segment order', () => {
     )
   })
 
+  it('appends even/odd after row annotations', () => {
+    expect(rngSeedString(p({ ...BASE_CLUES, evenOdd: true }), 3)).toBe(
+      'COVE-0001|Medium|Calm|c1l1|eo1|#3',
+    )
+  })
+
+  it('orders row annotations before even/odd when both are on', () => {
+    expect(
+      rngSeedString(p({ ...BASE_CLUES, lineConnectivity: true, evenOdd: true }), 3),
+    ).toBe('COVE-0001|Medium|Calm|c1l1|lc1|eo1|#3')
+  })
+
   it('appends a non-default shape last', () => {
     expect(rngSeedString(p(BASE_CLUES, 'atoll'), 3)).toBe(
       'COVE-0001|Medium|Calm|c1l1|s:atoll|#3',
@@ -58,6 +70,12 @@ describe('rngSeedString segment order', () => {
     expect(rngSeedString(p({ ...BASE_CLUES, lineConnectivity: true }, 'atoll'), 3)).toBe(
       'COVE-0001|Medium|Calm|c1l1|lc1|s:atoll|#3',
     )
+  })
+
+  it('composes all three optional segments in the pinned order', () => {
+    expect(
+      rngSeedString(p({ ...BASE_CLUES, lineConnectivity: true, evenOdd: true }, 'atoll'), 3),
+    ).toBe('COVE-0001|Medium|Calm|c1l1|lc1|eo1|s:atoll|#3')
   })
 })
 

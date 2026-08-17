@@ -4,6 +4,7 @@
 // with an exact water count (from an adjacency clue or a line total), optionally
 // carrying local connectivity for the ring it came from.
 import type { Board, Connectivity, Technique } from './board'
+import { isParityClue } from './board'
 import type { Line } from './hex'
 import { AXIS_STEP, DIRECTIONS, key, linesOf } from './hex'
 import { circularRuns, lineAdjacency } from './clues'
@@ -11,12 +12,18 @@ import { circularRuns, lineAdjacency } from './clues'
 export type CellVal = 'water' | 'rock' | 'unknown'
 export type Assign = Map<string, CellVal>
 
-export interface Constraint {
+/** What every constraint shares: the cells it governs, and where it came from. */
+interface ConstraintBase {
   /** present cell keys governed by this constraint */
   cells: string[]
+  source: 'adjacency' | 'line'
+}
+
+/** A constraint naming the exact water count among its cells. */
+export interface ExactConstraint extends ConstraintBase {
+  kind: 'exact'
   /** exact number of water among `cells` */
   water: number
-  source: 'adjacency' | 'line'
   /** for connectivity: the origin's 6 ring slots (cell key or null if absent) */
   ring?: (string | null)[]
   connectivity?: Connectivity
@@ -27,6 +34,23 @@ export interface Constraint {
    */
   adjacent?: boolean[]
 }
+
+/**
+ * A constraint naming only the parity of the water among its cells (018).
+ *
+ * A discriminated union rather than an optional `water`, deliberately: reading
+ * `water` off a parity constraint is now a compile error, where an optional
+ * field would have yielded `undefined`, made `c.water - known` evaluate to
+ * `NaN`, and let every comparison in `applyForcedCount` quietly return false.
+ * That failure mode looks exactly like "the pass correctly declined to act".
+ */
+export interface ParityConstraint extends ConstraintBase {
+  kind: 'parity'
+  /** water among `cells` is congruent to this, mod 2 */
+  parity: 0 | 1
+}
+
+export type Constraint = ExactConstraint | ParityConstraint
 
 /** Accumulates progress across a solving run. */
 export interface SolveCtx {
@@ -44,19 +68,28 @@ export function setup(board: Board): { assign: Assign; constraints: Constraint[]
     if (cell.given) {
       assign.set(k, 'rock') // a given clue cell is a revealed rock
       if (cell.clue) {
+        const clue = cell.clue
         const ring: (string | null)[] = DIRECTIONS.map((d) => {
           const nk = key({ q: cell.coord.q + d.q, r: cell.coord.r + d.r })
           return board.present.has(nk) ? nk : null
         })
         const cells = ring.filter((x): x is string => x !== null)
-        constraints.push({
-          cells,
-          water: cell.clue.count,
-          source: 'adjacency',
-          ...(cell.clue.connectivity
-            ? { ring, connectivity: cell.clue.connectivity }
-            : {}),
-        })
+        if (isParityClue(clue)) {
+          constraints.push({
+            kind: 'parity',
+            cells,
+            parity: clue.parity === 'even' ? 0 : 1,
+            source: 'adjacency',
+          })
+        } else {
+          constraints.push({
+            kind: 'exact',
+            cells,
+            water: clue.count,
+            source: 'adjacency',
+            ...(clue.connectivity ? { ring, connectivity: clue.connectivity } : {}),
+          })
+        }
       }
     }
   }
@@ -68,6 +101,7 @@ export function setup(board: Board): { assign: Assign; constraints: Constraint[]
       const ln = byId.get(`${lc.axis},${lc.index}`)
       if (!ln) continue
       constraints.push({
+        kind: 'exact',
         cells: ln.cells,
         water: lc.total,
         source: 'line',
@@ -97,6 +131,7 @@ function tally(cells: string[], assign: Assign): { water: number; unknown: strin
 
 /** Forced-by-count on a single constraint. Returns whether it changed a cell. */
 export function applyForcedCount(c: Constraint, assign: Assign, ctx: SolveCtx): boolean {
+  if (c.kind !== 'exact') return false // a parity clue names no count to force from
   const { water, unknown } = tally(c.cells, assign)
   const remaining = c.water - water
   if (remaining < 0 || remaining > unknown.length) {
@@ -143,6 +178,7 @@ export function forcedCountPass(
  * `{}`/`--` property; force any slot that is the same in every valid one.
  */
 export function applyConnectivity(c: Constraint, assign: Assign, ctx: SolveCtx): boolean {
+  if (c.kind !== 'exact') return false // parity clues carry no {}/-- (018)
   if (!c.ring || !c.connectivity) return false
   const ring = c.ring
   // Fixed slots from current knowledge; collect unknown present slots.
@@ -214,7 +250,7 @@ export function connectivityPass(
 ): boolean {
   let changed = false
   for (const c of constraints) {
-    if (c.connectivity && applyConnectivity(c, assign, ctx)) changed = true
+    if (c.kind === 'exact' && c.connectivity && applyConnectivity(c, assign, ctx)) changed = true
     if (ctx.contradiction) return changed
   }
   return changed
@@ -241,6 +277,7 @@ export function applyLineConnectivity(
   assign: Assign,
   ctx: SolveCtx,
 ): boolean {
+  if (c.kind !== 'exact') return false // line constraints are always exact
   if (!c.connectivity || !c.adjacent || c.source !== 'line') return false
   const cells = c.cells
   const n = cells.length
@@ -368,9 +405,77 @@ export function lineConnectivityPass(
 ): boolean {
   let changed = false
   for (const c of constraints) {
-    if (c.source === 'line' && c.connectivity && applyLineConnectivity(c, assign, ctx)) {
+    if (
+      c.kind === 'exact' &&
+      c.source === 'line' &&
+      c.connectivity &&
+      applyLineConnectivity(c, assign, ctx)
+    ) {
       changed = true
     }
+    if (ctx.contradiction) return changed
+  }
+  return changed
+}
+
+/**
+ * Parity forcing (018): a parity clue with exactly one unsettled cell left
+ * determines that cell — the water so far plus this one must come out even (or
+ * odd) as the clue says.
+ *
+ * That is the whole technique, and deliberately so. The obvious stronger rule —
+ * subtracting two overlapping constraints and reading the parity of the
+ * difference — was measured across 284 clues on 15 Deep boards and accounted for
+ * exactly one of the 98 clues that can carry a parity form. It is not worth its
+ * cost, and it is dangerous: it wants to read the parity of *exact* constraints
+ * too, which would strengthen the solver on boards with no parity clue at all,
+ * change what reduction keeps, and silently regenerate every board in existence.
+ *
+ * So this iterates ONLY parity constraints. On a board with none it does
+ * nothing at all — inert by construction rather than by a gate a later edit
+ * could quietly undo. `parity.test.ts` pins that property.
+ *
+ * A player who *does* spot the subtraction simply solves faster; the solver
+ * defines what guess-free is guaranteed to mean, not what a player may notice.
+ */
+export function applyParity(c: Constraint, assign: Assign, ctx: SolveCtx): boolean {
+  if (c.kind !== 'parity') return false
+  let water = 0
+  let unknown: string | null = null
+  let unknownCount = 0
+  for (const k of c.cells) {
+    const v = assign.get(k)
+    if (v === 'water') water++
+    else if (v === 'unknown') {
+      unknownCount++
+      if (unknownCount > 1) return false // two or more unknowns: parity forces nothing
+      unknown = k
+    }
+  }
+
+  if (unknown === null) {
+    // Fully settled — but that does NOT mean "nothing to do". The arrangement
+    // can still VIOLATE the clue, and saying so is what lets the uniqueness
+    // counter prune a branch that has already gone wrong. Without this the
+    // counter would happily count assignments this clue forbids and could call
+    // a board unique when it is not. Same reasoning as applyLineConnectivity.
+    if (water % 2 !== c.parity) ctx.contradiction = true
+    return false
+  }
+
+  assign.set(unknown, water % 2 === c.parity ? 'rock' : 'water')
+  ctx.used.add('parity')
+  return true
+}
+
+export function parityPass(
+  constraints: Constraint[],
+  assign: Assign,
+  ctx: SolveCtx,
+): boolean {
+  let changed = false
+  for (const c of constraints) {
+    if (applyParity(c, assign, ctx)) changed = true
     if (ctx.contradiction) return changed
   }
   return changed
@@ -393,6 +498,7 @@ export function subsetPass(
   const reduced: Reduced[] = []
   const cellIndex = new Map<string, number[]>()
   for (const c of constraints) {
+    if (c.kind !== 'exact') continue // subset arithmetic needs exact counts on both sides
     if (c.source === 'line' && !allowLine) continue
     const { water, unknown } = tally(c.cells, assign)
     if (unknown.length === 0) continue

@@ -4,6 +4,46 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-18 — At most a third of a board withholds its number
+
+### Changed
+
+- **The even/odd marks are capped at a third of each clue site.** No more than a
+  third of a board's stones, and a third of its edge numbers, may withhold a
+  count. Before this they were averaging **47% of stones and 39% of edge
+  numbers**, and the worst board in a fifty-board sweep showed marks on **86% of
+  its stones** — at which point the marks stop being an accent on a board of
+  numbers and become the board's own language.
+
+### The part worth explaining
+
+**This regenerates every `evenodd` board, and that is not a technical decision.**
+Those seeds shipped in 1.3.0 the day before. The rule this project holds above
+almost everything is that a seed is a promise: the same code plus the same seed
+makes the same board, forever, because a player may have written it down. Four
+frozen fingerprints were deliberately moved here, and the alternative was
+shipping a density that had been flagged twice from real play. That trade was
+made with the cost stated; it is recorded beside the rows in
+`fingerprints.test.ts` as an exception, not a precedent.
+
+The cap is **safe by construction**. When the budget is spent the weakening pass
+simply stops, and every remaining clue keeps its exact count — which is the
+strictly stronger clue. A board can therefore only become *more* solvable, never
+ambiguous, never unsolvable. All 72 curated boards still validate and all 44
+fingerprints for boards that don't use the mechanic stayed green.
+
+**It's a ceiling, not a ban.** Marks still land on every board; framed marks are
+rarer than they were but demonstrably reachable — measured at 86 framed stone
+marks and 29 framed edge marks across fifty boards, with 39 of 50 boards
+carrying at least one. The two end-to-end tests that assumed a particular seed
+would always have one were widened rather than weakened.
+
+The measurement lesson is the same one this feature exists to fix. The old test
+asserted that numbers stayed commoner than marks *pooled across the sample* —
+which was true at 298 to 179 while individual boards ran to 86%. A player meets
+one board, never an average. The new test asserts the worst board in the sample,
+and covers every silhouette rather than the hexagon alone.
+
 ## 2026-08-18 — The Home caption caught up
 
 ### Fixed

@@ -4,6 +4,65 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-17 — Two rules instead of six glyphs
+
+### Added
+
+- **Parity marks on the edge numbers.** A row's total can now withhold itself
+  the same way a stone's count can: `+` for an even number of water tiles along
+  that line, `|` for an odd one.
+- **`{}` and `--` on a parity mark**, giving `{+}`, `-+-`, `{|}`, `-|-` — on a
+  tile and on an edge number alike. Nothing new is invented; two rules a player
+  already knows stop being kept apart.
+- **How to play rebuilt around the composition**, so the nine forms are shown as
+  a grid you can derive rather than a list to memorise.
+
+### Fixed
+
+- The **Play button on the How to play screen** ignored every Endless choice and
+  served a plain hexagon — so you could read about `-|-` and be handed a board
+  that cannot contain one. A gap left by 016 and missed again by 018.
+
+### The part worth explaining
+
+The whole feature turned out to be one observation. A clue says two separate
+things — how *much* water (a number, or just its parity) and how it *sits*
+(`{}`, `--`, or neither) — and until now the game had been quietly preventing
+those two halves from meeting. Framing could only ever wrap a number; a parity
+mark could only ever appear bare and only on a stone.
+
+Making them orthogonal in the code meant most of this feature was *deleting*
+things. Two guards saying "not on a parity clue" came out of the solver's
+enumeration passes and were replaced by a single line asking whether a candidate
+water count satisfies the clue's face. Both passes already checked the run count
+separately, so that one substitution is the entire rule that a framed mark
+constrains by both halves at once. The board renderer lost a function, too: the
+one that drew row totals and the one that drew stone clues were the same code
+with different field names.
+
+Reduction became a three-rung ladder — try the bare mark, then the framed mark,
+then keep the number — and the order is doing real work rather than being tidy.
+Framed parity survives on about 58% of stone clues where a bare mark manages
+35%, so trying the stronger form first would have made the plain number the rare
+thing on a Deep board. Preferring to withhold the most is what keeps numbers on
+the board at all.
+
+Two claims went in as reasoning and came out as measurements. The first was
+018's own: that parity on a row would be nearly useless, since the technique
+only fires when one cell is left unsettled and a long row means waiting for
+twelve. Sound, and wrong — 81 of 202 row totals still solve as a parity, with
+the control at zero, because rows are heavily settled by stone clues late in a
+solve and the exact total's last remaining value is often just the final cell.
+The second was ours: that a bare `|` would read fine in the margin because 018
+had already solved that problem on a tile. Rendering it settled that in the
+other direction. In the margin there is no tile behind the stroke and it sits
+inches from a direction arrow, where it reads as part of the arrow rather than
+as a clue. It got more weight than a tile mark, not the same.
+
+Every board that uses the new marks is verified unique and guess-free by the
+same oracle as every other board, and every board that does not use them is
+byte-identical to the one that seed has always produced.
+
 ## 2026-08-17 — Stones that keep the number to themselves
 
 ### Added

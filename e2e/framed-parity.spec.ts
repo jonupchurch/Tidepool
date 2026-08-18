@@ -91,3 +91,42 @@ test('the board is still shareable by its label', async ({ page }) => {
   await openSeed(page, 'CORAL-4417 Large Deep evenodd')
   await expect(page.getByText(/CORAL-4417 · Large · Deep · evenodd/)).toBeVisible()
 })
+
+test('a parity mark can carry the run annotation, on a tile and on a row', async ({ page }) => {
+  // Edge hints on as well, since `{}` / `--` on a ROW is that toggle's
+  // vocabulary — a player who turned it off should not meet it wearing a new
+  // face, which is the gate the reduction ladder enforces.
+  const hook = await openSeed(page, 'CORAL-4417 Large Deep evenodd hints')
+
+  const framedTiles = hook.clueFaces.filter((t) => /^[{-][+|][}-]$/.test(t))
+  expect(framedTiles.length, 'no stone showed a framed parity mark').toBeGreaterThan(0)
+
+  const framedRows = hook.lineLabels.filter((l) => /^[{-][+|][}-]$/.test(l.text))
+  expect(framedRows.length, 'no edge total showed a framed parity mark').toBeGreaterThan(0)
+  for (const r of framedRows) expect(r.total).toBeNull()
+})
+
+test('all four framed forms are reachable across a handful of boards (SC-003)', async ({
+  page,
+}) => {
+  // Read from what the renderer produced, never from params — the same
+  // discipline as 016's cell counts and 018's clue faces.
+  const seen = new Set<string>()
+  for (const seed of ['CORAL-4417', 'KELP-0007', 'TIDE-1234', 'COVE-0001']) {
+    const hook = await openSeed(page, `${seed} Large Deep evenodd hints`)
+    for (const t of [...hook.clueFaces, ...hook.lineLabels.map((l) => l.text)]) {
+      if (/^[{-][+|][}-]$/.test(t)) seen.add(t)
+    }
+    if (seen.size === 4) break
+  }
+  expect([...seen].sort()).toEqual(['-+-', '-|-', '{+}', '{|}'])
+})
+
+test('no board below Deep carries a parity form, whatever is switched on', async ({ page }) => {
+  // SC-004. The gate lives in the engine, not only in the disabled switch —
+  // a stale preference must not be able to reach a Calm board.
+  for (const tier of ['Calm', 'Tricky']) {
+    const hook = await openSeed(page, `CORAL-4417 Large ${tier} evenodd hints`)
+    expect(parityMarks(hook), `${tier} grew a parity form`).toHaveLength(0)
+  }
+})

@@ -113,12 +113,23 @@ const FROZEN: ReadonlyArray<FrozenRow> = [
   ['KELP-0007', 'Large', 'Deep', '9f63eb297479de52', { clues: LC_CLUES, shape: 'shoal' }],
   ['FOAM-0002', 'Medium', 'Deep', '09cf8d32890285cb', { clues: LC_CLUES, shape: 'atoll' }],
 
-  // Parity clues (018) — captured as the mechanic shipped.
-  ['KELP-0007', 'Large', 'Deep', '9c78b51f0753415b', { clues: EO_CLUES }],
+  // ── Parity clues — the rows this project is allowed to move ────────────────
+  //
+  // Captured as 018 shipped, then RE-captured during 019 when parity reached the
+  // edge totals. That was legitimate exactly once, for one reason: 018 has never
+  // been released, so no player holds one of these seeds and no save regenerates
+  // from them. It is a record, NOT a precedent — the moment 018 ships, these
+  // rows join the 44 above and a failure here means the same thing it means
+  // there.
+  //
+  // If you are reading this because one of them just went red: ask whether your
+  // change was supposed to alter what an evenOdd board looks like. If it was
+  // not, the table is doing its job.
+  ['KELP-0007', 'Large', 'Deep', '84c06229fe1d3558', { clues: EO_CLUES }],
   ['CORAL-4417', 'Medium', 'Deep', 'e1266b7de9356fe2', { clues: EO_CLUES }],
-  ['TIDE-1234', 'Small', 'Deep', 'fad2434821935512', { clues: EO_CLUES }],
-  ['KELP-0007', 'Large', 'Deep', '5a0193b922aa700a', { clues: LC_EO_CLUES }],
-  ['FOAM-0002', 'Medium', 'Deep', '401dfbbd2882252f', { clues: LC_EO_CLUES, shape: 'atoll' }],
+  ['TIDE-1234', 'Small', 'Deep', '99e281b0971277b0', { clues: EO_CLUES }],
+  ['KELP-0007', 'Large', 'Deep', '9d526147b5ce813b', { clues: LC_EO_CLUES }],
+  ['FOAM-0002', 'Medium', 'Deep', '60425ffe9ecc4a8e', { clues: LC_EO_CLUES, shape: 'atoll' }],
 ]
 
 function fingerprint(p: BoardParams): string {

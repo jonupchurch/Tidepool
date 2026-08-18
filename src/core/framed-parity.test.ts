@@ -10,8 +10,12 @@
 // arrangement, keep the ones the clue permits, and force a cell exactly when all
 // survivors agree. Slow and obviously correct, run over the whole small state
 // space. 010 and 018 both did this and both caught real bugs.
-import type { Connectivity, Parity } from './board'
+import type { Board, ClueToggles, Connectivity, DifficultyTier, Parity, SizeTier } from './board'
+import { hasParityFace } from './board'
 import { circularRuns, lineRuns } from './clues'
+import { generateBoard } from './generate'
+import { linesOf } from './hex'
+import { solve } from './solver'
 import type { Assign, CellVal, Constraint, SolveCtx } from './techniques'
 import { applyConnectivity, applyLineConnectivity } from './techniques'
 
@@ -324,5 +328,115 @@ describe('applyLineConnectivity over a parity face (019 FR-003)', () => {
         }
       }
     }
+  })
+})
+
+// ── Generation: what actually reaches a served board (019 US1) ───────────────
+
+const SEEDS = ['CORAL-4417', 'KELP-0007', 'TIDE-1234', 'COVE-0001', 'FOAM-0002']
+const SIZES: SizeTier[] = ['Small', 'Medium', 'Large']
+const BASE_CLUES: ClueToggles = { connectivity: true, lineTotals: true }
+
+function boardFor(
+  seed: string,
+  size: SizeTier,
+  difficulty: DifficultyTier,
+  clues: ClueToggles,
+): Board {
+  return generateBoard({ seed, size, difficulty, clues })
+}
+
+/** True water total of a row, from the ground-truth layout. */
+function trueWater(board: Board, axis: number, index: number): { water: number; length: number } {
+  const ln = linesOf(board.present).find((l) => l.axis === axis && l.index === index)
+  if (!ln) throw new Error(`no such row ${axis},${index}`)
+  let water = 0
+  for (const k of ln.cells) if (board.cells.get(k)?.state === 'water') water++
+  return { water, length: ln.cells.length }
+}
+
+describe('parity on an edge total (019 FR-001)', () => {
+  const boards = SEEDS.flatMap((seed) =>
+    SIZES.map((size) => ({
+      label: `${seed} ${size}`,
+      board: boardFor(seed, size, 'Deep', { ...BASE_CLUES, evenOdd: true }),
+    })),
+  )
+
+  it('reaches real boards, on a meaningful share of rows', () => {
+    let parity = 0
+    let total = 0
+    for (const { board } of boards) {
+      for (const line of board.lines) {
+        total++
+        if (hasParityFace(line)) parity++
+      }
+    }
+    // Measured at 30.1% when the ladder landed. The floor is deliberately far
+    // below that: this asserts the mechanic is not inert, not that a particular
+    // generator run reproduces a number.
+    expect(total).toBeGreaterThan(100)
+    expect(parity / total).toBeGreaterThan(0.1)
+  })
+
+  it('never hides a zero, and never pins the total it claims to withhold', () => {
+    // 018 FR-006 read for a row (019 FR-009). A row of no water reading `+` is
+    // the same trap over a longer span: correct, and it makes a player rule out
+    // the truth.
+    for (const { label, board } of boards) {
+      for (const line of board.lines) {
+        if (!hasParityFace(line)) continue
+        const { water, length } = trueWater(board, line.axis, line.index)
+        expect(water, `${label} row ${line.axis},${line.index} shows a mark over zero`).toBeGreaterThan(0)
+        expect(length, `${label} row ${line.axis},${line.index} is too short to withhold`).toBeGreaterThanOrEqual(2)
+        // And the mark tells the truth about the row it sits on.
+        expect(water % 2 === 0 ? 'even' : 'odd').toBe(line.parity)
+      }
+    }
+  })
+
+  it('serves only boards the oracle certifies unique and guess-free (FR-005)', () => {
+    for (const { label, board } of boards) {
+      const res = solve(board)
+      expect(res.solved, `${label} is not guess-free`).toBe(true)
+      expect(res.unique, `${label} is not uniquely solvable`).toBe(true)
+    }
+  })
+
+  it('stays off below Deep even with the toggle forced on (FR-006)', () => {
+    // The gate lives in reduction, not only in the UI. 018 measured that the
+    // technique set alone does NOT prevent this for cells — weakening keeps the
+    // reveal, so a clue kept for its reveal survives weakening at any tier.
+    for (const difficulty of ['Calm', 'Tricky'] as const) {
+      for (const seed of SEEDS) {
+        const board = boardFor(seed, 'Medium', difficulty, { ...BASE_CLUES, evenOdd: true })
+        const lines = board.lines.filter(hasParityFace)
+        const cells = [...board.cells.values()].filter((c) => c.clue && hasParityFace(c.clue))
+        expect(lines, `${seed} ${difficulty} grew a parity row`).toHaveLength(0)
+        expect(cells, `${seed} ${difficulty} grew a parity stone`).toHaveLength(0)
+      }
+    }
+  })
+
+  it('leaves every row a plain number when the toggle is off (FR-008)', () => {
+    for (const seed of SEEDS) {
+      const board = boardFor(seed, 'Medium', 'Deep', BASE_CLUES)
+      expect(board.lines.filter(hasParityFace), `${seed} without evenOdd`).toHaveLength(0)
+    }
+  })
+
+  it('keeps numbers the commonest face on the board (SC-005)', () => {
+    // Density is this feature's real risk, not scarcity. Counted across tiles
+    // and edges together, as the criterion says.
+    let numbers = 0
+    let parity = 0
+    for (const { board } of boards) {
+      for (const cell of board.cells.values()) {
+        if (!cell.given || !cell.clue) continue
+        hasParityFace(cell.clue) ? parity++ : numbers++
+      }
+      for (const line of board.lines) hasParityFace(line) ? parity++ : numbers++
+    }
+    expect(numbers, `${numbers} numbers vs ${parity} parity marks`).toBeGreaterThan(parity)
   })
 })

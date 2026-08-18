@@ -107,12 +107,16 @@ export function parityOf(count: number): Parity {
 /**
  * Whether a clue may be shown as parity instead of a count (018 FR-006).
  *
+ * `governedCells` is however many cells the clue speaks about: a stone's present
+ * neighbours, or — since 019 — a row's length. The two readings are the same
+ * question, which is why they share a rule rather than each growing their own.
+ *
  * Two separate reasons to refuse, and they are not the same kind of reason.
  *
- * **It would withhold nothing.** With 0 present neighbours the count is always
- * 0, so the mark is unconditional. With exactly 1, the parity pins the count
- * exactly — even means 0 water, odd means 1 — so it is the same clue written
- * more strangely. From 2 upwards parity genuinely admits more than one count.
+ * **It would withhold nothing.** With 0 governed cells the count is always 0, so
+ * the mark is unconditional. With exactly 1, the parity pins the count exactly —
+ * even means 0 water, odd means 1 — so it is the same clue written more
+ * strangely. From 2 upwards parity genuinely admits more than one count.
  *
  * **It would mislead.** Zero is even, so a `+` over a count of 0 is
  * mathematically correct and a trap in practice: nobody reads "an even number
@@ -121,15 +125,16 @@ export function parityOf(count: number): Parity {
  * sound-looking reasoning, which is precisely what this game promises cannot
  * happen. Measured before the rule went in: 2 of 126 parity clues across 18
  * boards hid a zero, so refusing them costs 1.6% of the mechanic and buys back
- * the rule "an even mark means two, four or six".
+ * the rule "an even mark means two, four or six". It holds identically on a row,
+ * where an empty row reading `+` would be the same trap over a longer span.
  *
  * Note the first reason asks a different question from `connectivityInformative`,
  * which decides whether an annotation *distinguishes arrangements*. Parity is
  * never uninformative about the layout; it is only ever uninformative because it
  * failed to hide anything.
  */
-export function canShowParity(presentNeighbors: number, count: number): boolean {
-  return presentNeighbors >= 2 && count > 0
+export function canShowParity(governedCells: number, count: number): boolean {
+  return governedCells >= 2 && count > 0
 }
 
 /** Total water among a set of present cell keys. */

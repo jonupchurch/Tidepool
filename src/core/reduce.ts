@@ -5,6 +5,7 @@
 import type { Board, Cell, LineClue, Technique } from './board'
 import { hasParityFace, makeBoard } from './board'
 import { canShowParity, parityOf, presentNeighborCount } from './clues'
+import { linesOf } from './hex'
 import type { Rng } from './rng'
 import { shuffle } from './rng'
 import { ALL_TECHNIQUES, techniqueSolves } from './solver'
@@ -145,5 +146,62 @@ function weakenToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>):
 
     cell.clue = { parity: parityOf(saved.count) }
     if (!techniqueSolves(work, allowed).solved) cell.clue = saved
+  }
+
+  weakenLinesToParity(work, rng, allowed)
+}
+
+/**
+ * The same question, asked of a row's total (019).
+ *
+ * Measured before designing, the same way 018's was: across 5 seeds x 3 sizes at
+ * Deep, 81 of 202 already-minimal edge totals still solve when reduced to their
+ * parity — with the delete-control at 0 of 202, so every one of those 81 is
+ * carrying real parity information rather than having been redundant.
+ *
+ * **This refutes the reasoning that made it a non-goal in 018.** That plan
+ * argued the parity technique only fires when a single cell is unsettled, which
+ * on a 13-cell row means waiting for twelve — so edge parity would be nearly
+ * useless. Sound reasoning, wrong conclusion: rows *are* heavily settled by ring
+ * clues late in a solve, and the exact total's marginal value over its parity is
+ * frequently just the final cell.
+ *
+ * One thing here is simpler than the cell case, and it is worth saying why. A
+ * cell clue has a *reveal* side-effect — `given: true` says "this is a stone"
+ * even once the clue's value is gone — so 018 needed a decorative check to tell
+ * a clue that was doing work from one the reveal was carrying. A line clue has
+ * no such side-effect: it is nothing but its value. So the removal loop's
+ * verdict is trustworthy on its own, and the measurement's delete-control was
+ * clean for the same reason.
+ */
+function weakenLinesToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>): void {
+  // Row cells, for the length test below. Rebuilt here rather than threaded
+  // through: reduction is already the expensive part of generation by orders of
+  // magnitude, and this is one pass over the topology.
+  const rowCells = new Map<string, number>()
+  for (const ln of linesOf(work.present)) rowCells.set(`${ln.axis},${ln.index}`, ln.cells.length)
+
+  // A separate shuffle from the cells above, and a second RNG draw. Safe for the
+  // same reason the first one is: a board without `evenOdd` never reaches this
+  // function at all, so no board that predates the mechanic sees either draw.
+  const candidates = work.lines.filter((l) => !hasParityFace(l))
+  shuffle(rng, candidates)
+
+  for (const line of candidates) {
+    const idx = work.lines.indexOf(line)
+    if (idx === -1 || hasParityFace(line)) continue
+    const length = rowCells.get(`${line.axis},${line.index}`)
+    if (length === undefined) continue
+    // The same two refusals as a stone (018 FR-006), read for a row: with fewer
+    // than two cells the parity pins the total exactly, and a row holding no
+    // water must never read `+`. Zero is even, but nobody reads an even mark as
+    // "none" — they read it as two-or-four, and rule out the truth.
+    if (!canShowParity(length, line.count)) continue
+
+    // Rung 1 of the ladder: the weakest form there is — the parity alone, with
+    // any framing dropped as well. Weakest-first is FR-007, and it is what keeps
+    // numbers on the board.
+    work.lines[idx] = { axis: line.axis, index: line.index, from: line.from, parity: parityOf(line.count) }
+    if (!techniqueSolves(work, allowed).solved) work.lines[idx] = line
   }
 }

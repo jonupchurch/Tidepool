@@ -165,7 +165,7 @@ describe('generating with evenOdd on', () => {
   })
 
   it('never hides a count of zero behind an even mark (FR-006)', () => {
-    // Zero is even, so `+` would be mathematically right and practically a trap:
+    // Zero is even, so `●●` would be mathematically right and practically a trap:
     // a player who reads "even" as two-four-or-six — which is how people read it
     // — would conclude at least two neighbours are water and be wrong. The whole
     // promise is that sound reasoning gets you there, so these are refused.

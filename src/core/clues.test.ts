@@ -108,7 +108,7 @@ describe('parity (018)', () => {
   })
 
   it('never marks a count of zero, however many neighbours it has', () => {
-    // Zero IS even, so `+` would be correct — and a trap. Nobody reads "an even
+    // Zero IS even, so `●●` would be correct — and a trap. Nobody reads "an even
     // number of water tiles" and thinks *none*, so a player ruling zero out
     // would deduce "at least two are water" and be wrong. Refusing these keeps
     // the honest reading "an even mark means two, four or six".

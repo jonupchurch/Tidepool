@@ -48,14 +48,14 @@ test('How to play is reachable from Home and explains the clue forms', async ({ 
   await expect(page.getByText(/the two combine/i)).toBeVisible()
 
   // ...and the grid the rule produces contains every form, including the four
-  // this feature added. `exact` throughout: these are one-cell strings and a
-  // substring match would find `{4}` inside nothing but would find `+` inside
-  // `{+}` and fail strict mode.
-  // Scoped to the table's cells: `+` and `|` also head the "how much water"
+  // 019 added. `exact` throughout: these are one-cell strings and a substring
+  // match would find `{4}` inside nothing but would find `●●` inside `{●●}` and
+  // fail strict mode.
+  // Scoped to the table's cells: `●●` and `●` also head the "how much water"
   // list above, and an unscoped exact match would find both and trip strict
   // mode — which is itself the point, since the glyph is meant to appear as a
   // face AND inside every framing of it.
-  for (const form of ['4', '{4}', '-4-', '+', '{+}', '-+-', '|', '{|}', '-|-']) {
+  for (const form of ['4', '{4}', '-4-', '●●', '{●●}', '-●●-', '●', '{●}', '-●-']) {
     await expect(page.getByRole('cell', { name: form, exact: true }), `form ${form}`).toBeVisible()
   }
 
@@ -66,7 +66,7 @@ test('How to play is reachable from Home and explains the clue forms', async ({ 
 
 // The Play button on that screen is a board request like any other, and has to
 // carry the player's Endless choices. It did not until 019 — a pre-existing 016
-// gap that 018 also missed — so a player could read about `-|-` and be handed a
+// gap that 018 also missed — so a player could read about `-●-` and be handed a
 // board that cannot contain one.
 //
 // It reads the LAST PLAYED settings, not Home's picker, which is why this plays

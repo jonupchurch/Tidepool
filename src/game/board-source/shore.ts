@@ -109,7 +109,7 @@ export function edgeHintsApply(difficulty: DifficultyTier): boolean {
  *
  * Deep-only, for the same reason `edgeHintsApply` is: the `parity` technique is
  * in `allowedTechniquesFor('Deep')` and nowhere else, and reduction will only
- * weaken a clue to `+`/`|` when the tier's technique set can read it back.
+ * weaken a clue to `●●`/`●` when the tier's technique set can read it back.
  *
  * Measured before shipping: with the flag forced on at Calm and Tricky across 5
  * seeds, boards came back with zero parity clues — but the flag still reached

@@ -26,7 +26,7 @@ export function freshSeed(): string {
 export interface ShoreOpts {
   shore?: ShoreChoice
   edgeHints?: boolean
-  /** `+` / `|` parity clues (018). Deep-only; `endlessClues` holds the gate. */
+  /** `●●` / `●` parity clues (018). Deep-only; `endlessClues` holds the gate. */
   evenOdd?: boolean
 }
 

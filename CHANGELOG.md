@@ -4,6 +4,42 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-18 — The parity marks are dots now
+
+### Changed
+
+- **`+` and `|` became `●●` and `●`.** Two dots for an even number of water
+  tiles, one dot for an odd one — the dots pair up, or one is left over, which
+  is what parity *is* rather than a code for it. Every form moves with them:
+  `{●●}`, `-●●-`, `{●}`, `-●-`.
+
+### Fixed
+
+- **`-|-` drew a plus.** The split framing puts a dash either side of the mark,
+  and a dash-bar-dash is a cross — which is exactly what the *bare even* mark
+  looked like. The one pair on the board that must never be confusable was.
+- **One font for every clue again.** Digits and marks are now drawn at the same
+  weight and size. The two boosts that 018 and 019 added existed only because a
+  hairline `|` read lighter than the digits beside it; a filled circle doesn't,
+  and dropping them gave `-●●-` room in its tile and the margin marks their
+  clearance back from the direction arrows.
+
+### The part worth explaining
+
+Nothing about the puzzles changed. The mark is chosen where the clue is *drawn*,
+not where it is generated or saved — the engine has always stored a parity as
+even-or-odd and a save has always stored `e`/`o` — so every seed still makes the
+board it always made, every fingerprint stayed green, and a save written
+yesterday loads today. That was the deciding factor in doing it now rather than
+living with it: it costs players nothing.
+
+The lesson is about the test that missed it. `-|-` and `+` are different
+strings, so no assertion comparing rendered text could ever have caught this;
+what was needed was a *structural* rule. The framing is made of strokes, so a
+mark that is itself a bare stroke fuses with it into some other glyph. There is
+now a test that says exactly that, and a round mark satisfies it by
+construction — nothing else the board draws is round.
+
 ## 2026-08-17 — Names for the buttons
 
 ### Fixed

@@ -12,7 +12,7 @@ interface LabelHook {
   /** null when the row's total is withheld as a parity mark (019). */
   total: number | null
   connectivity: 'connected' | 'split' | null
-  /** exactly what the margin prints: `7`, `{7}`, `-7-`, `+`, `{+}`, `-|-`… */
+  /** exactly what the margin prints: `7`, `{7}`, `-7-`, `●●`, `{●●}`, `-●-`… */
   text: string
 }
 
@@ -44,12 +44,12 @@ async function openSeed(page: Page, token: string): Promise<TestHook> {
 
 /** Every parity mark a board printed, at either clue site. */
 const parityMarks = (h: TestHook): string[] =>
-  [...h.clueFaces, ...h.lineLabels.map((l) => l.text)].filter((t) => /[+|]/.test(t))
+  [...h.clueFaces, ...h.lineLabels.map((l) => l.text)].filter((t) => t.includes('●'))
 
 test('a row total can withhold its number and show a parity mark', async ({ page }) => {
   const hook = await openSeed(page, 'CORAL-4417 Large Deep evenodd')
 
-  const marks = hook.lineLabels.filter((l) => l.text === '+' || l.text === '|')
+  const marks = hook.lineLabels.filter((l) => l.text === '●●' || l.text === '●')
   expect(marks.length, 'no edge total showed a parity mark').toBeGreaterThan(0)
 
   // A withheld total really is withheld — the hook has no number to give.
@@ -80,7 +80,7 @@ test('a parity mark in the margin is never a bare digit', async ({ page }) => {
     // The whole point of `+` / `|` over `E` / `O`: nothing a player could read
     // as a number, in a margin that is otherwise entirely numbers.
     expect(l.text, `row ${l.id}`).not.toMatch(/[0-9]/)
-    expect(l.text, `row ${l.id}`).toMatch(/^[{-]?[+|][}-]?$/)
+    expect(l.text, `row ${l.id}`).toMatch(/^[{-]?●{1,2}[}-]?$/)
   }
 })
 
@@ -98,10 +98,10 @@ test('a parity mark can carry the run annotation, on a tile and on a row', async
   // face, which is the gate the reduction ladder enforces.
   const hook = await openSeed(page, 'CORAL-4417 Large Deep evenodd hints')
 
-  const framedTiles = hook.clueFaces.filter((t) => /^[{-][+|][}-]$/.test(t))
+  const framedTiles = hook.clueFaces.filter((t) => /^[{-]●{1,2}[}-]$/.test(t))
   expect(framedTiles.length, 'no stone showed a framed parity mark').toBeGreaterThan(0)
 
-  const framedRows = hook.lineLabels.filter((l) => /^[{-][+|][}-]$/.test(l.text))
+  const framedRows = hook.lineLabels.filter((l) => /^[{-]●{1,2}[}-]$/.test(l.text))
   expect(framedRows.length, 'no edge total showed a framed parity mark').toBeGreaterThan(0)
   for (const r of framedRows) expect(r.total).toBeNull()
 })
@@ -115,11 +115,11 @@ test('all four framed forms are reachable across a handful of boards (SC-003)', 
   for (const seed of ['CORAL-4417', 'KELP-0007', 'TIDE-1234', 'COVE-0001']) {
     const hook = await openSeed(page, `${seed} Large Deep evenodd hints`)
     for (const t of [...hook.clueFaces, ...hook.lineLabels.map((l) => l.text)]) {
-      if (/^[{-][+|][}-]$/.test(t)) seen.add(t)
+      if (/^[{-]●{1,2}[}-]$/.test(t)) seen.add(t)
     }
     if (seen.size === 4) break
   }
-  expect([...seen].sort()).toEqual(['-+-', '-|-', '{+}', '{|}'])
+  expect([...seen].sort()).toEqual(['-●-', '-●●-', '{●}', '{●●}'])
 })
 
 test('no board below Deep carries a parity form, whatever is switched on', async ({ page }) => {

@@ -101,7 +101,7 @@ function sameForcing(a: Map<number, boolean>, b: Map<number, boolean>): boolean 
 const show = (known: readonly CellVal[]): string =>
   known.map((v) => (v === 'water' ? 'W' : v === 'rock' ? 'R' : '.')).join('')
 
-// ── The ring: `{+}` / `-+-` on a stone ───────────────────────────────────────
+// ── The ring: `{●●}` / `-●●-` on a stone ─────────────────────────────────────
 
 describe('applyConnectivity over a parity face (019 FR-003)', () => {
   const RING = ['c0', 'c1', 'c2', 'c3', 'c4', 'c5']
@@ -225,7 +225,7 @@ describe('applyConnectivity over a parity face (019 FR-003)', () => {
   })
 })
 
-// ── The row: `{+}` / `-+-` on an edge total ──────────────────────────────────
+// ── The row: `{●●}` / `-●●-` on an edge total ────────────────────────────────
 
 describe('applyLineConnectivity over a parity face (019 FR-003)', () => {
   /**
@@ -389,7 +389,7 @@ describe('parity on an edge total (019 FR-001)', () => {
   })
 
   it('never hides a zero, and never pins the total it claims to withhold', () => {
-    // 018 FR-006 read for a row (019 FR-009). A row of no water reading `+` is
+    // 018 FR-006 read for a row (019 FR-009). A row of no water reading `●●` is
     // the same trap over a longer span: correct, and it makes a player rule out
     // the truth.
     for (const { label, board } of boards) {
@@ -514,7 +514,7 @@ describe('framed parity on a stone and on a row (019 FR-002)', () => {
 
   it('never frames a row when the annotation toggle is off', () => {
     // A player who turned edge hints off has said they do not want braced row
-    // clues. `{+}` is a braced row clue however it got there.
+    // clues. `{●●}` is a braced row clue however it got there.
     for (const seed of SEEDS) {
       const board = boardFor(seed, 'Large', 'Deep', { ...BASE_CLUES, evenOdd: true })
       for (const line of board.lines) {
@@ -587,7 +587,7 @@ describe('a framed mark needs a count worth framing (019 FR-013)', () => {
     // that count — `{2}` says two tiles side by side and there is nothing to
     // misread. A framing over a WITHHELD count is read on its own, and "all in
     // one unbroken run" is not how anybody describes a single tile: a player
-    // meeting `{|}` takes the run to be more than one tile, rules out 1, and
+    // meeting `{●}` takes the run to be more than one tile, rules out 1, and
     // concludes 3 or 5. Over a true 1 that is a wrong deduction reached by
     // sound-looking reasoning.
     const layoutOfBoard = (b: Board): Layout => {

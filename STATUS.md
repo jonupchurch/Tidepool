@@ -9,16 +9,21 @@ _Snapshot; updated each work session. Last updated: 2026-08-18._
 **Live on `default`: build 24786984 (`Tidepool 1.3.0`)** — every feature
 through 019, promoted 2026-08-17.
 
-**`Tidepool 1.3.5` was UPLOADED 2026-08-18 as build 24788017 and is NOT live.**
-8.0 MB, description `Tidepool 1.3.5 (9cea15c)`; it carries
-020's Home hover text, 021's dot parity marks, 022's density cap and 023's seed
-round-trip fix. Promote it from the partner site (Builds → Set Build Live) — it
-is the newest and it supersedes everything below.
+**`Tidepool 1.3.6` was UPLOADED 2026-08-18 as build 24807215 and is NOT live.**
+8.0 MB, description `Tidepool 1.3.6 (d880c69)`; it carries 020's Home hover
+text, 021's dot parity marks, 022's density cap **as retuned by 024**, and 023's
+seed round-trip fix. Promote it from the partner site (Builds → Set Build Live)
+— it is the newest and it supersedes everything below, **24788017 included**.
 
-**Five uploads have been skipped**: 1.2.1 (24766604, feature 017), 1.3.1
+Promoting this one rather than 1.3.5 matters more than usual: 1.3.5 carries
+022's cap at a third, which measured 30% of clues wearing a parity mark and was
+judged still too many. 024 halves that to 15.4%. Promoting 24788017 by mistake
+would ship the density that was rejected.
+
+**Six uploads have been skipped**: 1.2.1 (24766604, feature 017), 1.3.1
 (24787198, hover text), 1.3.2 (24787585, dots with a stale Home caption), 1.3.3
-(24787678, dots without the density cap) and 1.3.4 (24787910, without the seed
-fix). Each was superseded before promotion, so no player ever ran one; the next
+(24787678, dots without the density cap), 1.3.4 (24787910, without the seed fix)
+and 1.3.5 (24788017, the density cap at a third rather than 024's retune). Each was superseded before promotion, so no player ever ran one; the next
 promoted build carries their contents forward. Uploads are cheap and promotion
 is deliberate — never assume the newest upload is what players have.
 
@@ -26,7 +31,8 @@ Release history: 1.0.1 (24479382) → 1.1.0 (24743146, features 010–015) → 1
 (24766362, feature 016 + three bug fixes) → 1.2.1 (24766604, feature 017,
 skipped) → **1.3.0 (24786984, features 018–019, LIVE)** → 1.3.1 (24787198,
 skipped) → 1.3.2 (24787585, skipped) → 1.3.3 (24787678, skipped) → 1.3.4
-(24787910, skipped) → 1.3.5 (24788017, features 020–023, uploaded not live).
+(24787910, skipped) → 1.3.5 (24788017, skipped) → 1.3.6 (24807215, features
+020–024, uploaded not live).
 
 `setlive` is deliberately empty in the VDF, so an upload never reaches players
 on its own — promotion is always a separate step on the partner site

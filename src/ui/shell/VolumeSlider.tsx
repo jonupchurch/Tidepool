@@ -53,6 +53,10 @@ export function VolumeSlider({
       value={value}
       onChange={(e) => onChange(Number(e.currentTarget.value))}
       aria-label={label}
+      // Hovering says why dragging this is doing nothing. The slider itself
+      // reads as a slider, but a live-looking one over a muted game does not
+      // explain itself.
+      title={muted ? `${label} — muted` : label}
       // A screen reader would otherwise announce "0.35". Percentages are the
       // unit players actually have a feel for.
       aria-valuetext={muted ? `${percent}%, muted` : `${percent}%`}

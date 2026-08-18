@@ -119,9 +119,21 @@ export function HomeScreen({
           answers "how much?". */}
       <div className="absolute right-4 top-4 flex flex-col items-stretch gap-2">
         <div className="flex gap-2">
+          {/* Every button here is a bare glyph, so each carries a `title` as
+              well as its aria-label — the same job TopBar's counters use one
+              for. The two are deliberately worded differently: aria-label says
+              what a click will DO ("Turn music off"), which is what a screen
+              reader needs from a button, while the tooltip NAMES the control
+              and its state, which is what someone hovering because they cannot
+              tell what the icon means needs instead.
+
+              The wording matches PauseOverlay's text switches verbatim, since
+              Pause spells these out in words and Home is the only place they
+              are icons alone. */}
           <button
             type="button"
             aria-label={prefs.muted ? 'Unmute' : 'Mute'}
+            title={prefs.muted ? 'All sound off' : 'All sound on'}
             aria-pressed={prefs.muted}
             onClick={toggleMute}
             className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
@@ -131,6 +143,7 @@ export function HomeScreen({
           <button
             type="button"
             aria-label={prefs.music ? 'Turn music off' : 'Turn music on'}
+            title={prefs.music ? 'Music on' : 'Music off'}
             aria-pressed={prefs.music}
             onClick={toggleMusic}
             className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
@@ -147,17 +160,23 @@ export function HomeScreen({
           <button
             type="button"
             aria-label={prefs.effects ? 'Turn sound effects off' : 'Turn sound effects on'}
+            title={prefs.effects ? 'Sound effects on' : 'Sound effects off'}
             aria-pressed={prefs.effects}
             onClick={toggleEffects}
             className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"
           >
             {/* A drop, not a second speaker: the effects *are* the marks landing
-                in the water, and 🔊 already belongs to the master switch. */}
+                in the water, and 🔊 already belongs to the master switch. It is
+                the least self-explanatory glyph of the four, which is what
+                prompted the tooltips. */}
             <span className={prefs.effects ? '' : 'line-through decoration-2 opacity-50'}>💧</span>
           </button>
           <button
             type="button"
             aria-label="Night Tide"
+            // The glyph shows the tide you are IN, not the one a click brings,
+            // so the tooltip names that rather than offering an on/off.
+            title={prefs.theme === 'Night' ? 'Night Tide' : 'Day Tide'}
             aria-pressed={prefs.theme === 'Night'}
             onClick={toggleTheme}
             className="grid h-10 w-10 place-items-center rounded-full bg-foam text-lg hover:bg-driftwood"

@@ -137,6 +137,38 @@ export function canShowParity(governedCells: number, count: number): boolean {
   return governedCells >= 2 && count > 0
 }
 
+/** Below this, "one unbroken run" / "split apart" describes too little to say. */
+const MIN_FRAMED_PARITY = 3
+
+/**
+ * Whether a parity mark may additionally carry `{}` / `--` (019 FR-013).
+ *
+ * The zero rule again, one step along. A framing over a *known* count is read
+ * against that count: `{2}` says two tiles, side by side, and there is nothing
+ * to misread. A framing over a *withheld* count has to be read on its own — and
+ * "the water is all in one unbroken run", said about an unknown number of tiles,
+ * is not how anybody describes a single tile. A player meeting `{|}` naturally
+ * takes the run to be more than one tile and rules out 1, concluding 3 or 5.
+ * If the truth was 1 they have just made a wrong deduction by sound-looking
+ * reasoning, which is the one thing this game promises cannot happen.
+ *
+ * The same stretch, on the other framing: `-+-` over a true 2 is two lonely
+ * tiles being called two runs.
+ *
+ * So a framed mark needs a count that makes both words honest — three or more.
+ * In practice that means `{|}` / `-|-` are three or five, and `{+}` / `-+-` are
+ * four or six, which is also what a player will infer from them.
+ *
+ * **Deliberately NOT applied to counting clues.** `{2}` stays legal and always
+ * has been, because the count is right there and does the disambiguating. The
+ * rule exists for clues that withheld it. (Applying it to counts would also
+ * regenerate every board in existence, which is the same reason 010's
+ * `connectivityInformative` heuristic is left alone.)
+ */
+export function canFrameParity(count: number): boolean {
+  return count >= MIN_FRAMED_PARITY
+}
+
 /** Total water among a set of present cell keys. */
 export function lineTotal(cells: string[], layout: Layout): number {
   let n = 0

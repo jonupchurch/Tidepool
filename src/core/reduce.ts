@@ -6,6 +6,7 @@ import type { Board, Cell, LineClue, Technique } from './board'
 import { hasParityFace, makeBoard } from './board'
 import {
   type Layout,
+  canFrameParity,
   canShowParity,
   connectivityOf,
   lineAdjacency,
@@ -185,8 +186,10 @@ function weakenToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>):
     // Rung 2: the parity, framed. Says strictly more than a bare mark and
     // strictly less than a number, so it belongs exactly here in the order.
     // Only where the board's own toggle asked for `{}`/`--` at all — a player
-    // who turned that vocabulary off should not meet it wearing a new face.
-    if (work.params.clues.connectivity) {
+    // who turned that vocabulary off should not meet it wearing a new face —
+    // and only over a count big enough for "one run" to mean anything
+    // (`canFrameParity`, FR-013).
+    if (work.params.clues.connectivity && canFrameParity(saved.count)) {
       cell.clue = {
         parity: parityOf(saved.count),
         connectivity: connectivityOf(ringWater(cell.coord, layout, work.present)),
@@ -263,8 +266,10 @@ function weakenLinesToParity(
     // Rung 2: the parity, framed. Gated on the row-annotation toggle for the
     // same reason the tile rung is gated on its own: a player with edge hints
     // off has said they do not want braced row clues, and `{+}` is a braced row
-    // clue however it got there.
-    if (work.params.clues.lineConnectivity) {
+    // clue however it got there. And on `canFrameParity` for the same reason a
+    // stone is — a row of one water tile is not "one unbroken run" either, and
+    // over a whole row the wrong inference is bigger, not smaller.
+    if (work.params.clues.lineConnectivity && canFrameParity(line.count)) {
       const water = cells.map((k) => layout.get(k) === 'water')
       const adjacent = lineAdjacency(cells, AXIS_STEP[line.axis])
       work.lines[idx] = { ...site, parity, connectivity: lineConnectivityOf(water, adjacent) }

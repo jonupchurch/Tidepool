@@ -12,7 +12,16 @@
 // space. 010 and 018 both did this and both caught real bugs.
 import type { Board, ClueToggles, Connectivity, DifficultyTier, Parity, SizeTier } from './board'
 import { hasParityFace } from './board'
-import { circularRuns, lineAdjacency, lineConnectivityOf, lineRuns } from './clues'
+import type { Layout } from './clues'
+import {
+  canFrameParity,
+  canShowParity,
+  circularRuns,
+  lineAdjacency,
+  lineConnectivityOf,
+  lineRuns,
+  waterNeighborCount,
+} from './clues'
 import { generateBoard } from './generate'
 import { AXIS_STEP, DIRECTIONS, key, linesOf } from './hex'
 import { solve } from './solver'
@@ -558,5 +567,70 @@ describe('framed parity on a stone and on a row (019 FR-002)', () => {
         ).toBe(true)
       }
     }
+  })
+})
+
+describe('a framed mark needs a count worth framing (019 FR-013)', () => {
+  const boards = SEEDS.flatMap((seed) =>
+    SIZES.map((size) => ({
+      label: `${seed} ${size}`,
+      board: boardFor(seed, size, 'Deep', {
+        ...BASE_CLUES,
+        evenOdd: true,
+        lineConnectivity: true,
+      }),
+    })),
+  )
+
+  it('refuses to frame a parity mark over a count of 1 or 2', () => {
+    // The zero rule one step along. A framing over a KNOWN count is read against
+    // that count — `{2}` says two tiles side by side and there is nothing to
+    // misread. A framing over a WITHHELD count is read on its own, and "all in
+    // one unbroken run" is not how anybody describes a single tile: a player
+    // meeting `{|}` takes the run to be more than one tile, rules out 1, and
+    // concludes 3 or 5. Over a true 1 that is a wrong deduction reached by
+    // sound-looking reasoning.
+    const layoutOfBoard = (b: Board): Layout => {
+      const m: Layout = new Map()
+      for (const [k, c] of b.cells) m.set(k, c.state)
+      return m
+    }
+
+    let framed = 0
+    for (const { label, board } of boards) {
+      const layout = layoutOfBoard(board)
+      for (const [k, cell] of board.cells) {
+        const c = cell.clue
+        if (!c || !hasParityFace(c) || !c.connectivity) continue
+        framed++
+        const water = waterNeighborCount(cell.coord, layout, board.present)
+        expect(water, `${label} framed a mark over ${water} water at ${k}`).toBeGreaterThanOrEqual(
+          3,
+        )
+      }
+      for (const line of board.lines) {
+        if (!hasParityFace(line) || !line.connectivity) continue
+        framed++
+        const { water } = trueWater(board, line.axis, line.index)
+        expect(
+          water,
+          `${label} framed row ${line.axis},${line.index} over ${water} water`,
+        ).toBeGreaterThanOrEqual(3)
+      }
+    }
+    expect(framed, 'no framed marks at all — the rule would be vacuous').toBeGreaterThan(0)
+  })
+
+  it('still allows a BARE mark over 1 or 2, and a framed COUNT over 2', () => {
+    // The rule is about framing a withheld number, not about small numbers. Both
+    // of these stay legal, and `{2}` has been legal since 010 — changing that
+    // would regenerate every board in existence.
+    expect(canFrameParity(1)).toBe(false)
+    expect(canFrameParity(2)).toBe(false)
+    expect(canFrameParity(3)).toBe(true)
+    expect(canFrameParity(4)).toBe(true)
+    // Bare marks are governed by canShowParity, which only refuses zero.
+    expect(canShowParity(6, 1)).toBe(true)
+    expect(canShowParity(6, 2)).toBe(true)
   })
 })

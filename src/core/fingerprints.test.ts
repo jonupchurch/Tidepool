@@ -115,23 +115,26 @@ const FROZEN: ReadonlyArray<FrozenRow> = [
 
   // ── Parity clues — the rows this project is allowed to move ────────────────
   //
-  // Captured as 018 shipped, then re-captured TWICE during 019 — once when
-  // parity reached the edge totals, once when it learned to carry `{}`/`--`.
+  // Captured as 018 shipped, then re-captured three times during 019 — when
+  // parity reached the edge totals, when it learned to carry `{}`/`--`, and when
+  // playtest ruled that a framed mark needs a count of at least three.
   //
   // That was legitimate for exactly one reason: 018 has never been released, so
   // no player holds one of these seeds and no save regenerates from them. It is
   // a record, NOT a precedent. The moment 018 ships, these rows join the 44
-  // above and a failure here means precisely what a failure there means.
+  // above and a failure here means precisely what a failure there means — and
+  // three recaptures in one feature is the most this can ever be worth, because
+  // after release the answer becomes "no".
   //
   // Recapturing is the correct fix roughly never. If you are reading this
   // because one of them just went red, the question is whether your change was
   // *supposed* to alter what an evenOdd board looks like. If it was not, the
   // table is doing its job and the bug is upstream.
-  ['KELP-0007', 'Large', 'Deep', 'b112ad02073ef7c3', { clues: EO_CLUES }],
-  ['CORAL-4417', 'Medium', 'Deep', 'e0aafe8c22ca472c', { clues: EO_CLUES }],
-  ['TIDE-1234', 'Small', 'Deep', 'a4220729c195ea4c', { clues: EO_CLUES }],
-  ['KELP-0007', 'Large', 'Deep', '1fe3f1e5646cc0b3', { clues: LC_EO_CLUES }],
-  ['FOAM-0002', 'Medium', 'Deep', '089120b31427ecac', { clues: LC_EO_CLUES, shape: 'atoll' }],
+  ['KELP-0007', 'Large', 'Deep', '65fe35a747e4fcca', { clues: EO_CLUES }],
+  ['CORAL-4417', 'Medium', 'Deep', '525c2b6195d4de55', { clues: EO_CLUES }],
+  ['TIDE-1234', 'Small', 'Deep', '99e281b0971277b0', { clues: EO_CLUES }],
+  ['KELP-0007', 'Large', 'Deep', 'e237ab303248e7c4', { clues: LC_EO_CLUES }],
+  ['FOAM-0002', 'Medium', 'Deep', 'fdc46f81712a01ec', { clues: LC_EO_CLUES, shape: 'atoll' }],
 ]
 
 function fingerprint(p: BoardParams): string {

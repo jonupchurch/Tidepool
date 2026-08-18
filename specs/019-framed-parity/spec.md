@@ -192,6 +192,16 @@ seed entry reads it back.
   seed entry MUST read it back.
 - **FR-012**: The composition rule MUST be explained wherever the clue forms are
   explained.
+- **FR-013**: A framing MUST NOT be attached to a parity mark whose true count is
+  1 or 2. Added during playtest. A framing over a *known* count is read against
+  that count — `{2}` says two tiles side by side and there is nothing to misread
+  — but a framing over a *withheld* count is read on its own, and "all in one
+  unbroken run" is not how anyone describes a single tile. A player meeting
+  `{|}` takes the run to be more than one tile, rules out 1, and concludes 3 or
+  5; over a true 1 that is a wrong deduction reached by sound-looking reasoning,
+  which is the same trap FR-009 exists to prevent. This does **not** apply to
+  counting clues: `{2}` stays legal, both because the count disambiguates it and
+  because changing that would regenerate every board in existence.
 
 ### Key Entities
 

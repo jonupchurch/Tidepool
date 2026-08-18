@@ -4,6 +4,39 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-18 — Your own seed works in the seed box now
+
+### Fixed
+
+- **A board's seed can be typed back in.** Endless boards are labelled with
+  seeds like `TIDE-H4SD`, and the seed box accepted digits only — so pasting the
+  label of the board you were just playing came back with *"isn't a seed — they
+  look like CORAL-4417."* It affected roughly 99% of Endless boards: only a seed
+  whose four characters all happened to be digits could be reopened.
+
+### The part worth explaining
+
+The game has two seed generators and they disagreed. The Endless *chain* counts
+in decimal, but the seed behind every Play press and every New board is base 36
+— and only the decimal one matched what the parser would accept.
+
+Fixed by widening the parser rather than by making the generator count in
+decimal, for two reasons. Narrowing the generator only affects future boards, so
+every seed anyone has already written down would have stayed dead. And it would
+have cut that generator from 1.68 million possible boards to ten thousand, at
+which point two people comparing seeds start colliding for real.
+
+No board changed. Widening only accepts more input; every seed that parsed
+before parses to exactly the same board.
+
+The missing test was the point. Both halves were well covered *individually*,
+against hand-written examples — and every example in the suite, and every
+curated seed, is all digits, because they were all drawn from the parser's happy
+path. A generator and its parser have to be tested against **each other**.
+That round trip is now asserted over two thousand generated seeds, and again
+through the interface: play a board, read its seed, type it in, land on the same
+board.
+
 ## 2026-08-18 — At most a third of a board withholds its number
 
 ### Changed

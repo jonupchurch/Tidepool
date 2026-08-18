@@ -4,13 +4,48 @@
 // feature is a nicety; that one is the promise the game makes about seeds, and
 // it is the reason both new inputs are opt-in rather than automatic.
 import { describe, expect, it } from 'vitest'
-import { generateBoard, serializeBoard } from '@/core'
-import { ANY_SHORE } from '@/game/board-source'
-import { boardRequest } from './board-request'
+import { generateBoard, parseSeed, serializeBoard } from '@/core'
+import { ANY_SHORE, parseSeedEntry } from '@/game/board-source'
+import { boardRequest, freshSeed } from './board-request'
 
 const SEEDS = ['CORAL-4417', 'KELP-0007', 'TIDE-1234', 'COVE-0001']
 const SIZES = ['Small', 'Medium', 'Large'] as const
 const TIERS = ['Calm', 'Tricky', 'Deep'] as const
+
+describe('freshSeed makes seeds a player can type back in (023)', () => {
+  // The assertion whose ABSENCE was the bug. `freshSeed` emits base 36
+  // (`TIDE-H4SD`) and `parseSeed` accepted digits only, so roughly 99.4% of
+  // Endless boards printed a label the seed box then refused — "isn't a seed —
+  // they look like CORAL-4417" — about a board the game had just served.
+  //
+  // Nothing caught it because every seed in this suite and every curated seed
+  // is all digits. A generator and its parser have to be tested against EACH
+  // OTHER; testing each against hand-written examples proves nothing about the
+  // pair, and the examples were all drawn from the parser's happy path.
+  it('round-trips every seed it can produce', () => {
+    for (let i = 0; i < 2000; i++) {
+      const seed = freshSeed()
+      expect(parseSeed(seed), `freshSeed produced an unparseable ${seed}`).toBe(seed)
+    }
+  })
+
+  it('produces a board label that pastes straight back into the seed box', () => {
+    // The whole promise SeedEntry advertises: "paste the whole label to match
+    // its shore too". Exercised end to end rather than on the seed alone.
+    for (let i = 0; i < 200; i++) {
+      const seed = freshSeed()
+      const label = `${seed} · Large · Deep · atoll · hints · evenodd`
+      const parsed = parseSeedEntry(label, { size: 'Small', difficulty: 'Calm' })
+      expect(parsed.ok, `label “${label}” was rejected`).toBe(true)
+      if (!parsed.ok) continue
+      expect(parsed.request.seed).toBe(seed)
+      expect(parsed.request.size).toBe('Large')
+      expect(parsed.request.difficulty).toBe('Deep')
+      expect(parsed.request.shape).toBe('atoll')
+      expect(parsed.request.clues?.evenOdd).toBe(true)
+    }
+  })
+})
 
 describe('boardRequest — the defaults are the board we already shipped', () => {
   it('produces the pre-016 params exactly when no shore options are given', () => {

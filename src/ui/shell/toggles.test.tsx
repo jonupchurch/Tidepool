@@ -76,3 +76,53 @@ describe('AppShell theme application (US5)', () => {
     )
   })
 })
+
+describe('hover text on the Home glyph row', () => {
+  // Every control up there is a bare emoji, and the water drop in particular
+  // does not announce itself — a player asked what it was. `title` is the
+  // repo's existing answer for an unlabelled glyph (see TopBar's counters).
+  //
+  // Deliberately NOT the same string as `aria-label`. The label says what a
+  // click will do, which is what a screen reader wants from a button; the
+  // tooltip names the control and its state, which is what someone hovering
+  // because they cannot read the icon wants. Asserting them separately is what
+  // keeps a later "tidy-up" from collapsing the two.
+  const titleOf = (name: RegExp): string | null =>
+    screen.getByRole('button', { name }).getAttribute('title')
+
+  it('names each control and its state', () => {
+    renderShell(<HomeScreen {...props()} />)
+    expect(titleOf(/^mute$/i)).toBe('All sound on')
+    expect(titleOf(/turn music off/i)).toBe('Music on')
+    expect(titleOf(/turn sound effects off/i)).toBe('Sound effects on')
+    expect(titleOf(/night tide/i)).toBe('Day Tide')
+  })
+
+  it('follows the state when everything is off', () => {
+    renderShell(
+      <HomeScreen
+        {...props({ prefs: { theme: 'Night', muted: true, music: false, effects: false } })}
+      />,
+    )
+    expect(titleOf(/^unmute$/i)).toBe('All sound off')
+    expect(titleOf(/turn music on/i)).toBe('Music off')
+    expect(titleOf(/turn sound effects on/i)).toBe('Sound effects off')
+    expect(titleOf(/night tide/i)).toBe('Night Tide')
+  })
+
+  it('matches the words Pause uses for the same two switches', () => {
+    // Pause spells these out as text; Home is the only place they are icons
+    // alone. One vocabulary, so a player who learns them in one place reads
+    // them in the other.
+    renderShell(<HomeScreen {...props()} />)
+    expect(titleOf(/turn music off/i)).toBe('Music on')
+    expect(titleOf(/turn sound effects off/i)).toBe('Sound effects on')
+  })
+
+  it('tells you the volume slider is muted, which is why dragging does nothing', () => {
+    renderShell(<HomeScreen {...props({ prefs: { theme: 'Day', muted: true, music: true, effects: true } })} />)
+    expect(screen.getByRole('slider', { name: /volume/i }).getAttribute('title')).toBe(
+      'Volume — muted',
+    )
+  })
+})

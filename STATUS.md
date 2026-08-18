@@ -1,21 +1,27 @@
 # Tidepool — Status
 
-_Snapshot; updated each work session. Last updated: 2026-08-16._
+_Snapshot; updated each work session. Last updated: 2026-08-17._
 
 ## Current phase
 
-**Shipping.** All seventeen features are built and merged.
+**Shipping.** All nineteen features are built and merged.
 
 **Live on `default`: build 24766362 (`Tidepool 1.2.0`)** — every feature
 through 016.
 
 **`Tidepool 1.2.1` was UPLOADED 2026-08-16 as build 24766604 and is NOT live.**
 8.0 MB, description `Tidepool 1.2.1 (0320d54)`; it adds feature 017, the sound
-effects switch. Promote it from the partner site (Builds → Set Build Live).
+effects switch.
+
+**`Tidepool 1.3.0` is being prepared** — features 018 and 019, the even/odd
+marks and the framed forms. They ship TOGETHER and must not be split: 019
+extends 018's single `evenOdd` toggle rather than adding a second switch, so
+releasing 018 alone would freeze every `evenodd` seed and force 019 onto its own
+toggle and seed segment.
 
 Release history: 1.0.1 (24479382) → 1.1.0 (24743146, features 010–015) → 1.2.0
 (24766362, feature 016 + three bug fixes) → 1.2.1 (24766604, feature 017,
-uploaded not live).
+uploaded not live) → 1.3.0 (features 018–019, in preparation).
 
 `setlive` is deliberately empty in the VDF, so an upload never reaches players
 on its own — promotion is always a separate step on the partner site
@@ -23,9 +29,9 @@ on its own — promotion is always a separate step on the partner site
 
 ## Built
 
-Features 001–017, in build order. 001–015 were each specced and planned via
-Spec-Kit before implementation; 016 and 017 were scoped with a mini-spec, and
-016 was written up afterwards. Per-feature detail is in `CHANGELOG.md`; this is the index.
+Features 001–019, in build order. 001–015 and 018–019 were each specced and
+planned via Spec-Kit before implementation; 016 and 017 were scoped with a
+mini-spec, and 016 was written up afterwards. Per-feature detail is in `CHANGELOG.md`; this is the index.
 
 | | Feature | |
 |---|---|---|
@@ -46,6 +52,8 @@ Spec-Kit before implementation; 016 and 017 were scoped with a mini-spec, and
 | 015 | Master volume | one level for both channels, on Home and Pause |
 | 016 | Varied shores | the Endless tide gains the silhouettes and the `{n}`/`-n-` edge numbers |
 | 017 | Effects switch | the two sound channels are independently silenceable |
+| 018 | Even & odd clues | a stone may show `+` / `\|` for the parity of its water, withholding the count |
+| 019 | Framed parity | the marks reach the edge numbers, and take `{}` / `--`: `{+}`, `-+-`, `{\|}`, `-\|-` |
 
 Plus, since: all 12 creature portraits, audio, the About screen, the curated hex
 map, HiDPI rendering, a root error boundary, 29 achievements, and the SteamPipe

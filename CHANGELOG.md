@@ -4,6 +4,55 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-18 — Even/odd marks are down to 15% of a board
+
+### Changed
+
+- **Half as many parity marks.** The cap that 022 set at a third of each clue
+  site is now 0.19, which measures out at **15.4% of a board's clues withholding
+  their count** — down from 30.0%. Deep boards with even/odd switched on read as
+  numbers with an accent again, rather than as a board of marks.
+
+### The part worth explaining
+
+022 capped the density and measured the result at 30%. Played, that was still
+too many, so this halves it — and the interesting part is *why that is a
+one-line change*.
+
+The weakening ladder wants to go far past any cap worth setting. Measured at
+022's third, **95% of boards spent their stone budget exactly and 86% spent
+their edge budget**; at the new number it is 220 of 220 and 217 of 220. The cap
+is the binding constraint on essentially every board, which means the density a
+player sees is set by one constant and nothing else, and it moves very nearly
+1:1 with it. Nothing about the solver had to change: declining to weaken a clue
+still only ever leaves the exact count, which is the strictly stronger clue, so
+a board can only get more solvable.
+
+**The constant is 0.19, not 0.15, and that is not a typo.** Every site rounds
+down, which costs about four points on the way through. The number worth holding
+steady is the measured density, so `npm run measure:parity` now exists to
+measure it rather than infer it — it also reports cap saturation, framed-form
+survival, and the seed fixtures the tests pin.
+
+Two consequences, both measured rather than reasoned about:
+
+- **A small board can now show no marks at all.** Five or fewer clues at a site
+  rounds down to zero. That is deliberate: a floor of one mark would put a
+  five-clue site above its own cap, and the ceiling is meant to be a promise.
+  It affects about one board in a hundred.
+- **The framed `{●●}` / `-●-` forms are rarer.** They are the rung the ladder
+  reaches only where a bare mark was not enough, so a tighter budget starves
+  them first — 53% of boards carry a framed stone and 37% a framed row, down
+  from 78% and 46%. All eight forms still occur; two tests had to widen their
+  samples to keep finding them, which is the honest fix rather than lowering
+  the bar.
+
+Every `evenOdd` seed produces a different board again. That cost was paid once,
+by 022, and this does not pay it twice: 022 shipped in 1.3.5, which was uploaded
+and never promoted, so the boards it created never reached anyone. Players go
+from 1.3.0's boards straight to these. Once a build carrying the cap is live
+that argument is spent, and `fingerprints.test.ts` says so beside the rows.
+
 ## 2026-08-18 — Your own seed works in the seed box now
 
 ### Fixed

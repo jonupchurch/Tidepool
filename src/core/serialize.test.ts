@@ -1,6 +1,6 @@
 // Serialization tests (T015): canonical round-trip + seed code parse/format.
 import { deserializeBoard, formatSeed, parseSeed, serializeBoard } from './serialize'
-import { isParityClue } from './board'
+import { hasParityFace } from './board'
 import { generateBoard } from './generate'
 import { hexRegion, presentSet } from './hex'
 import { fullyClued, layoutOf } from './test-helpers'
@@ -35,7 +35,7 @@ describe('parity clues (018)', () => {
     const back = deserializeBoard(serializeBoard(board))
     expect(serializeBoard(back)).toBe(serializeBoard(board))
 
-    const parity = [...back.cells.values()].filter((c) => c.clue && isParityClue(c.clue))
+    const parity = [...back.cells.values()].filter((c) => c.clue && hasParityFace(c.clue))
     expect(parity.length).toBeGreaterThan(0)
     for (const cell of parity) {
       // The count must be genuinely absent, not merely hidden — a serialized

@@ -402,9 +402,14 @@ export function GameplayScreen({
               id: l.id,
               x: l.x,
               y: l.y,
-              total: l.total,
+              // `null` when the row's total is withheld as a parity mark (019).
+              total: l.count ?? null,
               // What the label actually prints: `{n}` / `-n-` / plain (016).
               connectivity: l.connectivity ?? null,
+              // The printed text itself — the honest read for an e2e, since a
+              // parity face has no number to compare against. Same discipline
+              // as `clueFaces` above.
+              text: clueText(l),
             }))
           },
           guides: () => [...guidesRef.current].sort(),

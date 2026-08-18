@@ -3,7 +3,7 @@
 // guess-free solvable. Result is a minimal board: removing any remaining clue
 // breaks unique guess-free solvability (spec FR-008, SC-003).
 import type { Board, Cell, LineClue, Technique } from './board'
-import { isParityClue, makeBoard } from './board'
+import { hasParityFace, makeBoard } from './board'
 import { canShowParity, parityOf, presentNeighborCount } from './clues'
 import type { Rng } from './rng'
 import { shuffle } from './rng'
@@ -118,14 +118,14 @@ function weakenToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>):
 
   const keys: string[] = []
   for (const [k, cell] of work.cells) {
-    if (cell.given && cell.clue && !isParityClue(cell.clue)) keys.push(k)
+    if (cell.given && cell.clue && !hasParityFace(cell.clue)) keys.push(k)
   }
   shuffle(rng, keys)
 
   for (const k of keys) {
     const cell = work.cells.get(k)!
     const saved = cell.clue
-    if (!saved || isParityClue(saved)) continue
+    if (!saved || hasParityFace(saved)) continue
     // Only weaken where parity both withholds something and does not mislead
     // (FR-006) — see `canShowParity`. In particular a count of zero never
     // becomes a mark: zero is even, but nobody reads `+` as "none".

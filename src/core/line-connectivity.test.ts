@@ -6,6 +6,7 @@
 // over every row short enough to enumerate — that is what actually proves it,
 // and it costs almost nothing to write.
 import type { Board, SizeTier } from './board'
+import { hasParityFace } from './board'
 import { lineAdjacency, lineConnectivityInforms, lineConnectivityOf, lineRuns } from './clues'
 import { generateBoard } from './generate'
 import { AXIS_STEP, linesOf } from './hex'
@@ -282,7 +283,7 @@ describe('generated boards carrying row annotations', () => {
           lc.connectivity,
         )
         // And the total it is attached to must also be true.
-        expect(water.filter(Boolean).length).toBe(lc.total)
+        expect(water.filter(Boolean).length).toBe(lc.count)
       }
       // Not a hard requirement per board, but if NO seed ever annotated
       // anything the mechanic would be inert — see the SC-004 test below.
@@ -296,10 +297,14 @@ describe('generated boards carrying row annotations', () => {
       const byId = new Map(linesOf(board.present).map((l) => [`${l.axis},${l.index}`, l]))
       for (const lc of board.lines) {
         if (!lc.connectivity) continue
+        // These boards have `evenOdd` off, so every face is a count (019). The
+        // guard is the assertion: a parity face reaching here would mean the
+        // toggle leaked.
+        if (hasParityFace(lc)) throw new Error(`${seed} produced a parity row without evenOdd`)
         const line = byId.get(`${lc.axis},${lc.index}`)!
         const adjacent = lineAdjacency(line.cells, AXIS_STEP[lc.axis])
         expect(
-          lineConnectivityInforms(line.cells.length, lc.total, adjacent),
+          lineConnectivityInforms(line.cells.length, lc.count, adjacent),
           `${seed} annotated an uninformative row ${lc.axis},${lc.index}`,
         ).toBe(true)
       }

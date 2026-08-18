@@ -3,7 +3,7 @@
 // sampled size × difficulty matrix. Rating fidelity is checked separately in
 // rating.test.ts (SC-004, a ≥95% property).
 import type { BoardParams, DifficultyTier, SizeTier } from './board'
-import { isParityClue } from './board'
+import { hasParityFace } from './board'
 import { generateBoard } from './generate'
 import { solve } from './solver'
 
@@ -42,7 +42,7 @@ describe('generateBoard contract', () => {
     })
     for (const cell of board.cells.values()) {
       // No parity clues here either — `evenOdd` is off, so every clue is a count.
-      expect(cell.clue && !isParityClue(cell.clue) ? cell.clue.connectivity : undefined).toBeUndefined()
+      expect(cell.clue && !hasParityFace(cell.clue) ? cell.clue.connectivity : undefined).toBeUndefined()
     }
     expect(solve(board).solved).toBe(true)
   })

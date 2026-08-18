@@ -1,7 +1,7 @@
 // test-helpers.ts — fixture builders + an ASCII board dump for tests. Not part
 // of the public engine surface; imported only by *.test.ts.
 import type { Board, BoardParams, Cell, LineClue } from './board'
-import { isParityClue, makeBoard } from './board'
+import { hasParityFace, makeBoard } from './board'
 import { type Layout, adjacencyClue, lineTotal } from './clues'
 import { key, linesOf, parseKey } from './hex'
 
@@ -45,7 +45,7 @@ export function fullyClued(present: Set<string>, layout: Layout, opts: BuildOpts
     ? linesOf(present).map((ln) => ({
         axis: ln.axis,
         index: ln.index,
-        total: lineTotal(ln.cells, layout),
+        count: lineTotal(ln.cells, layout),
         from: 'start' as const,
       }))
     : []
@@ -88,7 +88,7 @@ export function dumpBoard(board: Board): string {
       }
       if (cell.state === 'water') row += 'W '
       else if (!cell.given || !cell.clue) row += cell.given ? '# ' : 'r '
-      else if (isParityClue(cell.clue)) row += `${cell.clue.parity === 'even' ? 'E' : 'O'} `
+      else if (hasParityFace(cell.clue)) row += `${cell.clue.parity === 'even' ? 'E' : 'O'} `
       else row += `${cell.clue.count} `
     }
     lines.push(row)

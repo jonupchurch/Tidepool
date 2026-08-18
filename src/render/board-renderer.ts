@@ -3,8 +3,8 @@
 // the theme palette, renders adjacency clues with `{}` / `--` framing, line
 // totals in the margins, an optional hover highlight, and revealed-pool
 // creatures. Behind an interface so it stays swappable to WebGL later.
-import type { AdjacencyClue, Board } from '@/core'
-import { isParityClue, key, parseKey } from '@/core'
+import type { AdjacencyClue, Board, ClueFace, Connectivity } from '@/core'
+import { hasParityFace, key, parseKey } from '@/core'
 import type { Mark, Pool } from '@/game'
 import { cellStyle } from './cell-style'
 import { type HexLayout, fitLayout, hexToPixel, hitTest } from './layout'
@@ -53,27 +53,41 @@ export interface BoardRenderer {
 // concrete family stack so clue numerals render at the intended size.
 const DISPLAY_FONT = '"Bricolage Grotesque", "Nunito", system-ui, sans-serif'
 
-export function clueText(clue: AdjacencyClue): string {
-  // A parity clue withholds the number entirely (018), so it needs a mark that
-  // cannot be mistaken for one. Letters lost that argument: in Bricolage
-  // Grotesque at 700, `O` and `0` are near-identical at the cell sizes a Large
-  // board uses, and `0` is a clue value the game really shows.
-  //
-  // Strokes instead, which also carries the meaning: ONE stroke for odd, TWO
-  // crossed for even — the same "things pair up, or one is left over" that
-  // parity is taught with. Neither collides with a digit.
-  if (isParityClue(clue)) return clue.parity === 'even' ? '+' : '|'
-  if (clue.connectivity === 'connected') return `{${clue.count}}`
-  if (clue.connectivity === 'split') return `-${clue.count}-`
-  return `${clue.count}`
+/**
+ * What a clue says about QUANTITY.
+ *
+ * A parity clue withholds the number entirely (018), so it needs a mark that
+ * cannot be mistaken for one. Letters lost that argument: in Bricolage
+ * Grotesque at 700, `O` and `0` are near-identical at the cell sizes a Large
+ * board uses, and `0` is a clue value the game really shows.
+ *
+ * Strokes instead, which also carries the meaning: ONE stroke for odd, TWO
+ * crossed for even — the same "things pair up, or one is left over" that parity
+ * is taught with. Neither collides with a digit.
+ */
+function faceText(face: ClueFace): string {
+  if (hasParityFace(face)) return face.parity === 'even' ? '+' : '|'
+  return `${face.count}`
 }
 
-/** A row total's text — same braces and dashes as `clueText`, so the two forms
- *  read as one vocabulary wherever they appear (010 FR-008). */
-function lineText(label: LineLabel): string {
-  if (label.connectivity === 'connected') return `{${label.total}}`
-  if (label.connectivity === 'split') return `-${label.total}-`
-  return `${label.total}`
+/** What it says about ARRANGEMENT, wrapped around whatever the face printed. */
+function framed(text: string, connectivity?: Connectivity): string {
+  if (connectivity === 'connected') return `{${text}}`
+  if (connectivity === 'split') return `-${text}-`
+  return text
+}
+
+/**
+ * The text a clue shows — the six forms `4`, `{4}`, `-4-`, `+`, `{+}`, `-+-`.
+ *
+ * ONE function for both clue sites (019). `clueText` and the old `lineText` were
+ * already the same function twice over — identical braces, identical dashes,
+ * different field names — so a stone and a row total now read as one vocabulary
+ * by construction, rather than by two implementations continuing to agree
+ * (010 FR-008).
+ */
+export function clueText(clue: AdjacencyClue): string {
+  return framed(faceText(clue), clue.connectivity)
 }
 
 function hexPath(ctx: CanvasRenderingContext2D, cx: number, cy: number, size: number): void {
@@ -240,8 +254,12 @@ class CanvasBoardRenderer implements BoardRenderer {
         // an empty tile with an artifact on it to give a player pause. Heavier
         // and slightly larger evens the visual weight; checked by eye against
         // the digits at 26px, the smallest cells a Large board uses.
-        const parity = isParityClue(cell.clue)
-        ctx.font = `${parity ? 800 : 700} ${size * (parity ? 1.15 : 0.9)}px ${DISPLAY_FONT}`
+        //
+        // BARE marks only (019). A framed `{+}` is three glyphs, so it already
+        // carries a digit's worth of ink — boosting it too would make it the
+        // loudest thing on the board, and it would also outgrow its tile.
+        const bare = hasParityFace(cell.clue) && cell.clue.connectivity === undefined
+        ctx.font = `${bare ? 800 : 700} ${size * (bare ? 1.15 : 0.9)}px ${DISPLAY_FONT}`
         ctx.fillText(clueText(cell.clue), x, y + size * 0.06)
       } else if (style.glyph && !spriteDrawn) {
         ctx.fillStyle = palette.ink
@@ -304,7 +322,7 @@ class CanvasBoardRenderer implements BoardRenderer {
       ctx.save()
       if (struck) ctx.globalAlpha = 0.55
       ctx.fillStyle = colour
-      ctx.fillText(lineText(l), l.x, l.y)
+      ctx.fillText(clueText(l), l.x, l.y)
       ctx.restore()
     }
   }

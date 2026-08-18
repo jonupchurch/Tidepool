@@ -1,6 +1,6 @@
 // PlaySession (T009/T016/T020/T024/T026/T035): marking, pool reward, board
 // completion, undo/redo, serialize/restore, edge cases.
-import { generateBoard, isParityClue } from '@/core'
+import { generateBoard, hasParityFace } from '@/core'
 import { PlaySession } from './session'
 import {
   firstGiven,
@@ -376,7 +376,7 @@ describe('an even/odd board plays identically (018 FR-011)', () => {
   })
 
   it('has parity clues to begin with (otherwise this test proves nothing)', () => {
-    expect([...board.cells.values()].filter((c) => c.clue && isParityClue(c.clue)).length)
+    expect([...board.cells.values()].filter((c) => c.clue && hasParityFace(c.clue)).length)
       .toBeGreaterThan(0)
   })
 
@@ -404,7 +404,7 @@ describe('an even/odd board plays identically (018 FR-011)', () => {
   it('never treats a parity clue cell as something the player must mark', () => {
     const session = new PlaySession(board)
     for (const [k, cell] of board.cells) {
-      if (cell.clue && isParityClue(cell.clue)) expect(session.isGiven(k)).toBe(true)
+      if (cell.clue && hasParityFace(cell.clue)) expect(session.isGiven(k)).toBe(true)
     }
   })
 })

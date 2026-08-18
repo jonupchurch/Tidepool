@@ -8,8 +8,8 @@
 // a direction unrelated to the line, which left them ambiguous and stacked at
 // the corners.) Where two labels would still collide, the loser slides further
 // out along its own axis — never sideways — so the alignment cue survives.
-import type { Axial, Axis, Board, Connectivity } from '@/core'
-import { AXIS_STEP, linesOf, parseKey } from '@/core'
+import type { Axial, Axis, Board, ClueFace, Connectivity } from '@/core'
+import { AXIS_STEP, hasParityFace, linesOf, parseKey } from '@/core'
 import { type HexLayout, hexToPixel } from './layout'
 
 // AXIS_STEP moved to core/hex.ts — the solver needs the same steps to tell
@@ -17,14 +17,13 @@ import { type HexLayout, hexToPixel } from './layout'
 // existing importers keep working.
 export { AXIS_STEP }
 
-/** A label's resolved position in axial space — independent of hex size. */
-export interface LineAnchor {
+/** Everything about a label except its face — geometry and identity. */
+interface LineAnchorSite {
   /** `${axis},${index}` — stable id, also the guide-line toggle key */
   id: string
   axis: Axis
   index: number
-  total: number
-  /** `{}` / `--` on this row's total (010); absent = a plain number. */
+  /** `{}` / `--` on this row's clue (010); absent = a plain, unframed one. */
   connectivity?: Connectivity
   /** anchor coord, fractional: a point just off the end of the row */
   coord: Axial
@@ -34,7 +33,15 @@ export interface LineAnchor {
   cells: string[]
 }
 
-export interface LineLabel extends LineAnchor {
+/**
+ * A label's resolved position in axial space — independent of hex size.
+ *
+ * Carries the clue's FACE (019), so a row whose total is withheld as `+`/`|` is
+ * describable here rather than needing a number it does not have.
+ */
+export type LineAnchor = ClueFace & LineAnchorSite
+
+export type LineLabel = LineAnchor & {
   /** label centre, in canvas pixels */
   x: number
   y: number
@@ -167,7 +174,9 @@ export function lineAnchors(board: Board): LineAnchor[] {
       id,
       axis: lc.axis,
       index: lc.index,
-      total: lc.total,
+      // The face verbatim — a count or a parity (019). Spread, so neither arm
+      // has to be spelled out and a clue can never arrive here carrying both.
+      ...(hasParityFace(lc) ? { parity: lc.parity } : { count: lc.count }),
       ...(lc.connectivity ? { connectivity: lc.connectivity } : {}),
       coord: chosen.coord,
       tip: chosen.tip,

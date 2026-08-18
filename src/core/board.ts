@@ -61,35 +61,58 @@ export type Connectivity = 'connected' | 'split'
 /** Whether a count of water neighbours is even or odd (018). */
 export type Parity = 'even' | 'odd'
 
-/** A clue that names the exact number of water neighbours. */
-export interface CountClue {
-  /** water among the up-to-6 present neighbours */
-  count: number
-  /** `{}` (consecutive around the ring) / `--` (not all consecutive); absent = plain number */
+/**
+ * What a clue says about QUANTITY: an exact number, or only its parity (019).
+ *
+ * This is one half of a clue. The other half is its **framing** — the `{}`/`--`
+ * annotation, which says something about *arrangement* instead. The two are
+ * orthogonal, and every clue site (a stone, an edge total) carries both. Until
+ * 019 the framing could only ever wrap a number and a parity could only ever
+ * appear bare; nothing new is invented by letting them meet, and the code gets
+ * smaller for it.
+ *
+ * A parity face carries no `count`, deliberately: reading the number off a clue
+ * that withheld it is a *type error*, because a solver that could reach for it
+ * anyway would quietly cheat.
+ *
+ * **The `?: never` arms are load-bearing.** The natural
+ * `{ count: number } | { parity: Parity }` does NOT prevent a clue carrying
+ * both: excess-property checking against a union permits any property present
+ * in *any* member, so `{ count: 4, parity: 'even' }` type-checks against it.
+ * `hasParityFace` would then read such an object as a parity clue and silently
+ * ignore its count. Pinned by `clue-face.test.ts`; the same hole existed
+ * latently in 018's `CountClue | ParityClue`.
+ */
+export type ClueFace = { count: number; parity?: never } | { parity: Parity; count?: never }
+
+/** What a clue says about ARRANGEMENT; absent = the face alone, unframed. */
+export interface ClueFraming {
+  /** `{}` (one unbroken run) / `--` (two or more); absent = plain */
   connectivity?: Connectivity
 }
 
 /**
- * A clue that names only the PARITY of the water neighbours (018) — `E` / `O`.
+ * An adjacency clue shown on a given rock cell — a face plus a framing, giving
+ * the six forms `4`, `{4}`, `-4-`, `+`, `{+}`, `-+-`.
  *
- * It carries no `count`, deliberately. This is a union rather than an optional
- * field on `CountClue` so that reading the count of a parity clue is a *type
- * error*: the whole point of the mechanic is that the exact number is withheld,
- * and a solver that could reach for it anyway would quietly cheat.
- *
- * It carries no `connectivity` either — combining `E` with `{}`/`--` is named
- * as a non-goal in the 018 spec.
+ * TypeScript distributes the intersection over the face union, so both faces get
+ * the framing without either being spelled out twice.
  */
-export interface ParityClue {
-  parity: Parity
-}
+export type AdjacencyClue = ClueFace & ClueFraming
 
-/** An adjacency clue shown on a given rock cell: a count, or just its parity. */
-export type AdjacencyClue = CountClue | ParityClue
+/** The count form specifically — what generation always computes. */
+export type CountClue = Extract<AdjacencyClue, { count: number }>
+/** The parity form specifically — what reduction may weaken a clue to. */
+export type ParityClue = Extract<AdjacencyClue, { parity: Parity }>
 
-/** Narrow an `AdjacencyClue` to the parity form. */
-export function isParityClue(clue: AdjacencyClue): clue is ParityClue {
-  return 'parity' in clue
+/**
+ * Narrow any face-carrying clue — a cell's or a line's — to its parity form.
+ *
+ * Named for the *face* rather than the clue because both clue sites are now the
+ * same idea; 018's `isParityClue` only ever applied to cells.
+ */
+export function hasParityFace<T extends ClueFace>(clue: T): clue is Extract<T, { parity: Parity }> {
+  return clue.parity !== undefined
 }
 
 export interface Cell {
@@ -104,19 +127,26 @@ export interface Cell {
 
 export type Axis = 0 | 1 | 2
 
-/** A line/edge total: water cells along one axis line. */
-export interface LineClue {
+/** Which line a `LineClue` belongs to, and which end its label sits at. */
+export interface LineSite {
   axis: Axis
   index: number
-  total: number
   from: 'start' | 'end'
-  /**
-   * `{}` (the row's water is one unbroken run) / `--` (two or more runs);
-   * absent = plain number. A stone OR a missing cell ends a run, so this reads
-   * the way the row looks (010 FR-002/FR-003).
-   */
-  connectivity?: Connectivity
 }
+
+/**
+ * A line/edge total: what is known about the water along one axis line.
+ *
+ * The same face × framing pair a stone carries (019). `count` is the row's water
+ * total; a parity face withholds it. The framing reads the way the row looks —
+ * a stone OR a missing cell ends a run (010 FR-002/FR-003).
+ *
+ * `count` rather than `total` so the two clue sites share one face vocabulary
+ * and one formatter. The rename is invisible to `serializeBoard`, whose line
+ * tuples are positional, which is why the fingerprint table proves it changed
+ * nothing.
+ */
+export type LineClue = ClueFace & ClueFraming & LineSite
 
 export interface Board {
   params: BoardParams

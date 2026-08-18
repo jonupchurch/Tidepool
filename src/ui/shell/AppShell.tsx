@@ -359,7 +359,19 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
         return (
           <HowToPlayScreen
             onBack={goHome}
-            onPlay={() => onPlay(boardRequest(freshSeed(), lastPlay.size, lastPlay.difficulty))}
+            // The FOURTH place a play setting has to be threaded (016's shore,
+            // 018's marks). This one was missed by both and served a plain
+            // hexagon with none of the player's choices — reading about `-|-`
+            // and then being handed a board that cannot contain one.
+            onPlay={() =>
+              onPlay(
+                boardRequest(freshSeed(), lastPlay.size, lastPlay.difficulty, {
+                  shore: lastPlay.shore,
+                  edgeHints: lastPlay.edgeHints,
+                  evenOdd: lastPlay.evenOdd,
+                }),
+              )
+            }
           />
         )
       case 'About':

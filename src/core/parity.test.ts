@@ -13,7 +13,7 @@ import type { Assign, Constraint } from './techniques'
 import { applyParity, parityPass, setup } from './techniques'
 import type { SolveCtx } from './techniques'
 import { generateBoard } from './generate'
-import { isParityClue } from './board'
+import { hasParityFace } from './board'
 import type { DifficultyTier, SizeTier } from './board'
 import { presentNeighborCount, waterNeighborCount } from './clues'
 import { serializeBoard } from './serialize'
@@ -136,7 +136,7 @@ describe('generating with evenOdd on', () => {
     it(`${seed} Medium/Deep carries parity clues and stays sound`, () => {
       const board = generateBoard({ seed, size: 'Medium', difficulty: 'Deep', clues })
       const given = [...board.cells.values()].filter((c) => c.given && c.clue)
-      const parity = given.filter((c) => c.clue && isParityClue(c.clue))
+      const parity = given.filter((c) => c.clue && hasParityFace(c.clue))
 
       expect(parity.length).toBeGreaterThan(0)
       // Measured at ~35% across 5 seeds x 3 sizes; the band is deliberately wide
@@ -156,7 +156,7 @@ describe('generating with evenOdd on', () => {
     for (const seed of seeds) {
       const board = generateBoard({ seed, size: 'Large', difficulty: 'Deep', clues })
       for (const [k, cell] of board.cells) {
-        if (!cell.clue || !isParityClue(cell.clue)) continue
+        if (!cell.clue || !hasParityFace(cell.clue)) continue
         // With fewer than two present neighbours, parity pins the count exactly,
         // so the mark would be the number in disguise rather than weaker than it.
         expect(presentNeighborCount(cell.coord, board.present), `${seed} ${k}`).toBeGreaterThanOrEqual(2)
@@ -174,7 +174,7 @@ describe('generating with evenOdd on', () => {
         const board = generateBoard({ seed, size, difficulty: 'Deep', clues })
         const layout = new Map([...board.cells].map(([k, c]) => [k, c.state]))
         for (const [k, cell] of board.cells) {
-          if (!cell.clue || !isParityClue(cell.clue)) continue
+          if (!cell.clue || !hasParityFace(cell.clue)) continue
           expect(
             waterNeighborCount(cell.coord, layout, board.present),
             `${seed} ${size} ${k} shows "${cell.clue.parity}" over a true count of 0`,
@@ -190,7 +190,7 @@ describe('generating with evenOdd on', () => {
     for (const difficulty of ['Calm', 'Tricky'] as DifficultyTier[]) {
       for (const seed of seeds) {
         const board = generateBoard({ seed, size: 'Medium', difficulty, clues })
-        const parity = [...board.cells.values()].filter((c) => c.clue && isParityClue(c.clue))
+        const parity = [...board.cells.values()].filter((c) => c.clue && hasParityFace(c.clue))
         expect(parity, `${seed} ${difficulty}`).toHaveLength(0)
       }
     }
@@ -242,7 +242,7 @@ describe('parityPass is inert without parity clues (FR-003)', () => {
           })
           // No parity clue should exist at all without the toggle...
           const parityClues = [...board.cells.values()].filter(
-            (c) => c.clue && isParityClue(c.clue),
+            (c) => c.clue && hasParityFace(c.clue),
           )
           expect(parityClues, `${seed} ${size}/${difficulty}`).toHaveLength(0)
 

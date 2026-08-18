@@ -1,7 +1,7 @@
 // In-progress board round-trip (T014): only player state is persisted; the
 // board is regenerated from the saved `request` via the engine and must match
 // byte-for-byte — proving the board itself is never stored (tiny, robust saves).
-import { type BoardParams, generateBoard, isParityClue, serializeBoard } from '@/core'
+import { type BoardParams, generateBoard, hasParityFace, serializeBoard } from '@/core'
 import { createMemoryBackend } from './memory-backend'
 import { loadRecord, saveRecord } from './save-store'
 import type { InProgressBoardRecord } from './schemas'
@@ -46,7 +46,7 @@ describe('in-progress board persistence', () => {
     }
     const board = generateBoard(request)
     const canonical = serializeBoard(board)
-    expect([...board.cells.values()].some((c) => c.clue && isParityClue(c.clue))).toBe(true)
+    expect([...board.cells.values()].some((c) => c.clue && hasParityFace(c.clue))).toBe(true)
 
     const store = createMemoryBackend()
     await saveRecord(store, 'inProgressBoard', {

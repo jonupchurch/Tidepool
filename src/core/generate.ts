@@ -97,9 +97,12 @@ function buildFullyCluedBoard(
   }
   let lines: LineClue[] = []
   if (params.clues.lineTotals) {
-    lines = linesOf(present).map((ln) => {
+    lines = linesOf(present).map((ln): LineClue => {
       const total = lineTotal(ln.cells, layout)
-      const base = { axis: ln.axis, index: ln.index, total, from: 'start' as const }
+      // `count`, not `total` (019): a line clue carries the same face a stone
+      // does. Generation always computes the exact number; only reduction may
+      // weaken it to a parity.
+      const base = { axis: ln.axis, index: ln.index, count: total, from: 'start' as const }
       if (!params.clues.lineConnectivity) return base
       // Annotate only where it says something: a row whose water can only be
       // arranged one way learns nothing from `{}`/`--` (FR-004).

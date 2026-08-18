@@ -13,6 +13,21 @@
 // occasionally correct, but it is never incidental — the fix is almost always to
 // make your change opt-in (a new clue toggle or shape appends to the seed string
 // only when enabled) rather than to update the table.
+//
+// ── The table is in two halves, and they are not equally negotiable ───────────
+//
+// **The 44 rows without `evenOdd`** describe boards that have shipped. They must
+// stay green through any change, and a failure among them is never to be
+// recaptured — it means a change leaked out of its opt-in gate and reached boards
+// that players hold. These are the rows that make a large refactor reviewable:
+// they are unaffected by any mechanic added since, so if they move, the mechanic
+// is not as opt-in as its author believed.
+//
+// **The 5 `evenOdd` rows** describe a mechanic (018) that is built but has never
+// been released, so no player holds one of those seeds. A feature that changes
+// what those boards look like is therefore allowed to recapture them — see the
+// note beside those rows for the one time that has actually happened, and why it
+// is a record rather than a precedent.
 import { createHash } from 'node:crypto'
 import type { BoardParams, ClueToggles, DifficultyTier, SizeTier } from './board'
 import { generateBoard } from './generate'
@@ -98,12 +113,28 @@ const FROZEN: ReadonlyArray<FrozenRow> = [
   ['KELP-0007', 'Large', 'Deep', '9f63eb297479de52', { clues: LC_CLUES, shape: 'shoal' }],
   ['FOAM-0002', 'Medium', 'Deep', '09cf8d32890285cb', { clues: LC_CLUES, shape: 'atoll' }],
 
-  // Parity clues (018) — captured as the mechanic shipped.
-  ['KELP-0007', 'Large', 'Deep', '9c78b51f0753415b', { clues: EO_CLUES }],
-  ['CORAL-4417', 'Medium', 'Deep', 'e1266b7de9356fe2', { clues: EO_CLUES }],
-  ['TIDE-1234', 'Small', 'Deep', 'fad2434821935512', { clues: EO_CLUES }],
-  ['KELP-0007', 'Large', 'Deep', '5a0193b922aa700a', { clues: LC_EO_CLUES }],
-  ['FOAM-0002', 'Medium', 'Deep', '401dfbbd2882252f', { clues: LC_EO_CLUES, shape: 'atoll' }],
+  // ── Parity clues — the rows this project is allowed to move ────────────────
+  //
+  // Captured as 018 shipped, then re-captured three times during 019 — when
+  // parity reached the edge totals, when it learned to carry `{}`/`--`, and when
+  // playtest ruled that a framed mark needs a count of at least three.
+  //
+  // That was legitimate for exactly one reason: 018 has never been released, so
+  // no player holds one of these seeds and no save regenerates from them. It is
+  // a record, NOT a precedent. The moment 018 ships, these rows join the 44
+  // above and a failure here means precisely what a failure there means — and
+  // three recaptures in one feature is the most this can ever be worth, because
+  // after release the answer becomes "no".
+  //
+  // Recapturing is the correct fix roughly never. If you are reading this
+  // because one of them just went red, the question is whether your change was
+  // *supposed* to alter what an evenOdd board looks like. If it was not, the
+  // table is doing its job and the bug is upstream.
+  ['KELP-0007', 'Large', 'Deep', '65fe35a747e4fcca', { clues: EO_CLUES }],
+  ['CORAL-4417', 'Medium', 'Deep', '525c2b6195d4de55', { clues: EO_CLUES }],
+  ['TIDE-1234', 'Small', 'Deep', '99e281b0971277b0', { clues: EO_CLUES }],
+  ['KELP-0007', 'Large', 'Deep', 'e237ab303248e7c4', { clues: LC_EO_CLUES }],
+  ['FOAM-0002', 'Medium', 'Deep', 'fdc46f81712a01ec', { clues: LC_EO_CLUES, shape: 'atoll' }],
 ]
 
 function fingerprint(p: BoardParams): string {

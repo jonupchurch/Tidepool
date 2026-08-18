@@ -10,11 +10,14 @@ export type {
   BoardParams,
   Cell,
   CellState,
+  ClueFace,
+  ClueFraming,
   ClueToggles,
   Connectivity,
   CountClue,
   DifficultyTier,
   LineClue,
+  LineSite,
   Parity,
   ParityClue,
   SeedCode,
@@ -22,7 +25,7 @@ export type {
   SolverResult,
   Technique,
 } from './board'
-export { DIFFICULTY_TIERS, SIZE_TIERS, isParityClue } from './board'
+export { DIFFICULTY_TIERS, SIZE_TIERS, hasParityFace } from './board'
 export type { Axial, Line } from './hex'
 
 // Board silhouettes (012) — the catalog + its guards. `present` is still the

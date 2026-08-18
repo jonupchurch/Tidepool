@@ -4,11 +4,12 @@
 // stays gone once you know the rules. The same text is the How to play screen —
 // both read from `how-to-play-content`.
 import {
-  CLUE_FORMS,
+  CLUE_FACES,
+  CLUE_FRAMINGS,
+  COMPOSITION,
   EDGE_NUMBERS,
-  EDGE_RUNS,
-  EVEN_ODD,
   MARKING,
+  PARITY_NOTE,
   SETTLED,
 } from './how-to-play-content'
 
@@ -49,8 +50,12 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
 
       <p className="mt-2 text-xs leading-relaxed">{MARKING}</p>
 
-      <dl className="mt-3 flex flex-col gap-1.5 text-xs leading-relaxed">
-        {CLUE_FORMS.map((c) => (
+      {/* Faces then framings, as two short lists — the rail is 14rem wide, so
+          the grid on the How to play screen would not fit here. The composition
+          sentence beneath them is what turns the two lists back into it. */}
+      <p className="mt-3 text-[0.65rem] uppercase tracking-wide text-rock/50">How much water</p>
+      <dl className="mt-1 flex flex-col gap-1.5 text-xs leading-relaxed">
+        {CLUE_FACES.map((c) => (
           <div key={c.glyph} className="flex gap-2">
             <dt className="w-9 shrink-0 font-display text-rock/80">{c.glyph}</dt>
             <dd>{c.meaning}</dd>
@@ -58,9 +63,19 @@ export function HowToPlay({ onClose }: HowToPlayProps) {
         ))}
       </dl>
 
-      <p className="mt-3 text-xs leading-relaxed">{EDGE_NUMBERS}</p>
-      <p className="mt-2 text-xs leading-relaxed">{EDGE_RUNS}</p>
-      <p className="mt-2 text-xs leading-relaxed">{EVEN_ODD}</p>
+      <p className="mt-3 text-[0.65rem] uppercase tracking-wide text-rock/50">How it sits</p>
+      <dl className="mt-1 flex flex-col gap-1.5 text-xs leading-relaxed">
+        {CLUE_FRAMINGS.map((c) => (
+          <div key={c.glyph} className="flex gap-2">
+            <dt className="w-9 shrink-0 font-display text-rock/80">{c.glyph}</dt>
+            <dd>{c.meaning}</dd>
+          </div>
+        ))}
+      </dl>
+
+      <p className="mt-3 text-xs leading-relaxed">{COMPOSITION}</p>
+      <p className="mt-2 text-xs leading-relaxed">{EDGE_NUMBERS}</p>
+      <p className="mt-2 text-xs leading-relaxed">{PARITY_NOTE}</p>
       <p className="mt-2 text-xs leading-relaxed">{SETTLED}</p>
 
       <button

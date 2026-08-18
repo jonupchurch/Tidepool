@@ -1,8 +1,9 @@
 // Serialization tests (T015): canonical round-trip + seed code parse/format.
 import { deserializeBoard, formatSeed, parseSeed, serializeBoard } from './serialize'
-import { isParityClue } from './board'
+import type { AdjacencyClue, Cell, LineClue } from './board'
+import { hasParityFace, makeBoard } from './board'
 import { generateBoard } from './generate'
-import { hexRegion, presentSet } from './hex'
+import { hexRegion, parseKey, presentSet } from './hex'
 import { fullyClued, layoutOf } from './test-helpers'
 
 describe('board serialization', () => {
@@ -35,7 +36,7 @@ describe('parity clues (018)', () => {
     const back = deserializeBoard(serializeBoard(board))
     expect(serializeBoard(back)).toBe(serializeBoard(board))
 
-    const parity = [...back.cells.values()].filter((c) => c.clue && isParityClue(c.clue))
+    const parity = [...back.cells.values()].filter((c) => c.clue && hasParityFace(c.clue))
     expect(parity.length).toBeGreaterThan(0)
     for (const cell of parity) {
       // The count must be genuinely absent, not merely hidden — a serialized
@@ -91,5 +92,94 @@ describe('seed codes', () => {
     expect(parseSeed('coral-')).toBeNull()
     expect(parseSeed('123-456')).toBeNull()
     expect(parseSeed('coral-12345')).toBeNull() // too many digits
+  })
+})
+
+describe('framed parity (019)', () => {
+  it('round-trips all six forms, at both clue sites', () => {
+    // Hand-built rather than generated, so every form is present whether or not
+    // a particular seed happens to produce it. `makeBoard` only wires structure;
+    // this is a serialization test, not a solvability one.
+    const present = presentSet(hexRegion(2))
+    const cells = new Map<string, Cell>()
+    const faces: AdjacencyClue[] = [
+      { count: 3 },
+      { count: 3, connectivity: 'connected' },
+      { count: 3, connectivity: 'split' },
+      { parity: 'even' },
+      { parity: 'even', connectivity: 'connected' },
+      { parity: 'odd', connectivity: 'split' },
+    ]
+    let i = 0
+    for (const k of present) {
+      const coord = parseKey(k)
+      const clue = faces[i % faces.length]
+      cells.set(k, { coord, state: 'rock', given: true, clue })
+      i++
+    }
+    const lines: LineClue[] = [
+      { axis: 0, index: 0, from: 'start', count: 2 },
+      { axis: 0, index: 1, from: 'start', count: 2, connectivity: 'connected' },
+      { axis: 0, index: 2, from: 'end', count: 2, connectivity: 'split' },
+      { axis: 1, index: 0, from: 'start', parity: 'even' },
+      { axis: 1, index: 1, from: 'start', parity: 'even', connectivity: 'connected' },
+      { axis: 1, index: 2, from: 'end', parity: 'odd', connectivity: 'split' },
+    ]
+    const board = makeBoard({
+      params: {
+        seed: 'COVE-0001',
+        size: 'Small',
+        difficulty: 'Deep',
+        clues: { connectivity: true, lineTotals: true, evenOdd: true, lineConnectivity: true },
+      },
+      present,
+      cells,
+      lines,
+    })
+
+    const back = deserializeBoard(serializeBoard(board))
+    expect(back.lines).toEqual(lines)
+    expect(back.cells).toEqual(cells)
+    expect(serializeBoard(back)).toBe(serializeBoard(board))
+
+    // A parity face must not gain a count on the way back, at EITHER site — the
+    // number was withheld and a round trip is not an excuse to reveal it.
+    for (const l of back.lines) if (hasParityFace(l)) expect(l).not.toHaveProperty('count')
+    for (const c of back.cells.values()) {
+      if (c.clue && hasParityFace(c.clue)) expect(c.clue).not.toHaveProperty('count')
+    }
+  })
+
+  it('writes a framed line exactly as wide as an unframed one plus its framing', () => {
+    // The line tuple is positional, which is what let `LineClue.total` be
+    // renamed to `count` in 019 without moving a single byte. A bare clue must
+    // still omit the trailing slot rather than writing an explicit undefined.
+    const mk = (lines: LineClue[]) =>
+      JSON.parse(
+        serializeBoard(
+          makeBoard({
+            params: {
+              seed: 'COVE-0001',
+              size: 'Small',
+              difficulty: 'Deep',
+              clues: { connectivity: true, lineTotals: true },
+            },
+            present: new Set(),
+            cells: new Map(),
+            lines,
+          }),
+        ),
+      ) as { lines: unknown[][] }
+
+    expect(mk([{ axis: 0, index: 0, from: 'start', count: 4 }]).lines[0]).toEqual([0, 0, 4, 'start'])
+    expect(mk([{ axis: 0, index: 0, from: 'start', parity: 'odd' }]).lines[0]).toEqual([
+      0,
+      0,
+      'o',
+      'start',
+    ])
+    expect(
+      mk([{ axis: 0, index: 0, from: 'start', parity: 'even', connectivity: 'split' }]).lines[0],
+    ).toEqual([0, 0, 'e', 'start', 's'])
   })
 })

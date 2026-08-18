@@ -3,8 +3,8 @@
 // and records which techniques fired. A "constraint" is a set of present cells
 // with an exact water count (from an adjacency clue or a line total), optionally
 // carrying local connectivity for the ring it came from.
-import type { Board, Connectivity, Technique } from './board'
-import { isParityClue } from './board'
+import type { Board, ClueFace, Connectivity, Technique } from './board'
+import { hasParityFace } from './board'
 import type { Line } from './hex'
 import { AXIS_STEP, DIRECTIONS, key, linesOf } from './hex'
 import { circularRuns, lineAdjacency } from './clues'
@@ -12,18 +12,20 @@ import { circularRuns, lineAdjacency } from './clues'
 export type CellVal = 'water' | 'rock' | 'unknown'
 export type Assign = Map<string, CellVal>
 
-/** What every constraint shares: the cells it governs, and where it came from. */
+/**
+ * What every constraint shares: the cells it governs, where it came from, and —
+ * since 019 — its FRAMING.
+ *
+ * The framing fields live here rather than on `ExactConstraint` because a clue's
+ * face (quantity) and framing (arrangement) are orthogonal: a parity clue can
+ * carry `{}`/`--` just as a count can. They sat on the exact arm in 018, and
+ * that is precisely what forced the two `kind !== 'exact'` guards this feature
+ * deletes.
+ */
 interface ConstraintBase {
   /** present cell keys governed by this constraint */
   cells: string[]
   source: 'adjacency' | 'line'
-}
-
-/** A constraint naming the exact water count among its cells. */
-export interface ExactConstraint extends ConstraintBase {
-  kind: 'exact'
-  /** exact number of water among `cells` */
-  water: number
   /** for connectivity: the origin's 6 ring slots (cell key or null if absent) */
   ring?: (string | null)[]
   connectivity?: Connectivity
@@ -33,6 +35,13 @@ export interface ExactConstraint extends ConstraintBase {
    * which ends a run just as a stone does (010 FR-003).
    */
   adjacent?: boolean[]
+}
+
+/** A constraint naming the exact water count among its cells. */
+export interface ExactConstraint extends ConstraintBase {
+  kind: 'exact'
+  /** exact number of water among `cells` */
+  water: number
 }
 
 /**
@@ -52,10 +61,46 @@ export interface ParityConstraint extends ConstraintBase {
 
 export type Constraint = ExactConstraint | ParityConstraint
 
+/**
+ * Does a candidate water count satisfy this constraint's FACE? (019)
+ *
+ * The single place the quantity question is asked, so the enumeration passes
+ * stop caring *why* a count is admissible. Both of them already test the run
+ * count separately, which is what makes swapping `water === c.water` for this
+ * the whole of FR-003: an arrangement survives only if it satisfies the face
+ * **and** the framing.
+ */
+export function admits(c: Constraint, water: number): boolean {
+  return c.kind === 'exact' ? water === c.water : water % 2 === c.parity
+}
+
 /** Accumulates progress across a solving run. */
 export interface SolveCtx {
   contradiction: boolean
   used: Set<Technique>
+}
+
+/** The framing half of a constraint, however the clue site supplies it. */
+type Framing = Pick<ConstraintBase, 'ring' | 'connectivity' | 'adjacent'>
+
+/**
+ * Build the constraint a clue's FACE implies, carrying its framing through
+ * untouched (019).
+ *
+ * One function for both clue sites, because since 019 a stone and an edge total
+ * carry the same two halves. The face decides `kind`; the framing is opaque to
+ * that decision, which is the property the whole feature rests on.
+ */
+function faceConstraint(
+  face: ClueFace,
+  cells: string[],
+  source: 'adjacency' | 'line',
+  framing: Framing,
+): Constraint {
+  const base = { cells, source, ...framing }
+  return hasParityFace(face)
+    ? { kind: 'parity', parity: face.parity === 'even' ? 0 : 1, ...base }
+    : { kind: 'exact', water: face.count, ...base }
 }
 
 /** Build the constraint set + initial assignment (given cells known rock). */
@@ -74,22 +119,14 @@ export function setup(board: Board): { assign: Assign; constraints: Constraint[]
           return board.present.has(nk) ? nk : null
         })
         const cells = ring.filter((x): x is string => x !== null)
-        if (isParityClue(clue)) {
-          constraints.push({
-            kind: 'parity',
+        constraints.push(
+          faceConstraint(
+            clue,
             cells,
-            parity: clue.parity === 'even' ? 0 : 1,
-            source: 'adjacency',
-          })
-        } else {
-          constraints.push({
-            kind: 'exact',
-            cells,
-            water: clue.count,
-            source: 'adjacency',
-            ...(clue.connectivity ? { ring, connectivity: clue.connectivity } : {}),
-          })
-        }
+            'adjacency',
+            clue.connectivity ? { ring, connectivity: clue.connectivity } : {},
+          ),
+        )
       }
     }
   }
@@ -100,18 +137,19 @@ export function setup(board: Board): { assign: Assign; constraints: Constraint[]
     for (const lc of board.lines) {
       const ln = byId.get(`${lc.axis},${lc.index}`)
       if (!ln) continue
-      constraints.push({
-        kind: 'exact',
-        cells: ln.cells,
-        water: lc.total,
-        source: 'line',
-        ...(lc.connectivity
-          ? {
-              connectivity: lc.connectivity,
-              adjacent: lineAdjacency(ln.cells, AXIS_STEP[lc.axis]),
-            }
-          : {}),
-      })
+      constraints.push(
+        faceConstraint(
+          lc,
+          ln.cells,
+          'line',
+          lc.connectivity
+            ? {
+                connectivity: lc.connectivity,
+                adjacent: lineAdjacency(ln.cells, AXIS_STEP[lc.axis]),
+              }
+            : {},
+        ),
+      )
     }
   }
 
@@ -178,7 +216,6 @@ export function forcedCountPass(
  * `{}`/`--` property; force any slot that is the same in every valid one.
  */
 export function applyConnectivity(c: Constraint, assign: Assign, ctx: SolveCtx): boolean {
-  if (c.kind !== 'exact') return false // parity clues carry no {}/-- (018)
   if (!c.ring || !c.connectivity) return false
   const ring = c.ring
   // Fixed slots from current knowledge; collect unknown present slots.
@@ -193,6 +230,18 @@ export function applyConnectivity(c: Constraint, assign: Assign, ctx: SolveCtx):
   base.forEach((b, i) => {
     if (b === null) unknownIdx.push(i)
   })
+  // A fully-known ring is declined rather than VALIDATED — unlike
+  // `applyLineConnectivity` and `applyParity`, which both check that case and
+  // say why. The asymmetry is real and pre-dates 019 (it has been here since
+  // 010); `framed-parity.test.ts` pins it so it cannot be changed by accident.
+  //
+  // It is sound: the uniqueness counter can only ever OVER-count from this, so
+  // a board is never wrongly called unique, only wrongly called ambiguous and
+  // discarded. Measured while generalising this pass — removing the early
+  // return moved none of the 49 frozen boards and none of the 72 curated ones,
+  // so the fix looks free — but it changes the oracle's pruning for every board
+  // the game can generate, on the evidence of 121 samples. That is its own
+  // change with its own sweep, not a passenger on a clue feature.
   if (unknownIdx.length === 0) return false
 
   const wantSplit = c.connectivity === 'split'
@@ -212,7 +261,10 @@ export function applyConnectivity(c: Constraint, assign: Assign, ctx: SolveCtx):
       if (mask & (1 << b)) slots[unknownIdx[b]] = true
     }
     const waterCount = slots.filter(Boolean).length
-    if (waterCount !== c.water) continue
+    // The face and the framing are tested independently, one line apart. That
+    // is FR-003 in its entirety: an arrangement survives only if it satisfies
+    // both, and the loop never needs to know which face it is enforcing.
+    if (!admits(c, waterCount)) continue
     const runs = circularRuns(slots)
     const isSplit = runs >= 2
     if (isSplit !== wantSplit) continue
@@ -239,7 +291,13 @@ export function applyConnectivity(c: Constraint, assign: Assign, ctx: SolveCtx):
       changed = true
     }
   }
-  if (changed) ctx.used.add('connectivity')
+  if (changed) {
+    ctx.used.add('connectivity')
+    // A framed PARITY mark needed both halves to get here, so crediting
+    // connectivity alone would understate what the board asked of the player
+    // (019). Both are Deep-tier, so this changes attribution, not rating.
+    if (c.kind === 'parity') ctx.used.add('parity')
+  }
   return changed
 }
 
@@ -250,7 +308,7 @@ export function connectivityPass(
 ): boolean {
   let changed = false
   for (const c of constraints) {
-    if (c.kind === 'exact' && c.connectivity && applyConnectivity(c, assign, ctx)) changed = true
+    if (c.connectivity && applyConnectivity(c, assign, ctx)) changed = true
     if (ctx.contradiction) return changed
   }
   return changed
@@ -277,12 +335,25 @@ export function applyLineConnectivity(
   assign: Assign,
   ctx: SolveCtx,
 ): boolean {
-  if (c.kind !== 'exact') return false // line constraints are always exact
   if (!c.connectivity || !c.adjacent || c.source !== 'line') return false
   const cells = c.cells
   const n = cells.length
   const adjacent = c.adjacent
   const wantRuns = c.connectivity === 'connected' ? 1 : 2
+
+  /**
+   * The largest water count worth tracking (019).
+   *
+   * `c.water` used to play THREE distinct roles here that happened to be the
+   * same number: the state-space bound, `step()`'s pruning limit, and the
+   * acceptance test at `viable[n]`. They are not the same concept, and a parity
+   * face is what separates them — it admits every count of the right parity, so
+   * the bound becomes the row length while acceptance stays a question about the
+   * face. Conflating them is how a parity row would silently accept a wrong
+   * total: prune at the parity's lowest admissible count and the DP never sees
+   * the arrangements above it.
+   */
+  const maxWater = c.kind === 'exact' ? c.water : n
 
   const known: (boolean | null)[] = cells.map((k) => {
     const v = assign.get(k)
@@ -300,7 +371,7 @@ export function applyLineConnectivity(
   // arrangements and force cells that aren't actually forced.
   const RUNS_MAX = 2
   const RUN_STATES = RUNS_MAX + 1 // 0, 1, "2 or more"
-  const stateCount = (c.water + 1) * RUN_STATES * 2
+  const stateCount = (maxWater + 1) * RUN_STATES * 2
 
   const encode = (water: number, runs: number, inRun: boolean): number =>
     (water * RUN_STATES + runs) * 2 + (inRun ? 1 : 0)
@@ -315,7 +386,7 @@ export function applyLineConnectivity(
   const step = (s: number, wet: boolean, i: number): number => {
     const { water, runs, inRun } = decode(s)
     if (!wet) return encode(water, runs, false)
-    if (water + 1 > c.water) return -1
+    if (water + 1 > maxWater) return -1
     // A water cell extends the current run only if it also touches its
     // predecessor; a hole in the row starts a new run just as a stone does.
     const continues = inRun && i > 0 && adjacent[i - 1]
@@ -347,7 +418,7 @@ export function applyLineConnectivity(
     // and the ring's `circularRuns`. A row with no water at all is trivially
     // one arc. Informativeness keeps that off real boards, but the DP has to
     // agree with the definition, not with what generation happens to produce.
-    if (water === c.water && (wantRuns === 1 ? runs <= 1 : runs >= 2)) viable[n][s] = 1
+    if (admits(c, water) && (wantRuns === 1 ? runs <= 1 : runs >= 2)) viable[n][s] = 1
   }
   for (let i = n - 1; i >= 0; i--) {
     for (let s = 0; s < stateCount; s++) {
@@ -394,7 +465,10 @@ export function applyLineConnectivity(
       changed = true
     }
   }
-  if (changed) ctx.used.add('line-connectivity')
+  if (changed) {
+    ctx.used.add('line-connectivity')
+    if (c.kind === 'parity') ctx.used.add('parity') // see applyConnectivity (019)
+  }
   return changed
 }
 
@@ -405,12 +479,7 @@ export function lineConnectivityPass(
 ): boolean {
   let changed = false
   for (const c of constraints) {
-    if (
-      c.kind === 'exact' &&
-      c.source === 'line' &&
-      c.connectivity &&
-      applyLineConnectivity(c, assign, ctx)
-    ) {
+    if (c.source === 'line' && c.connectivity && applyLineConnectivity(c, assign, ctx)) {
       changed = true
     }
     if (ctx.contradiction) return changed

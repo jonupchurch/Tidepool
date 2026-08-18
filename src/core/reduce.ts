@@ -3,8 +3,19 @@
 // guess-free solvable. Result is a minimal board: removing any remaining clue
 // breaks unique guess-free solvability (spec FR-008, SC-003).
 import type { Board, Cell, LineClue, Technique } from './board'
-import { isParityClue, makeBoard } from './board'
-import { canShowParity, parityOf, presentNeighborCount } from './clues'
+import { hasParityFace, makeBoard } from './board'
+import {
+  type Layout,
+  canFrameParity,
+  canShowParity,
+  connectivityOf,
+  lineAdjacency,
+  lineConnectivityOf,
+  parityOf,
+  presentNeighborCount,
+  ringWater,
+} from './clues'
+import { AXIS_STEP, linesOf } from './hex'
 import type { Rng } from './rng'
 import { shuffle } from './rng'
 import { ALL_TECHNIQUES, techniqueSolves } from './solver'
@@ -92,7 +103,26 @@ function runRemovals(items: Item[], work: Board, allowed: ReadonlySet<Technique>
 }
 
 /**
- * Weaken surviving clues from a count to `E`/`O` (018).
+ * Weaken surviving clues from a count to a parity mark (018), framed or bare
+ * (019).
+ *
+ * **A three-rung ladder, weakest first** (019 FR-007): bare parity, then framed
+ * parity, then keep the number. The order is load-bearing rather than tidy.
+ * Framed parity survives on ~58% of ring clues where bare parity manages ~35%,
+ * so trying the stronger form first would make the plain number the rare form
+ * and turn a Large board into mush. Preferring to withhold the most is what
+ * keeps numbers on the board.
+ *
+ * **FR-004 comes free, and more strictly than a rule could give it.** The spec
+ * asks that a framing only be attached where it distinguishes something. Rung 2
+ * is reached only when rung 1 has already FAILED, so a framing that told the
+ * solver nothing new would leave the board exactly as unsolvable as the bare
+ * mark did, and the ladder would fall through to the number. The framing
+ * therefore survives only when it did real work — which is stronger than
+ * "both arrangements are achievable", and needs no separate informativeness
+ * heuristic on the parity path. (`connectivityInformative` still governs the
+ * count path, untouched, because changing it would move every board in
+ * existence — the same reason 010 left it alone.)
  *
  * This runs AFTER the removal loop, over the clues that survived it, rather than
  * adding a fourth item kind to the seeded shuffle above. That is the whole
@@ -116,16 +146,22 @@ function weakenToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>):
   // than its *count* therefore survives weakening at any tier.
   if (!allowed.has('parity')) return
 
+  // Ground truth, for computing a framing that is actually true of the board.
+  // Reduction has always had this available — every cell carries its solution
+  // state — it simply never needed to look before 019.
+  const layout: Layout = new Map()
+  for (const [k, cell] of work.cells) layout.set(k, cell.state)
+
   const keys: string[] = []
   for (const [k, cell] of work.cells) {
-    if (cell.given && cell.clue && !isParityClue(cell.clue)) keys.push(k)
+    if (cell.given && cell.clue && !hasParityFace(cell.clue)) keys.push(k)
   }
   shuffle(rng, keys)
 
   for (const k of keys) {
     const cell = work.cells.get(k)!
     const saved = cell.clue
-    if (!saved || isParityClue(saved)) continue
+    if (!saved || hasParityFace(saved)) continue
     // Only weaken where parity both withholds something and does not mislead
     // (FR-006) — see `canShowParity`. In particular a count of zero never
     // becomes a mark: zero is even, but nobody reads `+` as "none".
@@ -143,7 +179,103 @@ function weakenToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>):
       continue
     }
 
+    // Rung 1: the weakest form there is — the parity alone, unframed.
     cell.clue = { parity: parityOf(saved.count) }
-    if (!techniqueSolves(work, allowed).solved) cell.clue = saved
+    if (techniqueSolves(work, allowed).solved) continue
+
+    // Rung 2: the parity, framed. Says strictly more than a bare mark and
+    // strictly less than a number, so it belongs exactly here in the order.
+    // Only where the board's own toggle asked for `{}`/`--` at all — a player
+    // who turned that vocabulary off should not meet it wearing a new face —
+    // and only over a count big enough for "one run" to mean anything
+    // (`canFrameParity`, FR-013).
+    if (work.params.clues.connectivity && canFrameParity(saved.count)) {
+      cell.clue = {
+        parity: parityOf(saved.count),
+        connectivity: connectivityOf(ringWater(cell.coord, layout, work.present)),
+      }
+      if (techniqueSolves(work, allowed).solved) continue
+    }
+
+    cell.clue = saved
+  }
+
+  weakenLinesToParity(work, rng, allowed, layout)
+}
+
+/**
+ * The same question, asked of a row's total (019).
+ *
+ * Measured before designing, the same way 018's was: across 5 seeds x 3 sizes at
+ * Deep, 81 of 202 already-minimal edge totals still solve when reduced to their
+ * parity — with the delete-control at 0 of 202, so every one of those 81 is
+ * carrying real parity information rather than having been redundant.
+ *
+ * **This refutes the reasoning that made it a non-goal in 018.** That plan
+ * argued the parity technique only fires when a single cell is unsettled, which
+ * on a 13-cell row means waiting for twelve — so edge parity would be nearly
+ * useless. Sound reasoning, wrong conclusion: rows *are* heavily settled by ring
+ * clues late in a solve, and the exact total's marginal value over its parity is
+ * frequently just the final cell.
+ *
+ * One thing here is simpler than the cell case, and it is worth saying why. A
+ * cell clue has a *reveal* side-effect — `given: true` says "this is a stone"
+ * even once the clue's value is gone — so 018 needed a decorative check to tell
+ * a clue that was doing work from one the reveal was carrying. A line clue has
+ * no such side-effect: it is nothing but its value. So the removal loop's
+ * verdict is trustworthy on its own, and the measurement's delete-control was
+ * clean for the same reason.
+ */
+function weakenLinesToParity(
+  work: Board,
+  rng: Rng,
+  allowed: ReadonlySet<Technique>,
+  layout: Layout,
+): void {
+  // Row cells, for the length test and the framing below. Rebuilt here rather
+  // than threaded through: reduction is already the expensive part of generation
+  // by orders of magnitude, and this is one pass over the topology.
+  const rowCells = new Map<string, string[]>()
+  for (const ln of linesOf(work.present)) rowCells.set(`${ln.axis},${ln.index}`, ln.cells)
+
+  // A separate shuffle from the cells above, and a second RNG draw. Safe for the
+  // same reason the first one is: a board without `evenOdd` never reaches this
+  // function at all, so no board that predates the mechanic sees either draw.
+  const candidates = work.lines.filter((l) => !hasParityFace(l))
+  shuffle(rng, candidates)
+
+  for (const line of candidates) {
+    const idx = work.lines.indexOf(line)
+    if (idx === -1 || hasParityFace(line)) continue
+    const cells = rowCells.get(`${line.axis},${line.index}`)
+    if (cells === undefined) continue
+    // The same two refusals as a stone (018 FR-006), read for a row: with fewer
+    // than two cells the parity pins the total exactly, and a row holding no
+    // water must never read `+`. Zero is even, but nobody reads an even mark as
+    // "none" — they read it as two-or-four, and rule out the truth.
+    if (!canShowParity(cells.length, line.count)) continue
+
+    const site = { axis: line.axis, index: line.index, from: line.from }
+    const parity = parityOf(line.count)
+
+    // Rung 1: the weakest form there is — the parity alone, with any framing
+    // dropped as well.
+    work.lines[idx] = { ...site, parity }
+    if (techniqueSolves(work, allowed).solved) continue
+
+    // Rung 2: the parity, framed. Gated on the row-annotation toggle for the
+    // same reason the tile rung is gated on its own: a player with edge hints
+    // off has said they do not want braced row clues, and `{+}` is a braced row
+    // clue however it got there. And on `canFrameParity` for the same reason a
+    // stone is — a row of one water tile is not "one unbroken run" either, and
+    // over a whole row the wrong inference is bigger, not smaller.
+    if (work.params.clues.lineConnectivity && canFrameParity(line.count)) {
+      const water = cells.map((k) => layout.get(k) === 'water')
+      const adjacent = lineAdjacency(cells, AXIS_STEP[line.axis])
+      work.lines[idx] = { ...site, parity, connectivity: lineConnectivityOf(water, adjacent) }
+      if (techniqueSolves(work, allowed).solved) continue
+    }
+
+    work.lines[idx] = line
   }
 }

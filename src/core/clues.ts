@@ -107,12 +107,16 @@ export function parityOf(count: number): Parity {
 /**
  * Whether a clue may be shown as parity instead of a count (018 FR-006).
  *
+ * `governedCells` is however many cells the clue speaks about: a stone's present
+ * neighbours, or — since 019 — a row's length. The two readings are the same
+ * question, which is why they share a rule rather than each growing their own.
+ *
  * Two separate reasons to refuse, and they are not the same kind of reason.
  *
- * **It would withhold nothing.** With 0 present neighbours the count is always
- * 0, so the mark is unconditional. With exactly 1, the parity pins the count
- * exactly — even means 0 water, odd means 1 — so it is the same clue written
- * more strangely. From 2 upwards parity genuinely admits more than one count.
+ * **It would withhold nothing.** With 0 governed cells the count is always 0, so
+ * the mark is unconditional. With exactly 1, the parity pins the count exactly —
+ * even means 0 water, odd means 1 — so it is the same clue written more
+ * strangely. From 2 upwards parity genuinely admits more than one count.
  *
  * **It would mislead.** Zero is even, so a `+` over a count of 0 is
  * mathematically correct and a trap in practice: nobody reads "an even number
@@ -121,15 +125,48 @@ export function parityOf(count: number): Parity {
  * sound-looking reasoning, which is precisely what this game promises cannot
  * happen. Measured before the rule went in: 2 of 126 parity clues across 18
  * boards hid a zero, so refusing them costs 1.6% of the mechanic and buys back
- * the rule "an even mark means two, four or six".
+ * the rule "an even mark means two, four or six". It holds identically on a row,
+ * where an empty row reading `+` would be the same trap over a longer span.
  *
  * Note the first reason asks a different question from `connectivityInformative`,
  * which decides whether an annotation *distinguishes arrangements*. Parity is
  * never uninformative about the layout; it is only ever uninformative because it
  * failed to hide anything.
  */
-export function canShowParity(presentNeighbors: number, count: number): boolean {
-  return presentNeighbors >= 2 && count > 0
+export function canShowParity(governedCells: number, count: number): boolean {
+  return governedCells >= 2 && count > 0
+}
+
+/** Below this, "one unbroken run" / "split apart" describes too little to say. */
+const MIN_FRAMED_PARITY = 3
+
+/**
+ * Whether a parity mark may additionally carry `{}` / `--` (019 FR-013).
+ *
+ * The zero rule again, one step along. A framing over a *known* count is read
+ * against that count: `{2}` says two tiles, side by side, and there is nothing
+ * to misread. A framing over a *withheld* count has to be read on its own — and
+ * "the water is all in one unbroken run", said about an unknown number of tiles,
+ * is not how anybody describes a single tile. A player meeting `{|}` naturally
+ * takes the run to be more than one tile and rules out 1, concluding 3 or 5.
+ * If the truth was 1 they have just made a wrong deduction by sound-looking
+ * reasoning, which is the one thing this game promises cannot happen.
+ *
+ * The same stretch, on the other framing: `-+-` over a true 2 is two lonely
+ * tiles being called two runs.
+ *
+ * So a framed mark needs a count that makes both words honest — three or more.
+ * In practice that means `{|}` / `-|-` are three or five, and `{+}` / `-+-` are
+ * four or six, which is also what a player will infer from them.
+ *
+ * **Deliberately NOT applied to counting clues.** `{2}` stays legal and always
+ * has been, because the count is right there and does the disambiguating. The
+ * rule exists for clues that withheld it. (Applying it to counts would also
+ * regenerate every board in existence, which is the same reason 010's
+ * `connectivityInformative` heuristic is left alone.)
+ */
+export function canFrameParity(count: number): boolean {
+  return count >= MIN_FRAMED_PARITY
 }
 
 /** Total water among a set of present cell keys. */

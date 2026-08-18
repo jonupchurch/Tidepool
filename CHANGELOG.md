@@ -4,6 +4,16 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-18 — The Home caption caught up
+
+### Fixed
+
+- **The Even & odd switch on Home still said "Some stones show + or |".** The
+  one piece of player-facing copy the dot change missed, so it briefly told you
+  to look for a mark the game no longer draws. It — and the How to play grid —
+  now ask the renderer what it draws rather than naming a glyph, so the copy and
+  the board cannot disagree again.
+
 ## 2026-08-18 — The parity marks are dots now
 
 ### Changed

@@ -11,6 +11,7 @@ import {
   connectivityOf,
   lineAdjacency,
   lineConnectivityOf,
+  parityBudget,
   parityOf,
   presentNeighborCount,
   ringWater,
@@ -158,7 +159,20 @@ function weakenToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>):
   }
   shuffle(rng, keys)
 
+  // How many of these stones may end up withholding their count (022). Nothing
+  // here is a mark yet, so `keys.length` IS this site's clue total, and the
+  // removal loop has already finished — the denominator cannot move underneath
+  // the budget. See `parityBudget` for why a third, and why per site.
+  const budget = parityBudget(keys.length)
+  let marks = 0
+
   for (const k of keys) {
+    // Spending the budget stops the pass rather than skipping an entry. Every
+    // remaining clue keeps its exact count, which is the strictly stronger clue,
+    // so a board can only become MORE solvable — the cap cannot make one
+    // unsolvable, and it cannot make one ambiguous. It also skips the rest of
+    // the `techniqueSolves` calls, which are the expensive part of generation.
+    if (marks >= budget) break
     const cell = work.cells.get(k)!
     const saved = cell.clue
     if (!saved || hasParityFace(saved)) continue
@@ -181,7 +195,10 @@ function weakenToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>):
 
     // Rung 1: the weakest form there is — the parity alone, unframed.
     cell.clue = { parity: parityOf(saved.count) }
-    if (techniqueSolves(work, allowed).solved) continue
+    if (techniqueSolves(work, allowed).solved) {
+      marks++
+      continue
+    }
 
     // Rung 2: the parity, framed. Says strictly more than a bare mark and
     // strictly less than a number, so it belongs exactly here in the order.
@@ -194,7 +211,10 @@ function weakenToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>):
         parity: parityOf(saved.count),
         connectivity: connectivityOf(ringWater(cell.coord, layout, work.present)),
       }
-      if (techniqueSolves(work, allowed).solved) continue
+      if (techniqueSolves(work, allowed).solved) {
+        marks++
+        continue
+      }
     }
 
     cell.clue = saved
@@ -244,7 +264,15 @@ function weakenLinesToParity(
   const candidates = work.lines.filter((l) => !hasParityFace(l))
   shuffle(rng, candidates)
 
+  // This site's own budget (022), deliberately not shared with the stones'.
+  // A single combined total would let a hot rim spend the tiles' share, and the
+  // two sites are read differently enough that "a third of the board" is not
+  // the same promise as "a third of what you read around the edge".
+  const budget = parityBudget(work.lines.length)
+  let marks = 0
+
   for (const line of candidates) {
+    if (marks >= budget) break
     const idx = work.lines.indexOf(line)
     if (idx === -1 || hasParityFace(line)) continue
     const cells = rowCells.get(`${line.axis},${line.index}`)
@@ -261,7 +289,10 @@ function weakenLinesToParity(
     // Rung 1: the weakest form there is — the parity alone, with any framing
     // dropped as well.
     work.lines[idx] = { ...site, parity }
-    if (techniqueSolves(work, allowed).solved) continue
+    if (techniqueSolves(work, allowed).solved) {
+      marks++
+      continue
+    }
 
     // Rung 2: the parity, framed. Gated on the row-annotation toggle for the
     // same reason the tile rung is gated on its own: a player with edge hints
@@ -273,7 +304,10 @@ function weakenLinesToParity(
       const water = cells.map((k) => layout.get(k) === 'water')
       const adjacent = lineAdjacency(cells, AXIS_STEP[line.axis])
       work.lines[idx] = { ...site, parity, connectivity: lineConnectivityOf(water, adjacent) }
-      if (techniqueSolves(work, allowed).solved) continue
+      if (techniqueSolves(work, allowed).solved) {
+        marks++
+        continue
+      }
     }
 
     work.lines[idx] = line

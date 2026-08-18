@@ -1,29 +1,33 @@
 # Tidepool — Status
 
-_Snapshot; updated each work session. Last updated: 2026-08-17._
+_Snapshot; updated each work session. Last updated: 2026-08-18._
 
 ## Current phase
 
-**Shipping.** All nineteen features are built and merged.
+**Shipping.** All twenty-two features are built and merged.
 
 **Live on `default`: build 24786984 (`Tidepool 1.3.0`)** — every feature
 through 019, promoted 2026-08-17.
 
-**`Tidepool 1.3.1` was UPLOADED 2026-08-17 as build 24787198 and is NOT live.**
-8.0 MB, description `Tidepool 1.3.1 (52890eb)`; it adds hover text to the Home
-glyph row so the sound-effects drop says what it is. Promote it from the partner
-site (Builds → Set Build Live).
+**`Tidepool 1.3.3` was UPLOADED 2026-08-18 as build 24787678 and is NOT live.**
+8.0 MB, description `Tidepool 1.3.3 (966fc8d)`; it carries 020's Home hover text
+and 021's dot parity marks. Promote it from the partner site (Builds → Set Build
+Live).
 
-**`Tidepool 1.2.1` (build 24766604) was never promoted and is now skipped.** It
-was uploaded 2026-08-16 with feature 017 and superseded before it went live, so
-no player ever ran it. 1.3.0 carried its contents forward — players moved from
-1.2.0 across three releases at once: 017's effects switch, 018's even/odd marks,
-and 019's framed forms.
+**022 is merged but NOT in any upload yet.** The parity density cap landed after
+1.3.3 was built, so it needs its own version bump before it can ship.
+
+**Three uploads have been skipped**: 1.2.1 (24766604, feature 017), 1.3.1
+(24787198, hover text) and 1.3.2 (24787585, dots with a stale Home caption). Each
+was superseded before promotion, so no player ever ran one; the next promoted
+build carries their contents forward. Uploads are cheap and promotion is
+deliberate — never assume the newest upload is what players have.
 
 Release history: 1.0.1 (24479382) → 1.1.0 (24743146, features 010–015) → 1.2.0
 (24766362, feature 016 + three bug fixes) → 1.2.1 (24766604, feature 017,
-uploaded but skipped) → **1.3.0 (24786984, features 018–019, LIVE)** → 1.3.1
-(24787198, hover text, uploaded not live).
+skipped) → **1.3.0 (24786984, features 018–019, LIVE)** → 1.3.1 (24787198,
+skipped) → 1.3.2 (24787585, skipped) → 1.3.3 (24787678, features 020–021,
+uploaded not live).
 
 `setlive` is deliberately empty in the VDF, so an upload never reaches players
 on its own — promotion is always a separate step on the partner site
@@ -31,9 +35,11 @@ on its own — promotion is always a separate step on the partner site
 
 ## Built
 
-Features 001–019, in build order. 001–015 and 018–019 were each specced and
+Features 001–022, in build order. 001–015 and 018–019 were each specced and
 planned via Spec-Kit before implementation; 016 and 017 were scoped with a
-mini-spec, and 016 was written up afterwards. Per-feature detail is in `CHANGELOG.md`; this is the index.
+mini-spec, and 016 was written up afterwards; 020–022 are small, single-decision
+changes taken straight to a branch. Per-feature detail is in `CHANGELOG.md`; this
+is the index.
 
 | | Feature | |
 |---|---|---|
@@ -55,11 +61,14 @@ mini-spec, and 016 was written up afterwards. Per-feature detail is in `CHANGELO
 | 016 | Varied shores | the Endless tide gains the silhouettes and the `{n}`/`-n-` edge numbers |
 | 017 | Effects switch | the two sound channels are independently silenceable |
 | 018 | Even & odd clues | a stone may show `+` / `\|` for the parity of its water, withholding the count |
-| 019 | Framed parity | the marks reach the edge numbers, and take `{}` / `--`: `{+}`, `-+-`, `{\|}`, `-\|-` |
+| 019 | Framed parity | the marks reach the edge numbers, and take `{}` / `--`: `{●●}`, `-●●-`, `{●}`, `-●-` |
+| 020 | Glyph tooltips | hover text on the four Home buttons, so the sound-effects drop says what it is |
+| 021 | Parity dots | `+` / `\|` become `●●` / `●` — the old marks fused with the framing (`-\|-` drew a plus) |
+| 022 | Parity density | at most a third of each clue site may withhold its number; measured at 47% of stones before |
 
 Plus, since: all 12 creature portraits, audio, the About screen, the curated hex
 map, HiDPI rendering, a root error boundary, 29 achievements, and the SteamPipe
-release pipeline. **986 unit tests + 45 e2e green.**
+release pipeline. **1028 unit tests + 55 e2e green.**
 
 ## Release — what's left
 

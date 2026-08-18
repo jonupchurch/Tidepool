@@ -23,11 +23,12 @@
 // they are unaffected by any mechanic added since, so if they move, the mechanic
 // is not as opt-in as its author believed.
 //
-// **The 5 `evenOdd` rows** describe a mechanic (018) that is built but has never
-// been released, so no player holds one of those seeds. A feature that changes
-// what those boards look like is therefore allowed to recapture them — see the
-// note beside those rows for the one time that has actually happened, and why it
-// is a record rather than a precedent.
+// **The 5 `evenOdd` rows** describe a mechanic (018/019) that shipped in 1.3.0
+// on 2026-08-17. Until that date they were freely recapturable because no player
+// held one of those seeds; they are not any more. Four of them were moved once
+// after release, by 022, and the note beside them records who decided that and
+// on what evidence. Read it before treating it as licence: it is a record of a
+// deliberate exception, not a standing permission. Today all 49 rows are equal.
 import { createHash } from 'node:crypto'
 import type { BoardParams, ClueToggles, DifficultyTier, SizeTier } from './board'
 import { generateBoard } from './generate'
@@ -113,28 +114,41 @@ const FROZEN: ReadonlyArray<FrozenRow> = [
   ['KELP-0007', 'Large', 'Deep', '9f63eb297479de52', { clues: LC_CLUES, shape: 'shoal' }],
   ['FOAM-0002', 'Medium', 'Deep', '09cf8d32890285cb', { clues: LC_CLUES, shape: 'atoll' }],
 
-  // ── Parity clues — the rows this project is allowed to move ────────────────
+  // ── Parity clues — the rows that have been moved, and must not be again ────
   //
   // Captured as 018 shipped, then re-captured three times during 019 — when
   // parity reached the edge totals, when it learned to carry `{}`/`--`, and when
-  // playtest ruled that a framed mark needs a count of at least three.
+  // playtest ruled that a framed mark needs a count of at least three. All four
+  // were legitimate for one reason: 018 had never been released, so no player
+  // held one of these seeds and no save regenerated from them.
   //
-  // That was legitimate for exactly one reason: 018 has never been released, so
-  // no player holds one of these seeds and no save regenerates from them. It is
-  // a record, NOT a precedent. The moment 018 ships, these rows join the 44
-  // above and a failure here means precisely what a failure there means — and
-  // three recaptures in one feature is the most this can ever be worth, because
-  // after release the answer becomes "no".
+  // **That reason expired on 2026-08-17, when 1.3.0 went live.** These rows then
+  // became promises exactly like the 44 above.
+  //
+  // They were recaptured once more anyway, on 2026-08-18, for 022's density cap
+  // — and this is the only entry in this file where a row describing a SHIPPED
+  // board was deliberately moved. It was not a technical decision and is not
+  // recorded as one. Jon played two Deep boards, measured at 52% and 64% of
+  // their stones withholding a count, and twice said there were too many. The
+  // sweep behind him: 47% of stones on average and 86% on the worst board in
+  // fifty. The alternative to moving these rows was shipping that permanently.
+  // He was shown the cost — every evenOdd seed regenerates, one day after the
+  // mechanic reached players — and chose the cap.
+  //
+  // **This is the last one.** The justification above does not generalise: it
+  // needed a shipped-yesterday mechanic, a measured defect, and the owner's
+  // explicit call with the cost in front of him. Absent all three, a red row
+  // here means the same thing a red row above means — a change escaped its gate.
   //
   // Recapturing is the correct fix roughly never. If you are reading this
   // because one of them just went red, the question is whether your change was
   // *supposed* to alter what an evenOdd board looks like. If it was not, the
   // table is doing its job and the bug is upstream.
   ['KELP-0007', 'Large', 'Deep', '65fe35a747e4fcca', { clues: EO_CLUES }],
-  ['CORAL-4417', 'Medium', 'Deep', '525c2b6195d4de55', { clues: EO_CLUES }],
-  ['TIDE-1234', 'Small', 'Deep', '99e281b0971277b0', { clues: EO_CLUES }],
-  ['KELP-0007', 'Large', 'Deep', 'e237ab303248e7c4', { clues: LC_EO_CLUES }],
-  ['FOAM-0002', 'Medium', 'Deep', 'fdc46f81712a01ec', { clues: LC_EO_CLUES, shape: 'atoll' }],
+  ['CORAL-4417', 'Medium', 'Deep', 'b6eb1f0e84a4a0b8', { clues: EO_CLUES }],
+  ['TIDE-1234', 'Small', 'Deep', '35cefeb25f3ce536', { clues: EO_CLUES }],
+  ['KELP-0007', 'Large', 'Deep', 'afdbaa1c08f5b648', { clues: LC_EO_CLUES }],
+  ['FOAM-0002', 'Medium', 'Deep', '785952d520479b9d', { clues: LC_EO_CLUES, shape: 'atoll' }],
 ]
 
 function fingerprint(p: BoardParams): string {

@@ -20,10 +20,12 @@ import {
   lineAdjacency,
   lineConnectivityOf,
   lineRuns,
+  parityBudget,
   waterNeighborCount,
 } from './clues'
 import { generateBoard } from './generate'
 import { AXIS_STEP, DIRECTIONS, key, linesOf } from './hex'
+import { type ShapeId, shapeSupportsSize } from './shapes'
 import { solve } from './solver'
 import type { Assign, CellVal, Constraint, SolveCtx } from './techniques'
 import { applyConnectivity, applyLineConnectivity } from './techniques'
@@ -437,6 +439,12 @@ describe('parity on an edge total (019 FR-001)', () => {
   it('keeps numbers the commonest face on the board (SC-005)', () => {
     // Density is this feature's real risk, not scarcity. Counted across tiles
     // and edges together, as the criterion says.
+    //
+    // NOTE this assertion is nearly worthless on its own and 022 is the proof:
+    // it POOLS the sample, so it passed at 298 numbers vs 179 marks while
+    // individual boards ran to 86% marks on their stones. Kept because the
+    // criterion is worded this way; the assertion that does the work is the
+    // per-board cap below.
     let numbers = 0
     let parity = 0
     for (const { board } of boards) {
@@ -447,6 +455,78 @@ describe('parity on an edge total (019 FR-001)', () => {
       for (const line of board.lines) hasParityFace(line) ? parity++ : numbers++
     }
     expect(numbers, `${numbers} numbers vs ${parity} parity marks`).toBeGreaterThan(parity)
+  })
+})
+
+// ── Density: how much of one board may withhold its number (022) ─────────────
+
+describe('parity density is capped per board and per site (022)', () => {
+  /** Every silhouette, not just the hexagon — shaped cells have fewer
+   *  neighbours and measurably ran hotter than `hex` before the cap. */
+  const SHORES: (ShapeId | undefined)[] = [undefined, 'atoll', 'crescent', 'wedge', 'shoal']
+  const DENSE_SIZES: SizeTier[] = ['Medium', 'Large']
+
+  /** The hottest configuration the game can serve: Deep, both toggles on. */
+  const dense = SEEDS.flatMap((seed) =>
+    DENSE_SIZES.flatMap((size) =>
+      SHORES.filter((shape) => shape === undefined || shapeSupportsSize(shape, size)).map(
+        (shape) => ({
+          label: `${seed} ${size} ${shape ?? 'hex'}`,
+          board: generateBoard({
+            seed,
+            size,
+            difficulty: 'Deep',
+            clues: { ...BASE_CLUES, evenOdd: true, lineConnectivity: true },
+            ...(shape ? { shape } : {}),
+          }),
+        }),
+      ),
+    ),
+  )
+
+  const clueCells = (board: Board) => [...board.cells.values()].filter((c) => c.given && c.clue)
+
+  it('never lets marks past the budget, on ANY board and at EITHER site', () => {
+    // The shape of assertion 019 got wrong, and the reason this feature exists.
+    // Its SC-005 test pooled every board in the sample and sampled hexagons
+    // only, so it was green while one board in the sweep showed marks on 86% of
+    // its stones. **A player meets one board, never an average.** So this
+    // asserts the worst board in the sample, not the sum of them.
+    for (const { label, board } of dense) {
+      const cells = clueCells(board)
+      const tileMarks = cells.filter((c) => c.clue && hasParityFace(c.clue)).length
+      expect(
+        tileMarks,
+        `${label}: ${tileMarks}/${cells.length} stones withhold their count`,
+      ).toBeLessThanOrEqual(parityBudget(cells.length))
+
+      const lineMarks = board.lines.filter(hasParityFace).length
+      expect(
+        lineMarks,
+        `${label}: ${lineMarks}/${board.lines.length} edge numbers withhold their total`,
+      ).toBeLessThanOrEqual(parityBudget(board.lines.length))
+    }
+  })
+
+  it('still puts marks on the board — the cap is a ceiling, not a ban', () => {
+    // The other direction. A cap is easy to satisfy by refusing everything, and
+    // that would silently delete a shipped mechanic.
+    const withMarks = dense.filter(
+      ({ board }) =>
+        board.lines.some(hasParityFace) ||
+        clueCells(board).some((c) => c.clue && hasParityFace(c.clue)),
+    )
+    expect(withMarks.length, 'the cap emptied the mechanic').toBe(dense.length)
+  })
+
+  it('still serves only boards the oracle certifies unique and guess-free', () => {
+    // Refusing to weaken can only ever leave a stronger clue, so this should be
+    // impossible to break — which is exactly why it is worth pinning cheaply.
+    for (const { label, board } of dense) {
+      const res = solve(board)
+      expect(res.solved, `${label} is not guess-free`).toBe(true)
+      expect(res.unique, `${label} is not uniquely solvable`).toBe(true)
+    }
   })
 })
 

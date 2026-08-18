@@ -29,28 +29,28 @@ async function readHook(page: Page): Promise<TestHook> {
 /**
  * A fixed seed, deliberately. Which clues reduction can weaken depends on the
  * board, so a random `freshSeed()` would make this flaky about the very thing it
- * checks. CORAL-4417 Large/Deep carries 4 `+` and 9 `|` — and, usefully for the
+ * checks. CORAL-4417 Large/Deep carries 4 `●●` and 9 `●` — and, usefully for the
  * assertion below, two plain `0` clues, since a count of zero is never allowed
- * to become a `+`.
+ * to become an even mark.
  */
-test('even/odd puts + and | on the stones of a Deep board', async ({ page }) => {
+test('even/odd puts ●● and ● on the stones of a Deep board', async ({ page }) => {
   await page.goto('/')
   await page.getByRole('textbox', { name: /enter a seed/i }).fill('CORAL-4417 Large Deep evenodd')
   await page.getByRole('button', { name: /jump in/i }).click()
 
   const hook = await readHook(page)
-  const plus = hook.clueFaces.filter((f) => f === '+').length
-  const bar = hook.clueFaces.filter((f) => f === '|').length
+  const even = hook.clueFaces.filter((f) => f === '●●').length
+  const odd = hook.clueFaces.filter((f) => f === '●').length
 
   // Both readings appear, so the board really does distinguish even from odd.
-  expect(plus).toBeGreaterThan(0)
-  expect(bar).toBeGreaterThan(0)
+  expect(even).toBeGreaterThan(0)
+  expect(odd).toBeGreaterThan(0)
   // ...and they are a minority of the clues, not the whole board.
-  expect(plus + bar).toBeLessThan(hook.clueFaces.length)
+  expect(even + odd).toBeLessThan(hook.clueFaces.length)
   // No clue face is a bare digit that could be confused with a parity mark.
   expect(hook.clueFaces).not.toContain('O')
   expect(hook.clueFaces).not.toContain('E')
-  // A zero is shown as a zero, never dressed up as `+`. Zero is even, so the
+  // A zero is shown as a zero, never dressed up as `●●`. Zero is even, so the
   // mark would be correct and misleading: a player reads "even" as two-four-or-
   // six and would wrongly conclude at least two neighbours are water.
   expect(hook.clueFaces).toContain('0')
@@ -64,7 +64,7 @@ test('the same token without `evenodd` is the board that seed always made', asyn
   await page.getByRole('button', { name: /jump in/i }).click()
 
   const hook = await readHook(page)
-  expect(hook.clueFaces.filter((f) => f === '+' || f === '|')).toHaveLength(0)
+  expect(hook.clueFaces.filter((f) => f === '●●' || f === '●')).toHaveLength(0)
   await expect(page.getByText(/CORAL-4417 · Large · Deep$/)).toBeVisible()
 })
 
@@ -100,7 +100,7 @@ test('advancing to the next board keeps even/odd on', async ({ page }) => {
   await page.getByRole('button', { name: /^play$/i }).click()
 
   const first = await readHook(page)
-  expect(first.clueFaces.filter((f) => f === '+' || f === '|').length).toBeGreaterThan(0)
+  expect(first.clueFaces.filter((f) => f === '●●' || f === '●').length).toBeGreaterThan(0)
 
   // Solve it via the dev hook, then take the next board.
   await page.evaluate(() => {
@@ -114,7 +114,7 @@ test('advancing to the next board keeps even/odd on', async ({ page }) => {
   const next = await readHook(page)
   expect(next.seed).not.toBe(first.seed)
   expect(
-    next.clueFaces.filter((f) => f === '+' || f === '|').length,
+    next.clueFaces.filter((f) => f === '●●' || f === '●').length,
     'the new board dropped the even/odd setting',
   ).toBeGreaterThan(0)
 })

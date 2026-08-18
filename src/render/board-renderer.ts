@@ -54,19 +54,27 @@ export interface BoardRenderer {
 const DISPLAY_FONT = '"Bricolage Grotesque", "Nunito", system-ui, sans-serif'
 
 /**
- * What a clue says about QUANTITY.
+ * The parity marks: the dots PAIR UP for even, and ONE IS LEFT OVER for odd —
+ * which is the definition of parity rather than a code for it.
  *
- * A parity clue withholds the number entirely (018), so it needs a mark that
- * cannot be mistaken for one. Letters lost that argument: in Bricolage
- * Grotesque at 700, `O` and `0` are near-identical at the cell sizes a Large
- * board uses, and `0` is a clue value the game really shows.
+ * Two earlier answers were wrong, both for reasons only visible on the board.
+ * Letters first: in Bricolage Grotesque at 700, `O` and `0` are near-identical
+ * at the cell sizes a Large board uses, and `0` is a clue value the game really
+ * shows. Then strokes — `+` for even, `|` for odd (018) — which held up alone
+ * and broke the moment 019 wrapped them in framing: the split framing draws two
+ * horizontal dashes, so `-|-` renders a cross. That is the BARE EVEN mark. The
+ * two strings differ, so nothing that compared text could have caught it.
  *
- * Strokes instead, which also carries the meaning: ONE stroke for odd, TWO
- * crossed for even — the same "things pair up, or one is left over" that parity
- * is taught with. Neither collides with a digit.
+ * The rule the dots satisfy: a mark must not be a bare stroke, because the
+ * framing is made of strokes too and they fuse. Nothing else the board draws is
+ * round, so a dot can be completed into nothing but itself.
  */
+const EVEN_MARK = '●●'
+const ODD_MARK = '●'
+
+/** What a clue says about QUANTITY — a count, or a parity mark in place of one. */
 function faceText(face: ClueFace): string {
-  if (hasParityFace(face)) return face.parity === 'even' ? '+' : '|'
+  if (hasParityFace(face)) return face.parity === 'even' ? EVEN_MARK : ODD_MARK
   return `${face.count}`
 }
 
@@ -78,7 +86,7 @@ function framed(text: string, connectivity?: Connectivity): string {
 }
 
 /**
- * The text a clue shows — the six forms `4`, `{4}`, `-4-`, `+`, `{+}`, `-+-`.
+ * The text a clue shows — the six forms `4`, `{4}`, `-4-`, `●●`, `{●●}`, `-●●-`.
  *
  * ONE function for both clue sites (019). `clueText` and the old `lineText` were
  * already the same function twice over — identical braces, identical dashes,
@@ -249,17 +257,14 @@ class CanvasBoardRenderer implements BoardRenderer {
 
       if (cell.given && cell.clue) {
         ctx.fillStyle = palette.deepPool
-        // Parity marks are single strokes, so at the digits' own weight and
-        // size a `|` reads lighter than everything around it — close enough to
-        // an empty tile with an artifact on it to give a player pause. Heavier
-        // and slightly larger evens the visual weight; checked by eye against
-        // the digits at 26px, the smallest cells a Large board uses.
-        //
-        // BARE marks only (019). A framed `{+}` is three glyphs, so it already
-        // carries a digit's worth of ink — boosting it too would make it the
-        // loudest thing on the board, and it would also outgrow its tile.
-        const bare = hasParityFace(cell.clue) && cell.clue.connectivity === undefined
-        ctx.font = `${bare ? 800 : 700} ${size * (bare ? 1.15 : 0.9)}px ${DISPLAY_FONT}`
+        // ONE font for every clue, digits and marks alike (021). 018 and 019
+        // both had to boost the parity marks — heavier and larger — because a
+        // hairline `|` read lighter than the digits around it, close enough to
+        // an empty tile with an artifact on it to give a player pause. A filled
+        // circle has no such problem: rendered and compared against the digits
+        // at 26px, the smallest cells a Large board uses, `●●` already carries
+        // more ink than `4`. Boosting it as well made `-●●-` crowd its tile.
+        ctx.font = `700 ${size * 0.9}px ${DISPLAY_FONT}`
         ctx.fillText(clueText(cell.clue), x, y + size * 0.06)
       } else if (style.glyph && !spriteDrawn) {
         ctx.fillStyle = palette.ink
@@ -318,17 +323,13 @@ class CanvasBoardRenderer implements BoardRenderer {
       ctx.fill()
       ctx.restore()
 
-      // A bare mark in the MARGIN needs more help than one on a tile (019).
-      // 018 gave `|` extra weight because a single stroke read lighter than the
-      // digits around it; out here it is worse, because there is no tile behind
-      // it and it sits inches from a direction dash and an arrowhead. Rendered
-      // and looked at: at the digits' own weight a margin `|` reads as part of
-      // the arrow apparatus rather than as a clue. Same remedy, more of it.
-      //
-      // Framed marks are left alone: `{+}` is three glyphs and already carries a
-      // number's worth of ink, and boosting it would crowd its neighbours.
-      const bare = l.count === undefined && l.connectivity === undefined
-      ctx.font = `${bare ? 800 : 700} ${size * (bare ? 1.0 : 0.72)}px ${DISPLAY_FONT}`
+      // Same one font as the tiles (021). The margin was the harder case for a
+      // stroke mark — no tile behind it, and a direction dash and an arrowhead
+      // inches away, so 019's `|` read as part of the arrow apparatus rather
+      // than as a clue and needed the largest boost on the board. A circle is
+      // legible out here unaided, and dropping the boost gives the margin back
+      // its clearance: at 1.0em `●●` grew wide enough to touch its own arrow.
+      ctx.font = `700 ${size * 0.72}px ${DISPLAY_FONT}`
 
       ctx.save()
       if (struck) ctx.globalAlpha = 0.55

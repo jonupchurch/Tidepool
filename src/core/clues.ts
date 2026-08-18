@@ -170,19 +170,33 @@ export function canFrameParity(count: number): boolean {
 }
 
 /**
- * The most of one clue site that may withhold its number (022).
+ * The most of one clue site that may withhold its number (022, retuned by 024).
  *
- * A third. Below that the marks stop reading as an accent on a board of numbers
- * and start reading as the board's own language, which is a different and much
- * harder game than the one the tier promises — and the numbers are what a
- * player counts *from*.
+ * Above this the marks stop reading as an accent on a board of numbers and start
+ * reading as the board's own language, which is a different and much harder game
+ * than the one the tier promises — and the numbers are what a player counts
+ * *from*.
  *
- * Measured before the number was chosen, per board and across every silhouette:
- * the weakening ladder was leaving **47% of stones and 39% of edge numbers** as
- * marks on average, and the worst board in a 50-board sweep showed marks on
- * **86% of its stones**. The pooled average looked survivable and the individual
- * boards were not, which is the whole lesson — see the density test in
+ * Measured before 022 chose a number, per board and across every silhouette: the
+ * weakening ladder was leaving **47% of stones and 39% of edge numbers** as marks
+ * on average, and the worst board in a 50-board sweep showed marks on **86% of
+ * its stones**. The pooled average looked survivable and the individual boards
+ * were not, which is the whole lesson — see the density test in
  * `framed-parity.test.ts`.
+ *
+ * **Why this is a dial and not an emergent number (024).** The ladder wants to
+ * weaken far past any cap worth setting: measured at 1/3, **95% of boards spent
+ * their stone budget exactly and 86% spent their edge budget**. The cap is the
+ * binding constraint on essentially every board, so what a player sees is set
+ * here and nowhere else, and it moves very nearly 1:1 with this constant.
+ *
+ * 022 set it to 1/3, which measured out at 30.0% of all clues wearing a mark.
+ * Jon played it and said that was still too many; 024 halved the result to
+ * **15.4%**, and the constant that lands there is 0.19 rather than 0.15 —
+ * `floor` costs roughly four points on the way through. **The number to hold
+ * steady is the measured density, not this constant**; if the ladder or the
+ * clue counts ever change, retune here and re-measure rather than assuming 0.19
+ * still means 15%.
  *
  * **Per site, not per board.** One combined budget would let a hot row of edge
  * numbers spend the stones' share, and the two are read differently: a stone
@@ -191,9 +205,15 @@ export function canFrameParity(count: number): boolean {
  * single total cannot express.
  *
  * `floor`, so a site is never rounded UP into its cap — the ceiling is a
- * promise, and 2 of 5 is not a third.
+ * promise, and 2 of 5 is not a fifth. **At 0.19 that rounds a site of five or
+ * fewer clues down to no marks at all**, which is deliberate and was Jon's call
+ * (024): a small silhouette showing every count is the honest reading of a
+ * ceiling, and the alternative — a floor of one mark — would put a 5-clue site
+ * at 20%, above its own cap. Roughly 1 board in 100 therefore carries no parity
+ * mark anywhere even with the toggle on; the density test pins that rate so it
+ * cannot drift into "the cap emptied the mechanic".
  */
-const MAX_PARITY_SHARE = 1 / 3
+const MAX_PARITY_SHARE = 0.19
 
 export function parityBudget(clueCount: number): number {
   return Math.floor(clueCount * MAX_PARITY_SHARE)

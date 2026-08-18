@@ -114,7 +114,7 @@ const FROZEN: ReadonlyArray<FrozenRow> = [
   ['KELP-0007', 'Large', 'Deep', '9f63eb297479de52', { clues: LC_CLUES, shape: 'shoal' }],
   ['FOAM-0002', 'Medium', 'Deep', '09cf8d32890285cb', { clues: LC_CLUES, shape: 'atoll' }],
 
-  // ── Parity clues — the rows that have been moved, and must not be again ────
+  // ── Parity clues — the rows that move, and the shrinking reason they may ──
   //
   // Captured as 018 shipped, then re-captured three times during 019 — when
   // parity reached the edge totals, when it learned to carry `{}`/`--`, and when
@@ -125,30 +125,48 @@ const FROZEN: ReadonlyArray<FrozenRow> = [
   // **That reason expired on 2026-08-17, when 1.3.0 went live.** These rows then
   // became promises exactly like the 44 above.
   //
-  // They were recaptured once more anyway, on 2026-08-18, for 022's density cap
-  // — and this is the only entry in this file where a row describing a SHIPPED
-  // board was deliberately moved. It was not a technical decision and is not
-  // recorded as one. Jon played two Deep boards, measured at 52% and 64% of
-  // their stones withholding a count, and twice said there were too many. The
-  // sweep behind him: 47% of stones on average and 86% on the worst board in
-  // fifty. The alternative to moving these rows was shipping that permanently.
-  // He was shown the cost — every evenOdd seed regenerates, one day after the
-  // mechanic reached players — and chose the cap.
+  // They were recaptured once more anyway, on 2026-08-18, for 022's density cap.
+  // That was the one deliberate move of a row describing a SHIPPED board, and it
+  // was not a technical decision: Jon played two Deep boards measured at 52% and
+  // 64% of their stones withholding a count, twice said there were too many, was
+  // shown that the fix regenerates every evenOdd seed one day after the mechanic
+  // reached players, and chose the cap. The note here then said, correctly for
+  // what it knew: **this is the last one.**
   //
-  // **This is the last one.** The justification above does not generalise: it
-  // needed a shipped-yesterday mechanic, a measured defect, and the owner's
-  // explicit call with the cost in front of him. Absent all three, a red row
-  // here means the same thing a red row above means — a change escaped its gate.
+  // ── 024 moved all five again, the same day, and the reason is different ────
   //
-  // Recapturing is the correct fix roughly never. If you are reading this
-  // because one of them just went red, the question is whether your change was
-  // *supposed* to alter what an evenOdd board looks like. If it was not, the
-  // table is doing its job and the bug is upstream.
-  ['KELP-0007', 'Large', 'Deep', '65fe35a747e4fcca', { clues: EO_CLUES }],
-  ['CORAL-4417', 'Medium', 'Deep', 'b6eb1f0e84a4a0b8', { clues: EO_CLUES }],
-  ['TIDE-1234', 'Small', 'Deep', '35cefeb25f3ce536', { clues: EO_CLUES }],
-  ['KELP-0007', 'Large', 'Deep', 'afdbaa1c08f5b648', { clues: LC_EO_CLUES }],
-  ['FOAM-0002', 'Medium', 'Deep', '785952d520479b9d', { clues: LC_EO_CLUES, shape: 'atoll' }],
+  // Read this before treating it as a second exception, because it is not one.
+  //
+  // 022 shipped in **1.3.5, which was uploaded to Steam and never promoted**.
+  // Players are still on 1.3.0. So the hashes 022 wrote into this table describe
+  // boards **no player has ever held** — they were the *new* boards, the ones
+  // that would exist once 1.3.5 went live. Jon then played them, said the
+  // density was still too high, and 024 retuned the cap from 1/3 to 0.19.
+  //
+  // The cost of that is therefore **nothing beyond what 022 already paid**. The
+  // evenOdd seeds a 1.3.0 player wrote down broke when 022 chose the cap; they
+  // do not break a second time because 024 chose a different one. Both ship in
+  // the same unpromoted release train, so a player sees exactly one change to
+  // what an evenOdd seed means, not two. Re-editing an unreleased change is the
+  // 018/019 situation again, not the 022 situation.
+  //
+  // **The condition, stated so it can be checked rather than remembered: these
+  // rows are free to move only while no promoted Steam build contains the
+  // density cap.** The moment a build carrying it goes live — 1.3.6 or whatever
+  // supersedes it — that ends, and these five become promises like the 44 above
+  // with no exception left to appeal to. Nobody should be reading this note for
+  // permission; they should be checking which build is live.
+  //
+  // What has NOT changed: a red row here still means what a red row above means
+  // unless your change was *supposed* to alter what an evenOdd board looks like.
+  // Recapturing is the correct fix roughly never, and the tell that a move is
+  // correctly gated is the other 44 — 022 and 024 both left every one of them
+  // green on the first run, which is the whole value of the partition.
+  ['KELP-0007', 'Large', 'Deep', 'a67b16a390b6aab6', { clues: EO_CLUES }],
+  ['CORAL-4417', 'Medium', 'Deep', '247c32257334517f', { clues: EO_CLUES }],
+  ['TIDE-1234', 'Small', 'Deep', '193bef247376ada0', { clues: EO_CLUES }],
+  ['KELP-0007', 'Large', 'Deep', 'c7a72f2744b74af4', { clues: LC_EO_CLUES }],
+  ['FOAM-0002', 'Medium', 'Deep', 'e338115b3c677ab1', { clues: LC_EO_CLUES, shape: 'atoll' }],
 ]
 
 function fingerprint(p: BoardParams): string {

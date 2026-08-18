@@ -4,7 +4,7 @@ _Snapshot; updated each work session. Last updated: 2026-08-18._
 
 ## Current phase
 
-**Shipping.** All twenty-three features are built and merged.
+**Shipping.** All twenty-four features are built and merged.
 
 **Live on `default`: build 24786984 (`Tidepool 1.3.0`)** — every feature
 through 019, promoted 2026-08-17.
@@ -34,9 +34,9 @@ on its own — promotion is always a separate step on the partner site
 
 ## Built
 
-Features 001-023, in build order. 001–015 and 018–019 were each specced and
+Features 001-024, in build order. 001–015 and 018–019 were each specced and
 planned via Spec-Kit before implementation; 016 and 017 were scoped with a
-mini-spec, and 016 was written up afterwards; 020-023 are small, single-decision
+mini-spec, and 016 was written up afterwards; 020-024 are small, single-decision
 changes taken straight to a branch. Per-feature detail is in `CHANGELOG.md`; this
 is the index.
 
@@ -63,8 +63,9 @@ is the index.
 | 019 | Framed parity | the marks reach the edge numbers, and take `{}` / `--`: `{●●}`, `-●●-`, `{●}`, `-●-` |
 | 020 | Glyph tooltips | hover text on the four Home buttons, so the sound-effects drop says what it is |
 | 021 | Parity dots | `+` / `\|` become `●●` / `●` — the old marks fused with the framing (`-\|-` drew a plus) |
-| 022 | Parity density | at most a third of each clue site may withhold its number; measured at 47% of stones before |
+| 022 | Parity density | at most a third of each clue site may withhold its number; measured at 47% of stones before (retuned by 024) |
 | 023 | Seed round-trip | a board's own seed can be typed back in — the parser took digits, the generator emits base 36 |
+| 024 | Parity density, retuned | the cap drops from 1/3 to 0.19, halving the measured density to 15.4%; 022's 30% was still too many |
 
 Plus, since: all 12 creature portraits, audio, the About screen, the curated hex
 map, HiDPI rendering, a root error boundary, 29 achievements, and the SteamPipe

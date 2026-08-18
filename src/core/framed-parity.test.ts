@@ -511,12 +511,31 @@ describe('parity density is capped per board and per site (022)', () => {
   it('still puts marks on the board — the cap is a ceiling, not a ban', () => {
     // The other direction. A cap is easy to satisfy by refusing everything, and
     // that would silently delete a shipped mechanic.
+    //
+    // **Not `toBe(dense.length)` any more, and 024 is why.** `floor` rounds a
+    // site of five or fewer clues down to zero, so a small silhouette can now
+    // legitimately show no marks at all — Jon's call when 024 chose 0.19, on the
+    // grounds that a floor of one mark would put a 5-clue site above its own
+    // cap and the ceiling is supposed to be a promise.
+    //
+    // So this pins the RATE instead of demanding none. Measured at 1 board in
+    // 100 across a 220-board sweep; the bar is set well clear of that, because
+    // what it is defending against is the cap quietly emptying the mechanic, not
+    // a shape or two rounding down. If this ever goes red the question is
+    // whether `MAX_PARITY_SHARE` dropped, not whether the assertion is too
+    // strict.
     const withMarks = dense.filter(
       ({ board }) =>
         board.lines.some(hasParityFace) ||
         clueCells(board).some((c) => c.clue && hasParityFace(c.clue)),
     )
-    expect(withMarks.length, 'the cap emptied the mechanic').toBe(dense.length)
+    const silent = dense.length - withMarks.length
+    expect(
+      silent / dense.length,
+      `${silent}/${dense.length} boards carry no parity mark at all — the cap emptied the mechanic`,
+    ).toBeLessThan(0.1)
+    // And the marks that do land are not a rounding artefact on one lucky board.
+    expect(withMarks.length, 'the cap emptied the mechanic').toBeGreaterThan(dense.length / 2)
   })
 
   it('still serves only boards the oracle certifies unique and guess-free', () => {
@@ -533,7 +552,39 @@ describe('parity density is capped per board and per site (022)', () => {
 // ── Framed parity: the four combined forms (019 US2) ─────────────────────────
 
 describe('framed parity on a stone and on a row (019 FR-002)', () => {
-  const boards = SEEDS.flatMap((seed) =>
+  // A wider sample than the rest of the file, and 024 is why. The ladder tries
+  // BARE parity first, so a framed mark only exists where bare parity was not
+  // enough — which makes rung 2 the rung a tighter budget starves first. 022's
+  // cap already thinned it; 024's took the five-seed sample below the point
+  // where all four tile forms appear, and `connected/odd` dropped out.
+  //
+  // Widened rather than weakened, deliberately: the claim worth testing is that
+  // every form the mechanic defines is still REACHABLE, and 60 boards is enough
+  // to show that while 15 is not. Measured across 220 boards at the 024 cap,
+  // all eight forms (2 sites x 2 framings x 2 parities) still appear, 53% of
+  // boards carry a framed stone and 37% a framed row — down from 78%/46% at
+  // 022's cap, so if the `{}`/`--` forms ever feel like they vanished, this
+  // constant is the reason and `MAX_PARITY_SHARE` is the dial.
+  const WIDE_SEEDS = [
+    ...SEEDS,
+    'REEF-0011',
+    'SILT-0042',
+    'DUNE-0007',
+    'MARSH-0003',
+    'BRINE-0019',
+    'SPRAY-0025',
+    'DRIFT-0008',
+    'GULL-0014',
+    'LAGOON-0006',
+    'ROCKPOOL-0002',
+    'SURGE-0031',
+    'EBB-0005',
+    'NEAP-0013',
+    'SWELL-0021',
+    'WRACK-0009',
+  ]
+
+  const boards = WIDE_SEEDS.flatMap((seed) =>
     SIZES.map((size) => ({
       label: `${seed} ${size}`,
       board: boardFor(seed, size, 'Deep', {

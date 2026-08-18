@@ -6,29 +6,18 @@ _Snapshot; updated each work session. Last updated: 2026-08-17._
 
 **Shipping.** All nineteen features are built and merged.
 
-**Live on `default`: build 24766362 (`Tidepool 1.2.0`)** — every feature
-through 016.
+**Live on `default`: build 24786984 (`Tidepool 1.3.0`)** — every feature
+through 019, promoted 2026-08-17.
 
-**`Tidepool 1.2.1` was UPLOADED 2026-08-16 as build 24766604 and is NOT live.**
-8.0 MB, description `Tidepool 1.2.1 (0320d54)`; it adds feature 017, the sound
-effects switch.
-
-**`Tidepool 1.3.0` was UPLOADED 2026-08-17 as build 24786984 and is NOT live.**
-8.4 MB, description `Tidepool 1.3.0 (e792237)`; it adds features 018 and 019 —
-the even/odd marks and the framed forms. Promote it from the partner site
-(Builds → Set Build Live).
-
-Note that promoting it moves players across THREE releases at once, since 1.2.1
-was never promoted: 017's effects switch, then 018, then 019.
-
-018 and 019 ship TOGETHER and must not be split: 019 extends 018's single
-`evenOdd` toggle rather than adding a second switch, so releasing 018 alone
-would freeze every `evenodd` seed and force 019 onto its own toggle and seed
-segment.
+**`Tidepool 1.2.1` (build 24766604) was never promoted and is now skipped.** It
+was uploaded 2026-08-16 with feature 017 and superseded before it went live, so
+no player ever ran it. 1.3.0 carries its contents forward — players moved from
+1.2.0 across three releases at once: 017's effects switch, 018's even/odd marks,
+and 019's framed forms.
 
 Release history: 1.0.1 (24479382) → 1.1.0 (24743146, features 010–015) → 1.2.0
 (24766362, feature 016 + three bug fixes) → 1.2.1 (24766604, feature 017,
-uploaded not live) → 1.3.0 (24786984, features 018–019, uploaded not live).
+uploaded but skipped) → **1.3.0 (24786984, features 018–019, LIVE)**.
 
 `setlive` is deliberately empty in the VDF, so an upload never reaches players
 on its own — promotion is always a separate step on the partner site

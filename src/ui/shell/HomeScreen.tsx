@@ -14,6 +14,7 @@ import {
   shoresFor,
   toBoardParams,
 } from '@/game/board-source'
+import { clueText } from '@/render'
 import { SeedEntry } from '@/ui/modes/SeedEntry'
 import { ResumeCard } from './ResumeCard'
 import { VolumeSlider } from './VolumeSlider'
@@ -288,7 +289,10 @@ export function HomeScreen({
             legend="Even & odd"
             caption={
               evenOddAvailable
-                ? 'Some stones show + or | instead of a number — an even or odd count of water.'
+                ? // Asks the renderer what it draws rather than naming a glyph
+                  // here (021) — this caption still said `+ or |` for a whole
+                  // release after the board had moved on to dots.
+                  `Some stones show ${clueText({ parity: 'even' })} or ${clueText({ parity: 'odd' })} instead of a number — an even or odd count of water.`
                 : 'Deep tides only — gentler tides keep their numbers.'
             }
             checked={evenOddAvailable && evenOdd}

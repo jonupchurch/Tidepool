@@ -9,11 +9,20 @@
 // is two short lists and a sentence, and a player meeting `-●-` for the first
 // time can work it out rather than look it up.
 
+import { clueText } from '@/render'
+
+// The marks exactly as the board draws them, never re-typed here (021). The
+// glyph changed once already, and this file held the old one in six places
+// while the board had moved on — copy that teaches a mark the game no longer
+// draws is worse than no copy. Deriving them means the two cannot disagree.
+const EVEN = clueText({ parity: 'even' })
+const ODD = clueText({ parity: 'odd' })
+
 /** How much water a clue is talking about. */
 export const CLUE_FACES: { glyph: string; meaning: string }[] = [
   { glyph: 'n', meaning: 'exactly that many water tiles' },
-  { glyph: '●●', meaning: 'an even number of them — the dots pair up, and it won’t say how many' },
-  { glyph: '●', meaning: 'an odd number — one dot is left over' },
+  { glyph: EVEN, meaning: 'an even number of them — the dots pair up, and it won’t say how many' },
+  { glyph: ODD, meaning: 'an odd number — one dot is left over' },
 ]
 
 /** How that water is arranged. Wraps any face above. */
@@ -29,8 +38,8 @@ export const COMPOSITION =
 /** The grid the composition rule produces — every form, derived not listed. */
 export const CLUE_GRID: { face: string; forms: string[]; meaning: string }[] = [
   { face: 'n', forms: ['4', '{4}', '-4-'], meaning: 'four' },
-  { face: '●●', forms: ['●●', '{●●}', '-●●-'], meaning: 'an even number' },
-  { face: '●', forms: ['●', '{●}', '-●-'], meaning: 'an odd number' },
+  { face: EVEN, forms: [EVEN, `{${EVEN}}`, `-${EVEN}-`], meaning: 'an even number' },
+  { face: ODD, forms: [ODD, `{${ODD}}`, `-${ODD}-`], meaning: 'an odd number' },
 ]
 
 export const CLUE_GRID_HEADINGS = ['on its own', 'one run', 'split apart']

@@ -169,6 +169,36 @@ export function canFrameParity(count: number): boolean {
   return count >= MIN_FRAMED_PARITY
 }
 
+/**
+ * The most of one clue site that may withhold its number (022).
+ *
+ * A third. Below that the marks stop reading as an accent on a board of numbers
+ * and start reading as the board's own language, which is a different and much
+ * harder game than the one the tier promises — and the numbers are what a
+ * player counts *from*.
+ *
+ * Measured before the number was chosen, per board and across every silhouette:
+ * the weakening ladder was leaving **47% of stones and 39% of edge numbers** as
+ * marks on average, and the worst board in a 50-board sweep showed marks on
+ * **86% of its stones**. The pooled average looked survivable and the individual
+ * boards were not, which is the whole lesson — see the density test in
+ * `framed-parity.test.ts`.
+ *
+ * **Per site, not per board.** One combined budget would let a hot row of edge
+ * numbers spend the stones' share, and the two are read differently: a stone
+ * governs six neighbours, an edge number governs a whole line. A board that is
+ * all numbers on its tiles and all marks around its rim is lopsided in a way a
+ * single total cannot express.
+ *
+ * `floor`, so a site is never rounded UP into its cap — the ceiling is a
+ * promise, and 2 of 5 is not a third.
+ */
+const MAX_PARITY_SHARE = 1 / 3
+
+export function parityBudget(clueCount: number): number {
+  return Math.floor(clueCount * MAX_PARITY_SHARE)
+}
+
 /** Total water among a set of present cell keys. */
 export function lineTotal(cells: string[], layout: Layout): number {
   let n = 0

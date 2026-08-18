@@ -48,7 +48,7 @@ export interface Settings {
     stopwatch: boolean
     defaultShore: ShoreChoice
     edgeHints: boolean
-    /** 018 — `+` / `|` parity clues. Deep-only; `evenOddApply` is the gate. */
+    /** 018 — `●●` / `●` parity clues. Deep-only; `evenOddApply` is the gate. */
     evenOdd: boolean
   }
 }

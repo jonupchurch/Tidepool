@@ -36,7 +36,7 @@ interface LineAnchorSite {
 /**
  * A label's resolved position in axial space — independent of hex size.
  *
- * Carries the clue's FACE (019), so a row whose total is withheld as `+`/`|` is
+ * Carries the clue's FACE (019), so a row whose total is withheld as `●●`/`●` is
  * describable here rather than needing a number it does not have.
  */
 export type LineAnchor = ClueFace & LineAnchorSite

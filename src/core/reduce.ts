@@ -164,7 +164,7 @@ function weakenToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>):
     if (!saved || hasParityFace(saved)) continue
     // Only weaken where parity both withholds something and does not mislead
     // (FR-006) — see `canShowParity`. In particular a count of zero never
-    // becomes a mark: zero is even, but nobody reads `+` as "none".
+    // becomes a mark: zero is even, but nobody reads `●●` as "none".
     if (!canShowParity(presentNeighborCount(cell.coord, work.present), saved.count)) continue
 
     // Is the clue's VALUE doing any work, or is the board carried by the bare
@@ -251,7 +251,7 @@ function weakenLinesToParity(
     if (cells === undefined) continue
     // The same two refusals as a stone (018 FR-006), read for a row: with fewer
     // than two cells the parity pins the total exactly, and a row holding no
-    // water must never read `+`. Zero is even, but nobody reads an even mark as
+    // water must never read `●●`. Zero is even, but nobody reads an even mark as
     // "none" — they read it as two-or-four, and rule out the truth.
     if (!canShowParity(cells.length, line.count)) continue
 
@@ -265,7 +265,7 @@ function weakenLinesToParity(
 
     // Rung 2: the parity, framed. Gated on the row-annotation toggle for the
     // same reason the tile rung is gated on its own: a player with edge hints
-    // off has said they do not want braced row clues, and `{+}` is a braced row
+    // off has said they do not want braced row clues, and `{●●}` is a braced row
     // clue however it got there. And on `canFrameParity` for the same reason a
     // stone is — a row of one water tile is not "one unbroken run" either, and
     // over a whole row the wrong inference is bigger, not smaller.

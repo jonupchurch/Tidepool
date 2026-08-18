@@ -281,7 +281,7 @@ export function HomeScreen({
             disabled={!hintsAvailable}
             onChange={setEdgeHints}
           />
-          {/* Even/odd — `+` / `|` in place of a stone's count. Deep only, and
+          {/* Even/odd — `●●` / `●` in place of a stone's count. Deep only, and
               for the same reason as edge hints: `parity` is in Deep's technique
               set alone, so reduction can only ever weaken a clue there. */}
           <Switch

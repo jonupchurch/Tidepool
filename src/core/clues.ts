@@ -118,7 +118,7 @@ export function parityOf(count: number): Parity {
  * even means 0 water, odd means 1 — so it is the same clue written more
  * strangely. From 2 upwards parity genuinely admits more than one count.
  *
- * **It would mislead.** Zero is even, so a `+` over a count of 0 is
+ * **It would mislead.** Zero is even, so a `●●` over a count of 0 is
  * mathematically correct and a trap in practice: nobody reads "an even number
  * of water tiles" and thinks *none*. A player ruling zero out would conclude at
  * least two neighbours are water, which is false — a wrong deduction reached by
@@ -126,7 +126,7 @@ export function parityOf(count: number): Parity {
  * happen. Measured before the rule went in: 2 of 126 parity clues across 18
  * boards hid a zero, so refusing them costs 1.6% of the mechanic and buys back
  * the rule "an even mark means two, four or six". It holds identically on a row,
- * where an empty row reading `+` would be the same trap over a longer span.
+ * where an empty row reading `●●` would be the same trap over a longer span.
  *
  * Note the first reason asks a different question from `connectivityInformative`,
  * which decides whether an annotation *distinguishes arrangements*. Parity is
@@ -147,16 +147,16 @@ const MIN_FRAMED_PARITY = 3
  * against that count: `{2}` says two tiles, side by side, and there is nothing
  * to misread. A framing over a *withheld* count has to be read on its own — and
  * "the water is all in one unbroken run", said about an unknown number of tiles,
- * is not how anybody describes a single tile. A player meeting `{|}` naturally
+ * is not how anybody describes a single tile. A player meeting `{●}` naturally
  * takes the run to be more than one tile and rules out 1, concluding 3 or 5.
  * If the truth was 1 they have just made a wrong deduction by sound-looking
  * reasoning, which is the one thing this game promises cannot happen.
  *
- * The same stretch, on the other framing: `-+-` over a true 2 is two lonely
+ * The same stretch, on the other framing: `-●●-` over a true 2 is two lonely
  * tiles being called two runs.
  *
  * So a framed mark needs a count that makes both words honest — three or more.
- * In practice that means `{|}` / `-|-` are three or five, and `{+}` / `-+-` are
+ * In practice that means `{●}` / `-●-` are three or five, and `{●●}` / `-●●-` are
  * four or six, which is also what a player will infer from them.
  *
  * **Deliberately NOT applied to counting clues.** `{2}` stays legal and always

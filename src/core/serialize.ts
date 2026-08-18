@@ -22,7 +22,8 @@ const FORMAT_VERSION = 1
  *
  * `'e'`/`'o'` rather than `'+'`/`'|'`: this is storage, and the glyphs are a
  * rendering decision that already changed once (018 shipped `E`/`O` on paper and
- * `+`/`|` on screen). A save written today must still load if they change again.
+ * `●●`/`●` on screen). A save written today must still load if they change again
+ * — as they did in 021, with no save format change, which is the point.
  */
 type FaceSlot = number | 'e' | 'o'
 

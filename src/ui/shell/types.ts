@@ -44,7 +44,7 @@ export interface LastPlay {
   shore: ShoreChoice
   /** `{n}` / `-n-` on row totals (016). Only bites at Deep. */
   edgeHints: boolean
-  /** `+` / `|` parity clues (018). Also only bites at Deep. Optional so a
+  /** `●●` / `●` parity clues (018). Also only bites at Deep. Optional so a
    *  caller that predates it still compiles. */
   evenOdd?: boolean
 }

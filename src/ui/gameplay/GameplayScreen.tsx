@@ -379,7 +379,7 @@ export function GameplayScreen({
           // differ by cell count, which no amount of label-reading proves.
           shape: board.params.shape ?? 'hex',
           cells: board.present.size,
-          // The clue FACES as drawn (018), so an e2e can prove `+` / `|` really
+          // The clue FACES as drawn (018), so an e2e can prove `●●` / `●` really
           // reached the board rather than trusting the label — same discipline
           // as `cells` for silhouettes.
           clueFaces: [...board.cells.values()]

@@ -365,7 +365,7 @@ describe('progress counters + gentle-flag (UX feedback)', () => {
 
 describe('an even/odd board plays identically (018 FR-011)', () => {
   // Marking, locking, mistakes and completion all read the hidden solution, not
-  // the clues — so a stone showing `+` instead of `4` must change nothing about
+  // the clues — so a stone showing `●●` instead of `4` must change nothing about
   // how the board plays. Asserted rather than assumed, because "it reads the
   // solution" is exactly the kind of claim that quietly stops being true.
   const board = generateBoard({

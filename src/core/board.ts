@@ -93,7 +93,7 @@ export interface ClueFraming {
 
 /**
  * An adjacency clue shown on a given rock cell — a face plus a framing, giving
- * the six forms `4`, `{4}`, `-4-`, `+`, `{+}`, `-+-`.
+ * the six forms `4`, `{4}`, `-4-`, `●●`, `{●●}`, `-●●-`.
  *
  * TypeScript distributes the intersection over the face union, so both faces get
  * the framing without either being spelled out twice.

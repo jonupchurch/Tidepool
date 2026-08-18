@@ -361,7 +361,7 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
             onBack={goHome}
             // The FOURTH place a play setting has to be threaded (016's shore,
             // 018's marks). This one was missed by both and served a plain
-            // hexagon with none of the player's choices — reading about `-|-`
+            // hexagon with none of the player's choices — reading about `-●-`
             // and then being handed a board that cannot contain one.
             onPlay={() =>
               onPlay(

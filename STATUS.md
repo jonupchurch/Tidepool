@@ -4,29 +4,28 @@ _Snapshot; updated each work session. Last updated: 2026-08-18._
 
 ## Current phase
 
-**Shipping.** All twenty-two features are built and merged.
+**Shipping.** All twenty-three features are built and merged.
 
 **Live on `default`: build 24786984 (`Tidepool 1.3.0`)** — every feature
 through 019, promoted 2026-08-17.
 
-**`Tidepool 1.3.4` was UPLOADED 2026-08-18 as build 24787910 and is NOT live.**
-8.0 MB, description `Tidepool 1.3.4 (7a017cd)`; it carries
-020's Home hover text, 021's dot parity marks and 022's density cap. Promote it
-from the partner site (Builds → Set Build Live) — it is the newest and it
-supersedes everything below.
+**`Tidepool 1.3.5` was UPLOADED 2026-08-18 and is NOT live.** 8.0 MB; it carries
+020's Home hover text, 021's dot parity marks, 022's density cap and 023's seed
+round-trip fix. Promote it from the partner site (Builds → Set Build Live) — it
+is the newest and it supersedes everything below.
 
-**Four uploads have been skipped**: 1.2.1 (24766604, feature 017), 1.3.1
-(24787198, hover text), 1.3.2 (24787585, dots with a stale Home caption) and
-1.3.3 (24787678, dots without the density cap). Each was superseded before
-promotion, so no player ever ran one; the next promoted build carries their
-contents forward. Uploads are cheap and promotion is deliberate — never assume
-the newest upload is what players have.
+**Five uploads have been skipped**: 1.2.1 (24766604, feature 017), 1.3.1
+(24787198, hover text), 1.3.2 (24787585, dots with a stale Home caption), 1.3.3
+(24787678, dots without the density cap) and 1.3.4 (24787910, without the seed
+fix). Each was superseded before promotion, so no player ever ran one; the next
+promoted build carries their contents forward. Uploads are cheap and promotion
+is deliberate — never assume the newest upload is what players have.
 
 Release history: 1.0.1 (24479382) → 1.1.0 (24743146, features 010–015) → 1.2.0
 (24766362, feature 016 + three bug fixes) → 1.2.1 (24766604, feature 017,
 skipped) → **1.3.0 (24786984, features 018–019, LIVE)** → 1.3.1 (24787198,
 skipped) → 1.3.2 (24787585, skipped) → 1.3.3 (24787678, skipped) → 1.3.4
-(24787910, features 020–022, uploaded not live).
+(24787910, skipped) → 1.3.5 (features 020–023, uploaded not live).
 
 `setlive` is deliberately empty in the VDF, so an upload never reaches players
 on its own — promotion is always a separate step on the partner site
@@ -34,9 +33,9 @@ on its own — promotion is always a separate step on the partner site
 
 ## Built
 
-Features 001–022, in build order. 001–015 and 018–019 were each specced and
+Features 001-023, in build order. 001–015 and 018–019 were each specced and
 planned via Spec-Kit before implementation; 016 and 017 were scoped with a
-mini-spec, and 016 was written up afterwards; 020–022 are small, single-decision
+mini-spec, and 016 was written up afterwards; 020-023 are small, single-decision
 changes taken straight to a branch. Per-feature detail is in `CHANGELOG.md`; this
 is the index.
 
@@ -64,10 +63,11 @@ is the index.
 | 020 | Glyph tooltips | hover text on the four Home buttons, so the sound-effects drop says what it is |
 | 021 | Parity dots | `+` / `\|` become `●●` / `●` — the old marks fused with the framing (`-\|-` drew a plus) |
 | 022 | Parity density | at most a third of each clue site may withhold its number; measured at 47% of stones before |
+| 023 | Seed round-trip | a board's own seed can be typed back in — the parser took digits, the generator emits base 36 |
 
 Plus, since: all 12 creature portraits, audio, the About screen, the curated hex
 map, HiDPI rendering, a root error boundary, 29 achievements, and the SteamPipe
-release pipeline. **1028 unit tests + 55 e2e green.**
+release pipeline. **1032 unit tests + 56 e2e green.**
 
 ## Release — what's left
 

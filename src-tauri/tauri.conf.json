@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Tidepool",
-  "version": "1.3.4",
+  "version": "1.3.5",
   "identifier": "com.gravytraining.tidepool",
   "build": {
     "frontendDist": "../dist",

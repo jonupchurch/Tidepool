@@ -23,7 +23,8 @@
     "check:achievements": "vite-node scripts/check-achievements.ts",
     "find:seed": "vite-node scripts/find-trailer-seed.ts --",
     "check:art": "vite-node scripts/check-art.ts",
-    "check:audio": "vite-node scripts/check-audio.ts"
+    "check:audio": "vite-node scripts/check-audio.ts",
+    "measure:parity": "vite-node scripts/measure-parity.ts"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.11.1",

@@ -97,13 +97,21 @@ test('a parity mark can carry the run annotation, on a tile and on a row', async
   // vocabulary — a player who turned it off should not meet it wearing a new
   // face, which is the gate the reduction ladder enforces.
   //
-  // TIDE-1234, not CORAL-4417, since 022. The density cap keeps roughly a third
-  // of the marks a board could carry, and a framed mark is the rung the ladder
-  // reaches least often, so "one board that happens to have both" stopped being
-  // a safe assumption about any given seed. Measured across 50 boards: 39 carry
-  // a framed tile mark and 23 carry a framed row mark, and this is a seed with
-  // both. The forms are reachable; they are no longer everywhere.
-  const hook = await openSeed(page, 'TIDE-1234 Large Deep evenodd hints')
+  // BRINE-0019, not TIDE-1234, since 024 — and TIDE-1234 was itself picked to
+  // replace CORAL-4417 when 022 landed. Each retune of the density cap starves
+  // rung 2 of the ladder further (a framed mark exists only where BARE parity
+  // was not enough), so "one board that happens to have both" keeps expiring.
+  //
+  // Chosen by measurement, not by hope: at the 024 cap only four seeds in a
+  // 28-seed sweep carry a framed tile mark AND a framed row mark at this size
+  // and difficulty — SILT-0042, BRINE-0019, CORAL-0001, FOAM-7777. BRINE-0019
+  // has the most slack of the four (4 framed tiles, 1 framed row), so it is the
+  // least likely to go red on a nudge. Across 220 boards 53% carry a framed
+  // stone and 37% a framed row: reachable, nowhere near everywhere.
+  //
+  // If this goes red after a cap change, re-run `npm run measure:parity` and
+  // pick a new seed from its output rather than lowering the bar to zero.
+  const hook = await openSeed(page, 'BRINE-0019 Large Deep evenodd hints')
 
   const framedTiles = hook.clueFaces.filter((t) => /^[{-]●{1,2}[}-]$/.test(t))
   expect(framedTiles.length, 'no stone showed a framed parity mark').toBeGreaterThan(0)
@@ -118,12 +126,27 @@ test('all four framed forms are reachable across a handful of boards (SC-003)', 
 }) => {
   // Read from what the renderer produced, never from params — the same
   // discipline as 016's cell counts and 018's clue faces.
-  // More seeds since 022: the cap keeps about a third of a board's marks, so
-  // the rarest form — a braced ODD mark — needs a wider net than four boards.
-  // It is still reachable, not vanishing: measured at 29 framed row marks and 86
-  // framed tile marks across a 50-board sweep.
+  // The seed list is a measured covering set, re-derived for 024's cap. `{●}` —
+  // a braced ODD mark — is the rarest form the game can print: it needs the
+  // ladder to reach rung 2, an odd count of at least three (`canFrameParity`),
+  // and a connected ring, all inside a budget that 024 cut to 15%. In a 28-seed
+  // sweep only four seeds produced one at all.
+  //
+  // The first four below cover all four forms between them, in this order, and
+  // the rest are slack so a single seed drifting does not fail the sweep. The
+  // loop breaks as soon as it has all four, so the common case is still four
+  // page loads.
   const seen = new Set<string>()
-  for (const seed of ['CORAL-4417', 'KELP-0007', 'TIDE-1234', 'COVE-0001', 'TIDE-2789', 'SHELL-0001']) {
+  for (const seed of [
+    'KELP-0007',
+    'COVE-0001',
+    'TIDE-2789',
+    'LAGOON-0006',
+    'EBB-0005',
+    'COVE-9999',
+    'SHELL-4417',
+    'CORAL-0001',
+  ]) {
     const hook = await openSeed(page, `${seed} Large Deep evenodd hints`)
     for (const t of [...hook.clueFaces, ...hook.lineLabels.map((l) => l.text)]) {
       if (/^[{-]●{1,2}[}-]$/.test(t)) seen.add(t)

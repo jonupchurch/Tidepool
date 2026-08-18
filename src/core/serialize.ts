@@ -131,7 +131,25 @@ export function deserializeBoard(s: string): Board {
   return makeBoard({ params: c.params, present, cells, lines })
 }
 
-const SEED_RE = /^([A-Z]+)-(\d{1,4})$/
+/**
+ * `WORD-CODE`, where the code is up to four base-36 digits (023).
+ *
+ * It was `\d{1,4}` until 2026-08-18, which quietly broke the promise the seed
+ * box advertises. The game has TWO seed generators and they disagreed:
+ * `nextSeed` (the Endless chain) counts in decimal, but `freshSeed` — every
+ * Play press and every New board — emits base 36, e.g. `TIDE-H4SD`. So roughly
+ * 99.4% of Endless labels were rejected by the box that offers to reopen them.
+ *
+ * Widened rather than narrowing `freshSeed`, for two reasons. Narrowing would
+ * leave every seed a player has already written down just as dead, since it can
+ * only affect future boards. And it would cut that generator's space from 36^4
+ * to 10^4 — ten thousand boards behind one word, where collisions stop being
+ * theoretical.
+ *
+ * **This moves no board.** Widening only accepts more inputs; every string that
+ * parsed before parses to exactly the same normalized seed.
+ */
+const SEED_RE = /^([A-Z]+)-([A-Z0-9]{1,4})$/
 
 /** Display form, e.g. "CORAL-4417". Returns the input trimmed/upper-cased. */
 export function formatSeed(seed: SeedCode): string {

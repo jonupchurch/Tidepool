@@ -87,11 +87,32 @@ describe('seed codes', () => {
     expect(parseSeed(' KELP-7 ')).toBe('KELP-7')
   })
 
+  it('parses the base-36 codes freshSeed actually emits (023)', () => {
+    // These are the shape of every Endless label. The parser took digits only
+    // until 023, so the game printed seeds its own seed box then refused.
+    expect(parseSeed('TIDE-H4SD')).toBe('TIDE-H4SD')
+    expect(parseSeed('tide-1q9f')).toBe('TIDE-1Q9F')
+    expect(parseSeed('TIDE-ZZZZ')).toBe('TIDE-ZZZZ')
+  })
+
   it('rejects malformed codes', () => {
     expect(parseSeed('coral')).toBeNull()
     expect(parseSeed('coral-')).toBeNull()
-    expect(parseSeed('123-456')).toBeNull()
-    expect(parseSeed('coral-12345')).toBeNull() // too many digits
+    expect(parseSeed('123-456')).toBeNull() // the word is letters
+    expect(parseSeed('coral-12345')).toBeNull() // code is at most four
+    expect(parseSeed('coral-ABCDE')).toBeNull() // ...in base 36 too
+    expect(parseSeed('coral-44_7')).toBeNull() // alphanumeric only
+    expect(parseSeed('no-hints')).toBeNull() // `HINTS` is five
+    expect(parseSeed('noevenodd')).toBeNull() // no separator at all
+  })
+
+  it('only ever judges the FIRST token, which is why `even-odd` is harmless', () => {
+    // Worth writing down because it looks like a hazard and is not. `EVEN-ODD`
+    // does satisfy the widened pattern. It never matters: `parseSeedEntry`
+    // offers this function `parts[0]` alone and matches option tokens by their
+    // own rules, so `even-odd` can only be read as a seed by someone who typed
+    // nothing else — and then it is simply a seed, and makes a board.
+    expect(parseSeed('even-odd')).toBe('EVEN-ODD')
   })
 })
 

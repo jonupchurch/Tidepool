@@ -8,7 +8,7 @@ import type { BoardParams } from '@/core'
  *  decided by BLOB_SCHEMA_VERSION below, so this is here to tell a human which
  *  build wrote a save. Kept in step with the other version sites by a test in
  *  `ui/about/about.test.ts`. */
-export const APP_VERSION = '1.3.1'
+export const APP_VERSION = '1.3.2'
 
 /** Storage-layout version used in the key prefix `tp:v{N}:{namespace}`. */
 export const STORE_VERSION = 1

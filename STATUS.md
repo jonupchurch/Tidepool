@@ -9,25 +9,23 @@ _Snapshot; updated each work session. Last updated: 2026-08-18._
 **Live on `default`: build 24786984 (`Tidepool 1.3.0`)** — every feature
 through 019, promoted 2026-08-17.
 
-**`Tidepool 1.3.3` was UPLOADED 2026-08-18 as build 24787678 and is NOT live.**
-8.0 MB, description `Tidepool 1.3.3 (966fc8d)`; it carries 020's Home hover text
-and 021's dot parity marks. Promote it from the partner site (Builds → Set Build
-Live).
+**`Tidepool 1.3.4` was UPLOADED 2026-08-18 and is NOT live.** 8.0 MB; it carries
+020's Home hover text, 021's dot parity marks and 022's density cap. Promote it
+from the partner site (Builds → Set Build Live) — it is the newest and it
+supersedes everything below.
 
-**022 is merged but NOT in any upload yet.** The parity density cap landed after
-1.3.3 was built, so it needs its own version bump before it can ship.
-
-**Three uploads have been skipped**: 1.2.1 (24766604, feature 017), 1.3.1
-(24787198, hover text) and 1.3.2 (24787585, dots with a stale Home caption). Each
-was superseded before promotion, so no player ever ran one; the next promoted
-build carries their contents forward. Uploads are cheap and promotion is
-deliberate — never assume the newest upload is what players have.
+**Four uploads have been skipped**: 1.2.1 (24766604, feature 017), 1.3.1
+(24787198, hover text), 1.3.2 (24787585, dots with a stale Home caption) and
+1.3.3 (24787678, dots without the density cap). Each was superseded before
+promotion, so no player ever ran one; the next promoted build carries their
+contents forward. Uploads are cheap and promotion is deliberate — never assume
+the newest upload is what players have.
 
 Release history: 1.0.1 (24479382) → 1.1.0 (24743146, features 010–015) → 1.2.0
 (24766362, feature 016 + three bug fixes) → 1.2.1 (24766604, feature 017,
 skipped) → **1.3.0 (24786984, features 018–019, LIVE)** → 1.3.1 (24787198,
-skipped) → 1.3.2 (24787585, skipped) → 1.3.3 (24787678, features 020–021,
-uploaded not live).
+skipped) → 1.3.2 (24787585, skipped) → 1.3.3 (24787678, skipped) → 1.3.4
+(features 020–022, uploaded not live).
 
 `setlive` is deliberately empty in the VDF, so an upload never reaches players
 on its own — promotion is always a separate step on the partner site

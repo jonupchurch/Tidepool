@@ -4,6 +4,24 @@ Dated log of **actual code/feature changes**, newest first. Process/setup work
 isn't tracked here — see `STATUS.md` and the commit history. Will adopt
 versioned release notes once Steam builds start.
 
+## 2026-08-17 — Names for the buttons
+
+### Fixed
+
+- **The four buttons on Home now say what they are when you hover them.** The
+  water drop is the sound-effects switch, which was not obvious from the icon —
+  it is a drop because the effects *are* the marks landing in the water, and the
+  speaker was already spoken for by the master mute. The volume slider says
+  "Volume — muted" when the master switch is off, which answers why dragging it
+  does nothing.
+
+The hover text names the control and its state ("Sound effects on"), which is a
+different sentence from the one a screen reader gets ("Turn sound effects off").
+A button's accessible label should say what pressing it will do; a tooltip is
+read by someone who cannot tell what the thing IS. The wording is lifted from
+the Pause menu, which has always spelled these switches out in words — Home was
+the only place they were icons on their own.
+
 ## 2026-08-17 — Two rules instead of six glyphs
 
 ### Added

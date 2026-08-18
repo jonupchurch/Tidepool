@@ -293,7 +293,6 @@ class CanvasBoardRenderer implements BoardRenderer {
   private drawLineTotals(guides: ReadonlySet<string>, done: ReadonlySet<string>): void {
     const { ctx, palette } = this
     const size = this._layout.size
-    ctx.font = `700 ${size * 0.72}px ${DISPLAY_FONT}`
     for (const l of this.labels) {
       const struck = done.has(l.id)
       const colour = struck ? palette.rock : guides.has(l.id) ? palette.tide : palette.deepPool
@@ -318,6 +317,18 @@ class CanvasBoardRenderer implements BoardRenderer {
       ctx.closePath()
       ctx.fill()
       ctx.restore()
+
+      // A bare mark in the MARGIN needs more help than one on a tile (019).
+      // 018 gave `|` extra weight because a single stroke read lighter than the
+      // digits around it; out here it is worse, because there is no tile behind
+      // it and it sits inches from a direction dash and an arrowhead. Rendered
+      // and looked at: at the digits' own weight a margin `|` reads as part of
+      // the arrow apparatus rather than as a clue. Same remedy, more of it.
+      //
+      // Framed marks are left alone: `{+}` is three glyphs and already carries a
+      // number's worth of ink, and boosting it would crowd its neighbours.
+      const bare = l.count === undefined && l.connectivity === undefined
+      ctx.font = `${bare ? 800 : 700} ${size * (bare ? 1.0 : 0.72)}px ${DISPLAY_FONT}`
 
       ctx.save()
       if (struck) ctx.globalAlpha = 0.55

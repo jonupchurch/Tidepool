@@ -48,6 +48,8 @@ export interface Settings {
     stopwatch: boolean
     defaultShore: ShoreChoice
     edgeHints: boolean
+    /** 018 — `+` / `|` parity clues. Deep-only; `evenOddApply` is the gate. */
+    evenOdd: boolean
   }
 }
 
@@ -71,6 +73,7 @@ export const DEFAULT_SETTINGS: Settings = {
     // before 016, so an untouched install plays exactly as it did.
     defaultShore: DEFAULT_SHORE,
     edgeHints: false,
+    evenOdd: false,
   },
 }
 
@@ -140,6 +143,7 @@ export function resolveSettings(raw: unknown): Settings {
       // rather than reaching `generateBoard`, which refuses it outright.
       defaultShore: isShoreChoice(play.defaultShore) ? play.defaultShore : d.play.defaultShore,
       edgeHints: bool(play.edgeHints, d.play.edgeHints),
+      evenOdd: bool(play.evenOdd, d.play.evenOdd),
     },
   }
 }

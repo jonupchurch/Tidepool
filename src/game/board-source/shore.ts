@@ -104,7 +104,33 @@ export function edgeHintsApply(difficulty: DifficultyTier): boolean {
  * change which board a Calm seed produces in exchange for annotations that
  * reduction then strips anyway.
  */
-export function endlessClues(difficulty: DifficultyTier, edgeHints: boolean): ClueToggles {
-  if (!edgeHints || !edgeHintsApply(difficulty)) return DEFAULT_CLUES
-  return { ...DEFAULT_CLUES, lineConnectivity: true }
+/**
+ * Whether the even/odd toggle does anything at `difficulty` (018).
+ *
+ * Deep-only, for the same reason `edgeHintsApply` is: the `parity` technique is
+ * in `allowedTechniquesFor('Deep')` and nowhere else, and reduction will only
+ * weaken a clue to `+`/`|` when the tier's technique set can read it back.
+ *
+ * Measured before shipping: with the flag forced on at Calm and Tricky across 5
+ * seeds, boards came back with zero parity clues — but the flag still reached
+ * the RNG seed string and so still changed which board those seeds produced.
+ * That is precisely what this gate prevents.
+ */
+export function evenOddApply(difficulty: DifficultyTier): boolean {
+  return difficulty === 'Deep'
+}
+
+export function endlessClues(
+  difficulty: DifficultyTier,
+  edgeHints: boolean,
+  evenOdd = false,
+): ClueToggles {
+  const wantHints = edgeHints && edgeHintsApply(difficulty)
+  const wantEvenOdd = evenOdd && evenOddApply(difficulty)
+  if (!wantHints && !wantEvenOdd) return DEFAULT_CLUES
+  return {
+    ...DEFAULT_CLUES,
+    ...(wantHints ? { lineConnectivity: true } : {}),
+    ...(wantEvenOdd ? { evenOdd: true } : {}),
+  }
 }

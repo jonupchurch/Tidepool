@@ -1,6 +1,6 @@
 // Rating fidelity (T026 / US3, SC-004): ≥95% of a sampled batch per tier are
 // rated at the requested tier, and harder tiers require more advanced deduction.
-import type { BoardParams, DifficultyTier, SizeTier } from './board'
+import type { BoardParams, DifficultyTier, SizeTier, Technique } from './board'
 import { generateBoard } from './generate'
 import { solve } from './solver'
 
@@ -31,14 +31,15 @@ describe('rating fidelity', () => {
   }
 
   it('harder tiers require more advanced techniques', () => {
-    // Row annotations (010) are the same class of reasoning as ring
-    // connectivity, so they rank alongside it.
-    const rank = {
+    // Row annotations (010) and parity (018) are the same class of reasoning as
+    // ring connectivity, so they rank alongside it.
+    const rank: Record<Technique, number> = {
       'forced-count': 0,
       'line-total': 1,
       'subset-overlap': 1,
       connectivity: 2,
       'line-connectivity': 2,
+      parity: 2,
     }
     const hardest = (difficulty: DifficultyTier) => {
       const res = solve(generateBoard(params(`CMP-${difficulty}`, 'Medium', difficulty)))

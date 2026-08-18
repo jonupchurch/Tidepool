@@ -21,6 +21,17 @@ export interface ClueToggles {
    * generates byte-identically. See `rngSeedString` and `fingerprints.test.ts`.
    */
   lineConnectivity?: boolean
+  /**
+   * `E` / `O` in place of an adjacency count (018). Same discipline as
+   * `lineConnectivity`: optional, default-off, and it reaches the RNG seed
+   * string ONLY when enabled.
+   *
+   * Deep-tier only. The gate lives in `endlessClues`, not just in the UI — a
+   * stale `true` at Calm would change which board that seed produces in
+   * exchange for clues reduction then strips anyway (the trap 016 documented
+   * for `lineConnectivity`).
+   */
+  evenOdd?: boolean
 }
 
 /** Human-friendly seed, `WORD-NNNN` (e.g. `CORAL-4417`). */
@@ -47,12 +58,38 @@ export type CellState = 'water' | 'rock'
 /** Local (Hexcells-style) connectivity of the water neighbours around a clue. */
 export type Connectivity = 'connected' | 'split'
 
-/** An adjacency clue shown on a given rock cell. */
-export interface AdjacencyClue {
+/** Whether a count of water neighbours is even or odd (018). */
+export type Parity = 'even' | 'odd'
+
+/** A clue that names the exact number of water neighbours. */
+export interface CountClue {
   /** water among the up-to-6 present neighbours */
   count: number
   /** `{}` (consecutive around the ring) / `--` (not all consecutive); absent = plain number */
   connectivity?: Connectivity
+}
+
+/**
+ * A clue that names only the PARITY of the water neighbours (018) — `E` / `O`.
+ *
+ * It carries no `count`, deliberately. This is a union rather than an optional
+ * field on `CountClue` so that reading the count of a parity clue is a *type
+ * error*: the whole point of the mechanic is that the exact number is withheld,
+ * and a solver that could reach for it anyway would quietly cheat.
+ *
+ * It carries no `connectivity` either — combining `E` with `{}`/`--` is named
+ * as a non-goal in the 018 spec.
+ */
+export interface ParityClue {
+  parity: Parity
+}
+
+/** An adjacency clue shown on a given rock cell: a count, or just its parity. */
+export type AdjacencyClue = CountClue | ParityClue
+
+/** Narrow an `AdjacencyClue` to the parity form. */
+export function isParityClue(clue: AdjacencyClue): clue is ParityClue {
+  return 'parity' in clue
 }
 
 export interface Cell {
@@ -98,6 +135,7 @@ export type Technique =
   | 'connectivity'
   | 'subset-overlap'
   | 'line-connectivity'
+  | 'parity'
 
 export interface SolverResult {
   /** technique solver reached a complete assignment, guess-free */

@@ -97,6 +97,36 @@ describe('boardRequest — the opt-in paths', () => {
     })
   })
 
+  it('turns on evenOdd at Deep (018)', () => {
+    expect(boardRequest('KELP-0007', 'Large', 'Deep', { evenOdd: true }).clues).toEqual({
+      connectivity: true,
+      lineTotals: true,
+      evenOdd: true,
+    })
+  })
+
+  it('carries both optional clue mechanics together', () => {
+    expect(
+      boardRequest('KELP-0007', 'Large', 'Deep', { edgeHints: true, evenOdd: true }).clues,
+    ).toEqual({ connectivity: true, lineTotals: true, lineConnectivity: true, evenOdd: true })
+  })
+
+  it('refuses evenOdd below Deep, even when asked (018 FR-004)', () => {
+    // The gate has to bite HERE, not just in the UI. The flag reaches the RNG
+    // seed string, so a stale `true` carried down from Deep would change which
+    // board a Calm seed produces in exchange for clues reduction then strips.
+    for (const difficulty of ['Calm', 'Tricky'] as const) {
+      const withFlag = boardRequest('KELP-0007', 'Medium', difficulty, { evenOdd: true })
+      const without = boardRequest('KELP-0007', 'Medium', difficulty)
+      expect(withFlag.clues.evenOdd).toBeUndefined()
+      expect(withFlag).toEqual(without)
+      // ...and the board itself is the one that seed has always produced.
+      expect(serializeBoard(generateBoard(withFlag))).toBe(
+        serializeBoard(generateBoard(without)),
+      )
+    }
+  })
+
   it('serves a board on every shore it will hand out', () => {
     for (const shore of ['atoll', 'crescent', 'wedge', 'shoal'] as const) {
       const board = generateBoard(boardRequest('KELP-0007', 'Large', 'Deep', { shore }))

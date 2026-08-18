@@ -46,6 +46,10 @@ test('How to play is reachable from Home and explains the clue forms', async ({ 
   await expect(page.getByText(/count the water in that whole line/i)).toBeVisible()
   // 010: the same braces/dashes, explained for row totals too.
   await expect(page.getByText(/one unbroken run/i)).toBeVisible()
+  // 018: the parity marks. `exact` again — the sentence below names them too.
+  await expect(page.getByText('+', { exact: true })).toBeVisible()
+  await expect(page.getByText('|', { exact: true })).toBeVisible()
+  await expect(page.getByText(/one stroke for odd, two crossed for even/i)).toBeVisible()
 
   // It offers a way straight into a board.
   await page.getByRole('button', { name: /^play$/i }).click()

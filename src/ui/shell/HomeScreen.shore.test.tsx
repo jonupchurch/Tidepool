@@ -108,7 +108,11 @@ describe('Home — the Edge hints switch', () => {
     const toggle = screen.getByRole('switch', { name: /edge hints/i })
     expect(toggle).toBeDisabled()
     expect(toggle).toHaveAttribute('aria-checked', 'false')
-    expect(screen.getByText(/Deep tides only/i)).toBeInTheDocument()
+    // Specific to this switch's caption: 018 added a second Deep-only switch,
+    // and both say "Deep tides only" — deliberately parallel copy, so the
+    // assertion has to name which one it means.
+    expect(screen.getByText(/Deep tides only — gentler tides solve without them/i))
+      .toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: /^play$/i }))
     // Even with the pref stored as on, a Tricky board is the board it always was.
     expect(onPlay.mock.calls[0][0].clues).not.toHaveProperty('lineConnectivity')
@@ -143,5 +147,49 @@ describe('Home — the Play summary', () => {
       <HomeScreen {...props({ size: 'Small', difficulty: 'Calm', shore: 'wedge', edgeHints: true })} />,
     )
     expect(screen.getByRole('button', { name: /^play$/i })).toHaveTextContent('Small · Calm')
+  })
+})
+
+describe('Home — the Even & odd switch (018)', () => {
+  it('turns on evenOdd at Deep', () => {
+    const onPlay = vi.fn()
+    renderShell(<HomeScreen {...props(medium, { onPlay })} />)
+    fireEvent.click(screen.getByRole('switch', { name: /even & odd/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^play$/i }))
+    expect(onPlay.mock.calls[0][0].clues).toMatchObject({ evenOdd: true })
+  })
+
+  it('is inert below Deep, with the reason', () => {
+    const onPlay = vi.fn()
+    const tricky: LastPlay = { ...medium, difficulty: 'Tricky', evenOdd: true }
+    renderShell(<HomeScreen {...props(tricky, { onPlay })} />)
+    const toggle = screen.getByRole('switch', { name: /even & odd/i })
+    expect(toggle).toBeDisabled()
+    expect(toggle).toHaveAttribute('aria-checked', 'false')
+    expect(screen.getByText(/Deep tides only — gentler tides keep their numbers/i))
+      .toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /^play$/i }))
+    // Even with the pref stored as on, a Tricky board is the board it always was.
+    expect(onPlay.mock.calls[0][0].clues).not.toHaveProperty('evenOdd')
+  })
+
+  it('reflects the persisted state on load', () => {
+    renderShell(<HomeScreen {...props({ ...medium, evenOdd: true })} />)
+    expect(screen.getByRole('switch', { name: /even & odd/i })).toHaveAttribute(
+      'aria-checked',
+      'true',
+    )
+  })
+
+  it('rides alongside edge hints rather than replacing it', () => {
+    const onPlay = vi.fn()
+    renderShell(<HomeScreen {...props(medium, { onPlay })} />)
+    fireEvent.click(screen.getByRole('switch', { name: /edge hints/i }))
+    fireEvent.click(screen.getByRole('switch', { name: /even & odd/i }))
+    fireEvent.click(screen.getByRole('button', { name: /^play$/i }))
+    expect(onPlay.mock.calls[0][0].clues).toMatchObject({
+      lineConnectivity: true,
+      evenOdd: true,
+    })
   })
 })

@@ -61,14 +61,52 @@ describe('shell-store: last play', () => {
       difficulty: 'Calm',
       shore: 'hex',
       edgeHints: false,
+      evenOdd: false,
     })
   })
 
   it('round-trips the last-used size/difficulty', async () => {
     const store = makeFakeStore()
-    const last = { size: 'Large', difficulty: 'Deep', shore: 'Any', edgeHints: true } as const
+    const last = {
+      size: 'Large', difficulty: 'Deep', shore: 'Any', edgeHints: true, evenOdd: true,
+    } as const
     await setLastPlay(store, last)
     expect(await getLastPlay(store)).toEqual(last)
+  })
+
+  /**
+   * Regression (018): every play choice must survive the round trip through the
+   * persisted record. `evenOdd` was added to the settings *model* but not to the
+   * persisted *schema*, so the switch on Home reset itself the moment the player
+   * left the screen — the value was written into a field the record type did not
+   * have. These assert each field individually, which is what would have caught
+   * it: the whole-object `toEqual` tests above passed happily, because both
+   * sides of the comparison were missing the same field.
+   */
+  it('round-trips every play choice individually', async () => {
+    const store = makeFakeStore()
+    await setLastPlay(store, {
+      size: 'Large', difficulty: 'Deep', shore: 'atoll', edgeHints: true, evenOdd: true,
+    })
+    const got = await getLastPlay(store)
+    expect(got.size).toBe('Large')
+    expect(got.difficulty).toBe('Deep')
+    expect(got.shore).toBe('atoll')
+    expect(got.edgeHints).toBe(true)
+    expect(got.evenOdd).toBe(true)
+  })
+
+  it('turns a play choice back off again', async () => {
+    // Silence must be expressible: writing `false` has to persist as `false`,
+    // not fall back to a default that happens to match.
+    const store = makeFakeStore()
+    const on = {
+      size: 'Large' as const, difficulty: 'Deep' as const, shore: 'hex' as const,
+      edgeHints: true, evenOdd: true,
+    }
+    await setLastPlay(store, on)
+    await setLastPlay(store, { ...on, evenOdd: false })
+    expect((await getLastPlay(store)).evenOdd).toBe(false)
   })
 
   it('preserves other settings when writing last play', async () => {
@@ -85,6 +123,7 @@ describe('shell-store: last play', () => {
       difficulty: 'Tricky',
       shore: 'crescent',
       edgeHints: false,
+      evenOdd: false,
     })
     const back = await store.get<SettingsRecord>('tp:v1:settings')
     expect(back?.controls.swapMarkButtons).toBe(true)
@@ -98,6 +137,7 @@ describe('shell-store: last play', () => {
       stopwatch: true,
       defaultShore: 'crescent',
       edgeHints: false,
+      evenOdd: false,
     })
   })
 })

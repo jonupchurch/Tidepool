@@ -57,6 +57,7 @@ export function isBoardRequest(x: unknown): x is BoardRequest {
     if (typeof c !== 'object' || c === null) return false
     if (typeof c.connectivity !== 'boolean' || typeof c.lineTotals !== 'boolean') return false
     if (c.lineConnectivity !== undefined && typeof c.lineConnectivity !== 'boolean') return false
+    if (c.evenOdd !== undefined && typeof c.evenOdd !== 'boolean') return false
   }
   return true
 }

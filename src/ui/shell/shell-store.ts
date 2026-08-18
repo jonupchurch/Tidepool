@@ -38,6 +38,7 @@ export async function getLastPlay(store: SaveStore): Promise<LastPlay> {
     // which refuses a shape its catalog doesn't claim.
     shore: isShoreChoice(s.play.defaultShore) ? s.play.defaultShore : DEFAULT_SHORE,
     edgeHints: s.play.edgeHints === true,
+    evenOdd: s.play.evenOdd === true,
   }
 }
 
@@ -55,6 +56,9 @@ export async function setLastPlay(store: SaveStore, lastPlay: LastPlay): Promise
       defaultDifficulty: lastPlay.difficulty,
       defaultShore: lastPlay.shore,
       edgeHints: lastPlay.edgeHints,
+      // 018. Written and read back like every other play default — without it
+      // the switch on Home reset itself the moment you left the screen.
+      evenOdd: lastPlay.evenOdd === true,
     },
   })
 }

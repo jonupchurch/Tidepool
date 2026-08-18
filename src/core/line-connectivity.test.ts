@@ -139,6 +139,7 @@ function runDp(
     assign.set(k, known[i] === null ? 'unknown' : known[i] ? 'water' : 'rock')
   })
   const c: Constraint = {
+    kind: 'exact',
     cells,
     water,
     source: 'line',

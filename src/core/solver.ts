@@ -10,6 +10,7 @@ import {
   connectivityPass,
   forcedCountPass,
   lineConnectivityPass,
+  parityPass,
   setup,
   subsetPass,
 } from './techniques'
@@ -19,6 +20,7 @@ const TECHNIQUE_ORDER: Technique[] = [
   'line-total',
   'connectivity',
   'line-connectivity',
+  'parity',
   'subset-overlap',
 ]
 
@@ -61,6 +63,11 @@ function runTechniques(
       allowed.has('line-connectivity') &&
       lineConnectivityPass(constraints, assign, ctx)
     ) {
+      depth++
+      continue
+    }
+    if (ctx.contradiction) break
+    if (allowed.has('parity') && parityPass(constraints, assign, ctx)) {
       depth++
       continue
     }
@@ -112,6 +119,15 @@ function propagate(constraints: Constraint[], assign: Assign): boolean {
     // allows: every pass is sound, and a board that leans on row annotations
     // can't propagate without this and blows the step budget instead.
     if (lineConnectivityPass(constraints, assign, ctx)) {
+      if (ctx.contradiction) return false
+      continue
+    }
+    if (ctx.contradiction) return false
+    // Parity must run here too (018 FR-007). It is sound, so it only prunes —
+    // and its zero-unknown check is what rejects a branch that has already
+    // violated a parity clue. A counter blind to that would count assignments
+    // the clue forbids and could report a board unique when it is not.
+    if (parityPass(constraints, assign, ctx)) {
       if (ctx.contradiction) return false
       continue
     }

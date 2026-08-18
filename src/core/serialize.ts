@@ -2,12 +2,21 @@
 // oracle / save) and human-friendly seed codes (`WORD-NNNN`). Round-trips
 // deep-equal. Pure.
 import type { Axis, Board, Cell, CellState, Connectivity, LineClue, SeedCode } from './board'
-import { makeBoard } from './board'
+import { isParityClue, makeBoard } from './board'
 import { key, parseKey } from './hex'
 
 const FORMAT_VERSION = 1
 
-type CellTuple = [string, 'w' | 'r', 0 | 1, number?, ('c' | 's')?]
+/**
+ * `[key, state, given, face?, connectivity?]`
+ *
+ * Slot 3 is the clue *face*: a number for a count clue, or `'e'`/`'o'` for a
+ * parity clue (018). Widening the existing slot rather than adding a sixth one
+ * keeps every tuple ever written valid — a parity clue would otherwise need a
+ * `null` hole in position 3 — and `typeof t[3] === 'number'` discriminates.
+ * Slot 4 stays exclusive to count clues, since parity clues carry no `{}`/`--`.
+ */
+type CellTuple = [string, 'w' | 'r', 0 | 1, (number | 'e' | 'o')?, ('c' | 's')?]
 // The trailing 'c'/'s' mirrors CellTuple's connectivity slot: optional, so an
 // unannotated row serializes exactly as it always did.
 type LineTuple = [Axis, number, number, 'start' | 'end', ('c' | 's')?]
@@ -23,10 +32,14 @@ function encodeCell(cell: Cell): CellTuple {
   const s: 'w' | 'r' = cell.state === 'water' ? 'w' : 'r'
   const g: 0 | 1 = cell.given ? 1 : 0
   if (cell.given && cell.clue) {
-    if (cell.clue.connectivity) {
-      return [key(cell.coord), s, g, cell.clue.count, cell.clue.connectivity === 'connected' ? 'c' : 's']
+    const clue = cell.clue
+    if (isParityClue(clue)) {
+      return [key(cell.coord), s, g, clue.parity === 'even' ? 'e' : 'o']
     }
-    return [key(cell.coord), s, g, cell.clue.count]
+    if (clue.connectivity) {
+      return [key(cell.coord), s, g, clue.count, clue.connectivity === 'connected' ? 'c' : 's']
+    }
+    return [key(cell.coord), s, g, clue.count]
   }
   return [key(cell.coord), s, g]
 }
@@ -35,14 +48,18 @@ function decodeCell(t: CellTuple): Cell {
   const coord = parseKey(t[0])
   const state: CellState = t[1] === 'w' ? 'water' : 'rock'
   const given = t[2] === 1
-  if (given && t[3] !== undefined) {
+  const face = t[3]
+  if (given && face !== undefined) {
+    if (typeof face !== 'number') {
+      return { coord, state, given, clue: { parity: face === 'e' ? 'even' : 'odd' } }
+    }
     const connectivity: Connectivity | undefined =
       t[4] === 'c' ? 'connected' : t[4] === 's' ? 'split' : undefined
     return {
       coord,
       state,
       given,
-      clue: connectivity ? { count: t[3], connectivity } : { count: t[3] },
+      clue: connectivity ? { count: face, connectivity } : { count: face },
     }
   }
   return { coord, state, given }

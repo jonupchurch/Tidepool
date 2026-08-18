@@ -23,6 +23,7 @@ import {
   hexToPixel,
   makeTimeline,
   whenSpritesReady,
+  clueText,
 } from '@/render'
 import { DEFAULTS, getSaveStore, loadRecord, saveRecord } from '@/platform'
 import { getAudioEngine } from '@/audio'
@@ -378,6 +379,12 @@ export function GameplayScreen({
           // differ by cell count, which no amount of label-reading proves.
           shape: board.params.shape ?? 'hex',
           cells: board.present.size,
+          // The clue FACES as drawn (018), so an e2e can prove `+` / `|` really
+          // reached the board rather than trusting the label — same discipline
+          // as `cells` for silhouettes.
+          clueFaces: [...board.cells.values()]
+            .filter((c) => c.given && c.clue)
+            .map((c) => clueText(c.clue!)),
           lastSave: Promise.resolve(),
           // Getters, not snapshots: the board re-lays out whenever the pane
           // resizes (the how-to rail appearing, a window resize), so cached

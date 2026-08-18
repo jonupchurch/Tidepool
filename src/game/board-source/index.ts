@@ -26,6 +26,7 @@ export {
   ANY_SHORE,
   DEFAULT_SHORE,
   edgeHintsApply,
+  evenOddApply,
   endlessClues,
   isShoreChoice,
   resolveShore,

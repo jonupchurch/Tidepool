@@ -116,6 +116,7 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
     difficulty: 'Calm',
     shore: DEFAULT_SHORE,
     edgeHints: false,
+    evenOdd: false,
   })
   const [resume, setResume] = useState<ResumeSnapshot | null>(null)
   const [stats, setStats] = useState<HomeStats>(DEFAULT_STATS)
@@ -251,8 +252,9 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
       boardRequest(nextSeed(cur.seed), cur.size, cur.difficulty, {
         shore: lastPlay.shore,
         edgeHints: lastPlay.edgeHints,
+        evenOdd: lastPlay.evenOdd,
       }),
-    [lastPlay.shore, lastPlay.edgeHints],
+    [lastPlay.shore, lastPlay.edgeHints, lastPlay.evenOdd],
   )
 
   /**
@@ -299,6 +301,7 @@ export function AppShell({ store = getSaveStore(), initialScreen = 'Splash' }: A
         boardRequest(freshSeed(), lastPlay.size, lastPlay.difficulty, {
           shore: lastPlay.shore,
           edgeHints: lastPlay.edgeHints,
+          evenOdd: lastPlay.evenOdd,
         }),
       ),
     [onPlay, lastPlay],

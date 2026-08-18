@@ -4,7 +4,7 @@
 // totals in the margins, an optional hover highlight, and revealed-pool
 // creatures. Behind an interface so it stays swappable to WebGL later.
 import type { AdjacencyClue, Board } from '@/core'
-import { key, parseKey } from '@/core'
+import { isParityClue, key, parseKey } from '@/core'
 import type { Mark, Pool } from '@/game'
 import { cellStyle } from './cell-style'
 import { type HexLayout, fitLayout, hexToPixel, hitTest } from './layout'
@@ -53,7 +53,16 @@ export interface BoardRenderer {
 // concrete family stack so clue numerals render at the intended size.
 const DISPLAY_FONT = '"Bricolage Grotesque", "Nunito", system-ui, sans-serif'
 
-function clueText(clue: AdjacencyClue): string {
+export function clueText(clue: AdjacencyClue): string {
+  // A parity clue withholds the number entirely (018), so it needs a mark that
+  // cannot be mistaken for one. Letters lost that argument: in Bricolage
+  // Grotesque at 700, `O` and `0` are near-identical at the cell sizes a Large
+  // board uses, and `0` is a clue value the game really shows.
+  //
+  // Strokes instead, which also carries the meaning: ONE stroke for odd, TWO
+  // crossed for even — the same "things pair up, or one is left over" that
+  // parity is taught with. Neither collides with a digit.
+  if (isParityClue(clue)) return clue.parity === 'even' ? '+' : '|'
   if (clue.connectivity === 'connected') return `{${clue.count}}`
   if (clue.connectivity === 'split') return `-${clue.count}-`
   return `${clue.count}`
@@ -226,7 +235,13 @@ class CanvasBoardRenderer implements BoardRenderer {
 
       if (cell.given && cell.clue) {
         ctx.fillStyle = palette.deepPool
-        ctx.font = `700 ${size * 0.9}px ${DISPLAY_FONT}`
+        // Parity marks are single strokes, so at the digits' own weight and
+        // size a `|` reads lighter than everything around it — close enough to
+        // an empty tile with an artifact on it to give a player pause. Heavier
+        // and slightly larger evens the visual weight; checked by eye against
+        // the digits at 26px, the smallest cells a Large board uses.
+        const parity = isParityClue(cell.clue)
+        ctx.font = `${parity ? 800 : 700} ${size * (parity ? 1.15 : 0.9)}px ${DISPLAY_FONT}`
         ctx.fillText(clueText(cell.clue), x, y + size * 0.06)
       } else if (style.glyph && !spriteDrawn) {
         ctx.fillStyle = palette.ink

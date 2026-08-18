@@ -16,5 +16,8 @@ export function boardLabel(params: BoardParams): string {
   // board would make the common label longer to say nothing.
   if (params.shape && params.shape !== DEFAULT_SHAPE) parts.push(shapeName(params.shape))
   if (params.clues.lineConnectivity) parts.push('hints')
+  // One word on purpose: `parseSeedEntry` splits tokens on `/`, so `even/odd`
+  // would arrive as two tokens and the label would stop round-tripping.
+  if (params.clues.evenOdd) parts.push('evenodd')
   return parts.join(' · ')
 }

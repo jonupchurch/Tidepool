@@ -14,12 +14,36 @@
 // make your change opt-in (a new clue toggle or shape appends to the seed string
 // only when enabled) rather than to update the table.
 import { createHash } from 'node:crypto'
-import type { BoardParams, DifficultyTier, SizeTier } from './board'
+import type { BoardParams, ClueToggles, DifficultyTier, SizeTier } from './board'
 import { generateBoard } from './generate'
 import { serializeBoard } from './serialize'
+import type { ShapeId } from './shapes'
 
-/** [seed, size, difficulty, sha256(serializeBoard(...)) first 16 hex chars] */
-const FROZEN: ReadonlyArray<[string, SizeTier, DifficultyTier, string]> = [
+/** The clue set every board in this table used before optional mechanics existed. */
+const BASE_CLUES: ClueToggles = { connectivity: true, lineTotals: true }
+/** Base plus 010's `{n}` / `-n-` row annotations. */
+const LC_CLUES: ClueToggles = { ...BASE_CLUES, lineConnectivity: true }
+/** Base plus 018's `E` / `O` parity clues. */
+const EO_CLUES: ClueToggles = { ...BASE_CLUES, evenOdd: true }
+/** Both optional clue mechanics at once — the pair the segment order governs. */
+const LC_EO_CLUES: ClueToggles = { ...BASE_CLUES, lineConnectivity: true, evenOdd: true }
+
+/**
+ * `[seed, size, difficulty, sha256(serializeBoard(...)) first 16 hex chars, extra?]`
+ *
+ * `extra` names anything beyond the base clue set — a richer clue set, a
+ * silhouette. Omitting it means the defaults, which is why every row captured
+ * before optional mechanics existed still reads exactly as it did.
+ */
+type FrozenRow = readonly [
+  string,
+  SizeTier,
+  DifficultyTier,
+  string,
+  { clues?: ClueToggles; shape?: ShapeId }?,
+]
+
+const FROZEN: ReadonlyArray<FrozenRow> = [
   ['CORAL-4417', 'Small', 'Calm', 'fbee2b388e2c4400'],
   ['CORAL-4417', 'Small', 'Tricky', '06ac497c4b84c5da'],
   ['CORAL-4417', 'Small', 'Deep', '32a3f6a0dae3e1f8'],
@@ -56,33 +80,83 @@ const FROZEN: ReadonlyArray<[string, SizeTier, DifficultyTier, string]> = [
   ['FOAM-0002', 'Medium', 'Calm', '0b8811419dce4f9c'],
   ['FOAM-0002', 'Medium', 'Tricky', 'e900555726a01b69'],
   ['FOAM-0002', 'Medium', 'Deep', '98e37bc143ae306b'],
+
+  // ── Optional mechanics (added with 018) ────────────────────────────────────
+  // These combinations ship today and were NOT covered before: 010's row
+  // annotations ride on 18 curated Deep boards, 012's silhouettes on the rest of
+  // the pack, and 016 made both reachable in Endless. Feature 016's own spec
+  // noted the gap — "the fingerprint table does not cover them, so nothing would
+  // have caught it" — and 018 adds a third optional seed segment, which is
+  // exactly the change that would break the ones composing two.
+  ['KELP-0007', 'Large', 'Deep', '8f120bfbf6ca6cc7', { clues: LC_CLUES }],
+  ['CORAL-4417', 'Large', 'Deep', '5cf453922fa3f2b0', { clues: LC_CLUES }],
+  ['TIDE-1234', 'Medium', 'Deep', '1bebeae066ad1bb9', { clues: LC_CLUES }],
+  ['KELP-0007', 'Large', 'Deep', '1d2d2a999345ee71', { shape: 'atoll' }],
+  ['COVE-0001', 'Medium', 'Tricky', '570395fb5901dd72', { shape: 'wedge' }],
+  ['SHELL-0001', 'Large', 'Calm', '965031e50c0678e7', { shape: 'crescent' }],
+  // Both at once — the composition the segment ORDER governs.
+  ['KELP-0007', 'Large', 'Deep', '9f63eb297479de52', { clues: LC_CLUES, shape: 'shoal' }],
+  ['FOAM-0002', 'Medium', 'Deep', '09cf8d32890285cb', { clues: LC_CLUES, shape: 'atoll' }],
+
+  // Parity clues (018) — captured as the mechanic shipped.
+  ['KELP-0007', 'Large', 'Deep', '9c78b51f0753415b', { clues: EO_CLUES }],
+  ['CORAL-4417', 'Medium', 'Deep', 'e1266b7de9356fe2', { clues: EO_CLUES }],
+  ['TIDE-1234', 'Small', 'Deep', 'fad2434821935512', { clues: EO_CLUES }],
+  ['KELP-0007', 'Large', 'Deep', '5a0193b922aa700a', { clues: LC_EO_CLUES }],
+  ['FOAM-0002', 'Medium', 'Deep', '401dfbbd2882252f', { clues: LC_EO_CLUES, shape: 'atoll' }],
 ]
 
 function fingerprint(p: BoardParams): string {
   return createHash('sha256').update(serializeBoard(generateBoard(p))).digest('hex').slice(0, 16)
 }
 
+/** The full params a row describes — `extra` filling in for the defaults. */
+function paramsOf(row: FrozenRow): BoardParams {
+  const [seed, size, difficulty, , extra] = row
+  return {
+    seed,
+    size,
+    difficulty,
+    clues: extra?.clues ?? BASE_CLUES,
+    ...(extra?.shape ? { shape: extra.shape } : {}),
+  }
+}
+
+/** What the row is called in test output — the extras have to show, or two rows
+ *  differing only by clue set would be indistinguishable when one fails. */
+function labelOf(row: FrozenRow): string {
+  const [seed, size, difficulty, , extra] = row
+  const parts: string[] = []
+  if (extra?.clues?.lineConnectivity) parts.push('lineConnectivity')
+  if (extra?.clues?.evenOdd) parts.push('evenOdd')
+  if (extra?.shape) parts.push(extra.shape)
+  return `${seed} ${size}/${difficulty}${parts.length ? ` (${parts.join(' + ')})` : ''}`
+}
+
 describe('frozen board fingerprints (Principle XI)', () => {
-  for (const [seed, size, difficulty, expected] of FROZEN) {
-    it(`${seed} ${size}/${difficulty} is the board it has always been`, () => {
-      const actual = fingerprint({
-        seed,
-        size,
-        difficulty,
-        clues: { connectivity: true, lineTotals: true },
-      })
+  for (const row of FROZEN) {
+    it(`${labelOf(row)} is the board it has always been`, () => {
       expect(
-        actual,
+        fingerprint(paramsOf(row)),
         'This seed now produces a DIFFERENT board. See the note at the top of this file.',
-      ).toBe(expected)
+      ).toBe(row[3])
     })
   }
 
   it('the table is actually discriminating (a changed seed changes the hash)', () => {
     // Guards against the table silently passing because fingerprint() is broken.
-    const base = { size: 'Small' as const, difficulty: 'Calm' as const, clues: { connectivity: true, lineTotals: true } }
+    const base = { size: 'Small' as const, difficulty: 'Calm' as const, clues: BASE_CLUES }
     expect(fingerprint({ ...base, seed: 'CORAL-4417' })).not.toBe(
       fingerprint({ ...base, seed: 'KELP-0007' }),
+    )
+  })
+
+  it('an optional mechanic changes the board (so those rows are load-bearing too)', () => {
+    // If a toggle did NOT change the board, its rows below would be duplicates of
+    // the base rows and would silently stop guarding anything.
+    const base = { seed: 'KELP-0007', size: 'Large' as const, difficulty: 'Deep' as const }
+    expect(fingerprint({ ...base, clues: BASE_CLUES })).not.toBe(
+      fingerprint({ ...base, clues: { ...BASE_CLUES, lineConnectivity: true } }),
     )
   })
 })

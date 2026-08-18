@@ -5,6 +5,8 @@ import {
   connectivityInformative,
   connectivityOf,
   lineTotal,
+  canShowParity,
+  parityOf,
   presentNeighborCount,
   ringWater,
   waterNeighborCount,
@@ -81,6 +83,38 @@ describe('adjacency clues', () => {
   it('omits connectivity when not requested', () => {
     const twoAdj = layoutOf(present, [originNeighbours[0], originNeighbours[1]])
     expect(adjacencyClue({ q: 0, r: 0 }, twoAdj, present, false)).toEqual({ count: 2 })
+  })
+})
+
+describe('parity (018)', () => {
+  it('reads a count as even or odd', () => {
+    expect(parityOf(0)).toBe('even')
+    expect(parityOf(1)).toBe('odd')
+    expect(parityOf(4)).toBe('even')
+    expect(parityOf(5)).toBe('odd')
+  })
+
+  it('withholds nothing below two present neighbours', () => {
+    // 0 neighbours: the count is always 0, so the mark is unconditional.
+    expect(canShowParity(0, 0)).toBe(false)
+    // 1 neighbour: parity pins the count exactly (even = 0 water, odd = 1), so
+    // the clue is the number in disguise rather than a weaker form of it.
+    expect(canShowParity(1, 1)).toBe(false)
+  })
+
+  it('withholds something from two neighbours upward', () => {
+    expect(canShowParity(2, 2)).toBe(true)
+    expect(canShowParity(6, 3)).toBe(true)
+  })
+
+  it('never marks a count of zero, however many neighbours it has', () => {
+    // Zero IS even, so `+` would be correct — and a trap. Nobody reads "an even
+    // number of water tiles" and thinks *none*, so a player ruling zero out
+    // would deduce "at least two are water" and be wrong. Refusing these keeps
+    // the honest reading "an even mark means two, four or six".
+    for (const neighbours of [2, 3, 4, 5, 6]) {
+      expect(canShowParity(neighbours, 0)).toBe(false)
+    }
   })
 })
 

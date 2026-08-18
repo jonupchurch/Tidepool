@@ -12,9 +12,9 @@
 // space. 010 and 018 both did this and both caught real bugs.
 import type { Board, ClueToggles, Connectivity, DifficultyTier, Parity, SizeTier } from './board'
 import { hasParityFace } from './board'
-import { circularRuns, lineRuns } from './clues'
+import { circularRuns, lineAdjacency, lineConnectivityOf, lineRuns } from './clues'
 import { generateBoard } from './generate'
-import { linesOf } from './hex'
+import { AXIS_STEP, DIRECTIONS, key, linesOf } from './hex'
 import { solve } from './solver'
 import type { Assign, CellVal, Constraint, SolveCtx } from './techniques'
 import { applyConnectivity, applyLineConnectivity } from './techniques'
@@ -438,5 +438,125 @@ describe('parity on an edge total (019 FR-001)', () => {
       for (const line of board.lines) hasParityFace(line) ? parity++ : numbers++
     }
     expect(numbers, `${numbers} numbers vs ${parity} parity marks`).toBeGreaterThan(parity)
+  })
+})
+
+// ── Framed parity: the four combined forms (019 US2) ─────────────────────────
+
+describe('framed parity on a stone and on a row (019 FR-002)', () => {
+  const boards = SEEDS.flatMap((seed) =>
+    SIZES.map((size) => ({
+      label: `${seed} ${size}`,
+      board: boardFor(seed, size, 'Deep', {
+        ...BASE_CLUES,
+        evenOdd: true,
+        lineConnectivity: true,
+      }),
+    })),
+  )
+
+  /** Which run-classes a parity face admits, over the arrangements of a slot set. */
+  function classesFor(
+    slotCount: number,
+    parity: Parity,
+    runsOf: (bits: boolean[]) => number,
+    place: (bits: boolean[]) => boolean[],
+  ): { connected: boolean; split: boolean } {
+    const want = parity === 'even' ? 0 : 1
+    let connected = false
+    let split = false
+    for (let mask = 0; mask < 1 << slotCount; mask++) {
+      const bits = Array.from({ length: slotCount }, (_, i) => (mask & (1 << i)) !== 0)
+      if (bits.filter(Boolean).length % 2 !== want) continue
+      if (runsOf(place(bits)) <= 1) connected = true
+      else split = true
+      if (connected && split) break
+    }
+    return { connected, split }
+  }
+
+  it('reaches all four framed forms across a sample (SC-003)', () => {
+    const seen = new Set<string>()
+    for (const { board } of boards) {
+      for (const cell of board.cells.values()) {
+        const c = cell.clue
+        if (!c || !hasParityFace(c) || !c.connectivity) continue
+        seen.add(`${c.connectivity}/${c.parity}`)
+      }
+    }
+    expect([...seen].sort()).toEqual([
+      'connected/even',
+      'connected/odd',
+      'split/even',
+      'split/odd',
+    ])
+  })
+
+  it('reaches an edge total too, when row annotations are switched on', () => {
+    const seen = new Set<string>()
+    for (const { board } of boards) {
+      for (const line of board.lines) {
+        if (!hasParityFace(line) || !line.connectivity) continue
+        seen.add(`${line.connectivity}/${line.parity}`)
+      }
+    }
+    expect(seen.size, 'no edge total carried a framed parity mark').toBeGreaterThan(0)
+  })
+
+  it('never frames a row when the annotation toggle is off', () => {
+    // A player who turned edge hints off has said they do not want braced row
+    // clues. `{+}` is a braced row clue however it got there.
+    for (const seed of SEEDS) {
+      const board = boardFor(seed, 'Large', 'Deep', { ...BASE_CLUES, evenOdd: true })
+      for (const line of board.lines) {
+        expect(line.connectivity, `${seed} framed a row without the toggle`).toBeUndefined()
+      }
+    }
+  })
+
+  it('tells the truth: a framed mark matches the layout it sits on', () => {
+    for (const { label, board } of boards) {
+      for (const line of board.lines) {
+        if (!hasParityFace(line) || !line.connectivity) continue
+        const ln = linesOf(board.present).find(
+          (l) => l.axis === line.axis && l.index === line.index,
+        )!
+        const water = ln.cells.map((k) => board.cells.get(k)?.state === 'water')
+        const adjacent = lineAdjacency(ln.cells, AXIS_STEP[line.axis])
+        expect(lineConnectivityOf(water, adjacent), `${label} row ${line.axis},${line.index}`).toBe(
+          line.connectivity,
+        )
+        expect(water.filter(Boolean).length % 2 === 0 ? 'even' : 'odd').toBe(line.parity)
+      }
+    }
+  })
+
+  it('only frames where the framing distinguishes something (FR-004)', () => {
+    // The ladder gives this for free and more strictly than a rule could: rung 2
+    // is reached only after bare parity FAILED, so a framing that ruled nothing
+    // out would leave the board just as unsolvable and fall through to the
+    // number. This asserts the consequence — if only one run-class were
+    // achievable for a mark's parity, its framing could never have done work.
+    for (const { label, board } of boards) {
+      for (const cell of board.cells.values()) {
+        const c = cell.clue
+        if (!c || !hasParityFace(c) || !c.connectivity) continue
+        const present = DIRECTIONS.map((d) =>
+          board.present.has(key({ q: cell.coord.q + d.q, r: cell.coord.r + d.r })),
+        )
+        const slots = present.flatMap((p, i) => (p ? [i] : []))
+        const cls = classesFor(slots.length, c.parity, circularRuns, (bits) => {
+          const ring = new Array<boolean>(6).fill(false)
+          bits.forEach((b, i) => {
+            if (b) ring[slots[i]] = true
+          })
+          return ring
+        })
+        expect(
+          cls.connected && cls.split,
+          `${label} framed a stone whose parity admits only one arrangement class`,
+        ).toBe(true)
+      }
+    }
   })
 })

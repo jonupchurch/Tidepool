@@ -115,21 +115,23 @@ const FROZEN: ReadonlyArray<FrozenRow> = [
 
   // ── Parity clues — the rows this project is allowed to move ────────────────
   //
-  // Captured as 018 shipped, then RE-captured during 019 when parity reached the
-  // edge totals. That was legitimate exactly once, for one reason: 018 has never
-  // been released, so no player holds one of these seeds and no save regenerates
-  // from them. It is a record, NOT a precedent — the moment 018 ships, these
-  // rows join the 44 above and a failure here means the same thing it means
-  // there.
+  // Captured as 018 shipped, then re-captured TWICE during 019 — once when
+  // parity reached the edge totals, once when it learned to carry `{}`/`--`.
   //
-  // If you are reading this because one of them just went red: ask whether your
-  // change was supposed to alter what an evenOdd board looks like. If it was
-  // not, the table is doing its job.
-  ['KELP-0007', 'Large', 'Deep', '84c06229fe1d3558', { clues: EO_CLUES }],
-  ['CORAL-4417', 'Medium', 'Deep', 'e1266b7de9356fe2', { clues: EO_CLUES }],
-  ['TIDE-1234', 'Small', 'Deep', '99e281b0971277b0', { clues: EO_CLUES }],
-  ['KELP-0007', 'Large', 'Deep', '9d526147b5ce813b', { clues: LC_EO_CLUES }],
-  ['FOAM-0002', 'Medium', 'Deep', '60425ffe9ecc4a8e', { clues: LC_EO_CLUES, shape: 'atoll' }],
+  // That was legitimate for exactly one reason: 018 has never been released, so
+  // no player holds one of these seeds and no save regenerates from them. It is
+  // a record, NOT a precedent. The moment 018 ships, these rows join the 44
+  // above and a failure here means precisely what a failure there means.
+  //
+  // Recapturing is the correct fix roughly never. If you are reading this
+  // because one of them just went red, the question is whether your change was
+  // *supposed* to alter what an evenOdd board looks like. If it was not, the
+  // table is doing its job and the bug is upstream.
+  ['KELP-0007', 'Large', 'Deep', 'b112ad02073ef7c3', { clues: EO_CLUES }],
+  ['CORAL-4417', 'Medium', 'Deep', 'e0aafe8c22ca472c', { clues: EO_CLUES }],
+  ['TIDE-1234', 'Small', 'Deep', 'a4220729c195ea4c', { clues: EO_CLUES }],
+  ['KELP-0007', 'Large', 'Deep', '1fe3f1e5646cc0b3', { clues: LC_EO_CLUES }],
+  ['FOAM-0002', 'Medium', 'Deep', '089120b31427ecac', { clues: LC_EO_CLUES, shape: 'atoll' }],
 ]
 
 function fingerprint(p: BoardParams): string {

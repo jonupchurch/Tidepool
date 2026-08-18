@@ -4,8 +4,17 @@
 // breaks unique guess-free solvability (spec FR-008, SC-003).
 import type { Board, Cell, LineClue, Technique } from './board'
 import { hasParityFace, makeBoard } from './board'
-import { canShowParity, parityOf, presentNeighborCount } from './clues'
-import { linesOf } from './hex'
+import {
+  type Layout,
+  canShowParity,
+  connectivityOf,
+  lineAdjacency,
+  lineConnectivityOf,
+  parityOf,
+  presentNeighborCount,
+  ringWater,
+} from './clues'
+import { AXIS_STEP, linesOf } from './hex'
 import type { Rng } from './rng'
 import { shuffle } from './rng'
 import { ALL_TECHNIQUES, techniqueSolves } from './solver'
@@ -93,7 +102,26 @@ function runRemovals(items: Item[], work: Board, allowed: ReadonlySet<Technique>
 }
 
 /**
- * Weaken surviving clues from a count to `E`/`O` (018).
+ * Weaken surviving clues from a count to a parity mark (018), framed or bare
+ * (019).
+ *
+ * **A three-rung ladder, weakest first** (019 FR-007): bare parity, then framed
+ * parity, then keep the number. The order is load-bearing rather than tidy.
+ * Framed parity survives on ~58% of ring clues where bare parity manages ~35%,
+ * so trying the stronger form first would make the plain number the rare form
+ * and turn a Large board into mush. Preferring to withhold the most is what
+ * keeps numbers on the board.
+ *
+ * **FR-004 comes free, and more strictly than a rule could give it.** The spec
+ * asks that a framing only be attached where it distinguishes something. Rung 2
+ * is reached only when rung 1 has already FAILED, so a framing that told the
+ * solver nothing new would leave the board exactly as unsolvable as the bare
+ * mark did, and the ladder would fall through to the number. The framing
+ * therefore survives only when it did real work — which is stronger than
+ * "both arrangements are achievable", and needs no separate informativeness
+ * heuristic on the parity path. (`connectivityInformative` still governs the
+ * count path, untouched, because changing it would move every board in
+ * existence — the same reason 010 left it alone.)
  *
  * This runs AFTER the removal loop, over the clues that survived it, rather than
  * adding a fourth item kind to the seeded shuffle above. That is the whole
@@ -116,6 +144,12 @@ function weakenToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>):
   // constraint is gone. A clue the removal loop kept for its *reveal* rather
   // than its *count* therefore survives weakening at any tier.
   if (!allowed.has('parity')) return
+
+  // Ground truth, for computing a framing that is actually true of the board.
+  // Reduction has always had this available — every cell carries its solution
+  // state — it simply never needed to look before 019.
+  const layout: Layout = new Map()
+  for (const [k, cell] of work.cells) layout.set(k, cell.state)
 
   const keys: string[] = []
   for (const [k, cell] of work.cells) {
@@ -144,11 +178,26 @@ function weakenToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>):
       continue
     }
 
+    // Rung 1: the weakest form there is — the parity alone, unframed.
     cell.clue = { parity: parityOf(saved.count) }
-    if (!techniqueSolves(work, allowed).solved) cell.clue = saved
+    if (techniqueSolves(work, allowed).solved) continue
+
+    // Rung 2: the parity, framed. Says strictly more than a bare mark and
+    // strictly less than a number, so it belongs exactly here in the order.
+    // Only where the board's own toggle asked for `{}`/`--` at all — a player
+    // who turned that vocabulary off should not meet it wearing a new face.
+    if (work.params.clues.connectivity) {
+      cell.clue = {
+        parity: parityOf(saved.count),
+        connectivity: connectivityOf(ringWater(cell.coord, layout, work.present)),
+      }
+      if (techniqueSolves(work, allowed).solved) continue
+    }
+
+    cell.clue = saved
   }
 
-  weakenLinesToParity(work, rng, allowed)
+  weakenLinesToParity(work, rng, allowed, layout)
 }
 
 /**
@@ -174,12 +223,17 @@ function weakenToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>):
  * verdict is trustworthy on its own, and the measurement's delete-control was
  * clean for the same reason.
  */
-function weakenLinesToParity(work: Board, rng: Rng, allowed: ReadonlySet<Technique>): void {
-  // Row cells, for the length test below. Rebuilt here rather than threaded
-  // through: reduction is already the expensive part of generation by orders of
-  // magnitude, and this is one pass over the topology.
-  const rowCells = new Map<string, number>()
-  for (const ln of linesOf(work.present)) rowCells.set(`${ln.axis},${ln.index}`, ln.cells.length)
+function weakenLinesToParity(
+  work: Board,
+  rng: Rng,
+  allowed: ReadonlySet<Technique>,
+  layout: Layout,
+): void {
+  // Row cells, for the length test and the framing below. Rebuilt here rather
+  // than threaded through: reduction is already the expensive part of generation
+  // by orders of magnitude, and this is one pass over the topology.
+  const rowCells = new Map<string, string[]>()
+  for (const ln of linesOf(work.present)) rowCells.set(`${ln.axis},${ln.index}`, ln.cells)
 
   // A separate shuffle from the cells above, and a second RNG draw. Safe for the
   // same reason the first one is: a board without `evenOdd` never reaches this
@@ -190,18 +244,33 @@ function weakenLinesToParity(work: Board, rng: Rng, allowed: ReadonlySet<Techniq
   for (const line of candidates) {
     const idx = work.lines.indexOf(line)
     if (idx === -1 || hasParityFace(line)) continue
-    const length = rowCells.get(`${line.axis},${line.index}`)
-    if (length === undefined) continue
+    const cells = rowCells.get(`${line.axis},${line.index}`)
+    if (cells === undefined) continue
     // The same two refusals as a stone (018 FR-006), read for a row: with fewer
     // than two cells the parity pins the total exactly, and a row holding no
     // water must never read `+`. Zero is even, but nobody reads an even mark as
     // "none" — they read it as two-or-four, and rule out the truth.
-    if (!canShowParity(length, line.count)) continue
+    if (!canShowParity(cells.length, line.count)) continue
 
-    // Rung 1 of the ladder: the weakest form there is — the parity alone, with
-    // any framing dropped as well. Weakest-first is FR-007, and it is what keeps
-    // numbers on the board.
-    work.lines[idx] = { axis: line.axis, index: line.index, from: line.from, parity: parityOf(line.count) }
-    if (!techniqueSolves(work, allowed).solved) work.lines[idx] = line
+    const site = { axis: line.axis, index: line.index, from: line.from }
+    const parity = parityOf(line.count)
+
+    // Rung 1: the weakest form there is — the parity alone, with any framing
+    // dropped as well.
+    work.lines[idx] = { ...site, parity }
+    if (techniqueSolves(work, allowed).solved) continue
+
+    // Rung 2: the parity, framed. Gated on the row-annotation toggle for the
+    // same reason the tile rung is gated on its own: a player with edge hints
+    // off has said they do not want braced row clues, and `{+}` is a braced row
+    // clue however it got there.
+    if (work.params.clues.lineConnectivity) {
+      const water = cells.map((k) => layout.get(k) === 'water')
+      const adjacent = lineAdjacency(cells, AXIS_STEP[line.axis])
+      work.lines[idx] = { ...site, parity, connectivity: lineConnectivityOf(water, adjacent) }
+      if (techniqueSolves(work, allowed).solved) continue
+    }
+
+    work.lines[idx] = line
   }
 }
